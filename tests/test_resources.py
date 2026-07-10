@@ -315,6 +315,7 @@ def test_installed_wheel_smoke_script_covers_all_console_entry_points():
         "celatim-support-matrix",
         "outside-checkout",
         "performance.json",
+        "all-extras.json",
         "scenario",
         "evidence",
         "support-matrix.json",
@@ -334,6 +335,12 @@ def test_unified_installed_wheel_smoke_covers_public_package_surface():
     assert "celatim.cli:main" in script
     assert "outside-checkout" in script
     assert "performance.json" in script
+    assert "EXPECTED_EXTRAS" in script
+    assert "all-extras.json" in script
+    assert '"performance": performance' in script
+    assert '"extras": extras_report' in script
+    assert '"pip",' in script
+    assert '"install",' in script
     assert "--no-deps" in script
     assert "packages" + "/celatim" not in script
     assert "rfc" + "tunnel" not in script

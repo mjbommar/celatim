@@ -193,7 +193,9 @@ use their concrete library modules so they remain statically resolvable.
 The installed-wheel smoke builds an sdist, builds the wheel from that sdist, installs it
 without dependencies into a fresh virtual environment, changes to a directory outside
 the checkout, and exercises all five console entry points plus representative public API
-and binary-payload workflows.
+and binary-payload workflows. After proving the base import does not load optional
+stacks, it installs every wheel-declared extra into the isolated environment, imports
+each integration dependency, and records the resolved versions.
 
 Build and validate release distributions with:
 

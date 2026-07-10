@@ -15,6 +15,8 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+EXPECTED_EXTRAS = ("crypto", "daemon", "dns", "iot", "packet", "realtime", "ssh")
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
@@ -1031,11 +1033,51 @@ def main(argv: list[str] | None = None) -> int:
             commands=commands,
         )
 
+        extras = _wheel_extras(celatim_wheel)
+        if extras != EXPECTED_EXTRAS:
+            raise RuntimeError(f"unexpected wheel extras: {extras}; expected {EXPECTED_EXTRAS}")
+        _run(
+            [
+                args.uv,
+                "pip",
+                "install",
+                "--python",
+                str(python),
+                f"{celatim_wheel}[{','.join(extras)}]",
+            ],
+            cwd=smoke_dir,
+            commands=commands,
+        )
+        _run(
+            [
+                str(python),
+                "-c",
+                (
+                    "import importlib.metadata as metadata, json; "
+                    "import aiocoap, aioquic, cryptography, dns, ecdsa, h2, "
+                    "paho.mqtt, paramiko, scapy, websockets; "
+                    "from pathlib import Path; "
+                    f"extras = {extras!r}; "
+                    "distributions = ('aiocoap', 'aioquic', 'cryptography', 'dnspython', "
+                    "'ecdsa', 'h2', 'paho-mqtt', 'paramiko', 'scapy', 'websockets'); "
+                    "versions = {name: metadata.version(name) for name in distributions}; "
+                    "Path('all-extras.json').write_text(json.dumps({"
+                    "'extras': extras, 'versions': versions}, sort_keys=True) + '\\n')"
+                ),
+            ],
+            cwd=smoke_dir,
+            commands=commands,
+        )
+
+        performance = json.loads((smoke_dir / "performance.json").read_text())
+        extras_report = json.loads((smoke_dir / "all-extras.json").read_text())
         summary = {
             "ok": True,
             "work_dir": str(work_dir),
             "celatim_sdist": str(celatim_sdist),
             "celatim_wheel": str(celatim_wheel),
+            "performance": performance,
+            "extras": extras_report,
             "commands": commands,
         }
         print(json.dumps(summary, indent=2, sort_keys=True))
@@ -1092,6 +1134,21 @@ def _assert_release_members(sdist: Path, wheel: Path) -> None:
         raise RuntimeError(f"{wheel}: missing typed-package marker")
     if not any(name.endswith(".dist-info/entry_points.txt") for name in wheel_members):
         raise RuntimeError(f"{wheel}: missing console entry-point metadata")
+
+
+def _wheel_extras(wheel: Path) -> tuple[str, ...]:
+    with zipfile.ZipFile(wheel) as archive:
+        metadata_name = next(
+            name for name in archive.namelist() if name.endswith(".dist-info/METADATA")
+        )
+        metadata = archive.read(metadata_name).decode()
+    return tuple(
+        sorted(
+            line.partition(":")[2].strip()
+            for line in metadata.splitlines()
+            if line.startswith("Provides-Extra:")
+        )
+    )
 
 
 def _run(

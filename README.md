@@ -225,5 +225,5 @@ and exchanges GitHub's OIDC identity for a short-lived PyPI credential. No PyPI 
 stored in the repository. See [`RELEASING.md`](RELEASING.md) for the trusted-publisher
 identity and release procedure.
 
-Publication remains blocked until the project license is selected and its SPDX
-expression and license file are present in the wheel.
+Celatim is licensed under the [Apache License 2.0](LICENSE). Release validation requires
+the exact SPDX expression and packaged license file in the wheel.

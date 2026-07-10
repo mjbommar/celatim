@@ -219,6 +219,8 @@ def test_unified_celatim_project_owns_the_only_distribution_and_namespace():
     assert project["name"] == "celatim"
     assert project["version"] == "0.1.0"
     assert project["requires-python"] == ">=3.14"
+    assert project["license"] == "Apache-2.0"
+    assert project["license-files"] == ["LICENSE"]
     assert project["dependencies"] == []
     assert project["optional-dependencies"]["crypto"] == ["cryptography>=46.0.3"]
     assert project["scripts"]["celatim"] == "celatim.cli:main"
@@ -228,6 +230,10 @@ def test_unified_celatim_project_owns_the_only_distribution_and_namespace():
     assert not (search_root / "packages" / "celatim").exists()
     retired_namespace = "rfc" + "tunnel"
     assert not (PROJECT / "src" / retired_namespace).exists()
+
+    license_text = (PROJECT / "LICENSE").read_text()
+    assert "Apache License" in license_text
+    assert "Version 2.0, January 2004" in license_text
 
     package = PROJECT / "src" / "celatim"
     for relative in (

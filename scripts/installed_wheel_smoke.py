@@ -1163,6 +1163,18 @@ def _assert_release_members(sdist: Path, wheel: Path) -> None:
         raise RuntimeError(f"{wheel}: missing typed-package marker")
     if not any(name.endswith(".dist-info/entry_points.txt") for name in wheel_members):
         raise RuntimeError(f"{wheel}: missing console entry-point metadata")
+    if not any(name.endswith("/LICENSE") for name in sdist_members):
+        raise RuntimeError(f"{sdist}: missing Apache-2.0 license file")
+    if not any(name.endswith(".dist-info/licenses/LICENSE") for name in wheel_members):
+        raise RuntimeError(f"{wheel}: missing packaged Apache-2.0 license file")
+
+    with zipfile.ZipFile(wheel) as archive:
+        metadata_name = next(
+            name for name in archive.namelist() if name.endswith(".dist-info/METADATA")
+        )
+        metadata = archive.read(metadata_name).decode()
+    if "License-Expression: Apache-2.0" not in metadata.splitlines():
+        raise RuntimeError(f"{wheel}: missing Apache-2.0 PEP 639 metadata")
 
 
 def _wheel_extras(wheel: Path) -> tuple[str, ...]:

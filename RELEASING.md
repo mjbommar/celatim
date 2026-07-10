@@ -21,10 +21,12 @@ requires updating the publisher configuration on PyPI.
 1. Register the pending publisher above while signed in to PyPI.
 2. Keep the GitHub `pypi` environment enabled. Add deployment protection rules when
    the repository plan supports them.
-3. Select a software license, add its text as `LICENSE`, and declare its SPDX
-   expression and license file in `pyproject.toml`.
-4. Require the `CI / Python 3.14 quality and installed-package gate` check on `main`
+3. Require the `CI / Python 3.14 quality and installed-package gate` check on `main`
    before making the repository public.
+
+Celatim is licensed under Apache-2.0. The release workflow rejects distributions that
+do not contain both the exact PEP 639 `License-Expression` and the packaged `LICENSE`
+file.
 
 A pending publisher does not reserve the project name. The first successful trusted
 publication creates the PyPI project and converts the pending publisher into a normal

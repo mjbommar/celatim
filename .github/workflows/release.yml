@@ -70,8 +70,8 @@ jobs:
               names = archive.namelist()
               metadata_name = next(name for name in names if name.endswith(".dist-info/METADATA"))
               metadata = archive.read(metadata_name).decode()
-          if "License-Expression:" not in metadata:
-              raise SystemExit("missing PEP 639 License-Expression metadata")
+          if "License-Expression: Apache-2.0" not in metadata.splitlines():
+              raise SystemExit("missing Apache-2.0 PEP 639 License-Expression metadata")
           if not any(".dist-info/licenses/" in name for name in names):
               raise SystemExit("missing packaged license file")
           PY

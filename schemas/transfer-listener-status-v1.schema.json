@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celatim.org/schemas/transfer-listener-status-v1.schema.json",
+  "title": "celatim transfer listener status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "pid", "process_start", "host", "port", "output_dir", "started_at", "active"],
+  "properties": {
+    "schema_version": {"const": "celatim.transfer_listener_status.v1"},
+    "pid": {"type": "integer", "minimum": 1},
+    "process_start": {"type": ["string", "null"]},
+    "host": {"type": "string", "minLength": 1, "maxLength": 253},
+    "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+    "output_dir": {"type": ["string", "null"], "maxLength": 4096},
+    "started_at": {"type": "string", "format": "date-time"},
+    "active": {"type": "boolean"}
+  }
+}

@@ -1,13 +1,66 @@
 # celatim API Guide
 
-This package is public research software for the RFC tunnel survey, intended for
-controlled and authorized use. It is not a production-ready tunneling service: it is
-designed to encode caller
-payload bytes into measured protocol carriers, recover them through explicit
-transports, and emit evidence that describes what was exercised.
+This package provides an experimental authenticated file-transfer surface and public
+research software for the RFC tunnel survey. Use it only in controlled and authorized
+environments. The research surface encodes caller payload bytes into measured protocol
+carriers and emits evidence describing what was exercised; the product transfer
+surface keeps payloads encrypted and does not emit research evidence by default.
 
 The Python examples below are tested against the packaged catalog resources and only
 write artifacts beneath the current working directory.
+
+## Authenticated file transfer
+
+Install `celatim[transfer]` and import the typed async API from `celatim.transfer`.
+Alice parses Bob's short-lived offer and starts an operation:
+
+```python
+from pathlib import Path
+
+from celatim.transfer import TransferClient, TransferOffer
+
+
+async def send_file(offer_text: str) -> None:
+    offer = TransferOffer.parse(offer_text)
+    async with TransferClient.open_default() as client:
+        operation = await client.send_file(Path("report.pdf"), offer)
+        async for event in operation.events():
+            handle_progress(event)
+        receipt = await operation.result()
+        assert receipt.authenticated and receipt.acknowledged and receipt.verified
+```
+
+Bob can embed the receiver without invoking the CLI:
+
+```python
+from pathlib import Path
+
+from celatim.transfer import TransferServer
+
+
+async def receive_one() -> None:
+    async with TransferServer(Path("incoming"), host="0.0.0.0") as server:
+        offer = await server.create_offer(expires_in_s=900)
+        publish_offer(offer.to_uri())
+        receipt = await server.receive()
+        index_received_file(receipt.path)
+```
+
+`TransferOperation` exposes ordered events, cancellation, and a typed result. Resume
+uses `TransferClient.resume(transfer_id)` and the original authenticated manifest.
+`TransferClient.send_stream()` accepts an async iterable of byte chunks through a
+bounded owner-only disk spool, while `send_bytes()` is the in-memory convenience form.
+The spool is retained for resume after failure and removed after authenticated success.
+`TransferFailure` supplies a stable code, retryable/resumable flags, and a safe next
+action. `TransferStateStore` persists owner-only atomic state; `ReceiverFile` writes a
+destination-local spool and exposes the final name only after synchronization and
+whole-file verification.
+
+The implemented `offer_bound` trust mode authenticates the TLS certificate fingerprint
+inside the exact offer received by Alice. It does not authenticate a human identity.
+Provider fallback is opt-in. The built-in direct provider is `tcp-tls`; configured
+AF_PACKET providers are labeled `synthetic_outer_frame` and require the separately
+configured capability-bounded packet service.
 
 ## Core objects
 

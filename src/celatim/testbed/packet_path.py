@@ -338,6 +338,9 @@ def _send_frames_with_pacing(
     pacing: PacingConfig | None,
 ) -> None:
     period = pacing.effective_symbol_period_s if pacing is not None else None
+    if pacing is None:
+        sender.send_frames(frames)
+        return
     if pacing is not None and pacing.base_delay_s > 0:
         sleep(pacing.base_delay_s)
     start = monotonic()

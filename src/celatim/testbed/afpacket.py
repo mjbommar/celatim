@@ -140,6 +140,21 @@ class AfpacketFrameSocket:
         if sent != len(frame):
             raise TransportError(f"short AF_PACKET send: sent {sent} of {len(frame)} bytes")
 
+    def send_frames(self, frames: tuple[bytes, ...]) -> None:
+        if any(len(frame) < MIN_ETHERNET_FRAME_BYTES for frame in frames):
+            raise TransportError("AF_PACKET frame must include an Ethernet header")
+        sock = self._open_socket()
+        batch_sender = getattr(sock, "send_frames", None)
+        if callable(batch_sender):
+            sent = batch_sender(frames)
+            if sent != len(frames):
+                raise TransportError(
+                    f"short AF_PACKET batch send: sent {sent} of {len(frames)} frames"
+                )
+            return
+        for frame in frames:
+            self.send_frame(frame)
+
     def receive_frame(self) -> bytes:
         try:
             return self._open_socket().recv(self.config.max_frame_bytes)
@@ -157,6 +172,13 @@ class AfpacketFrameSocket:
             raise ValueError("count must be > 0")
         frames: list[bytes] = []
         sock = self._open_socket()
+        batch_receiver = getattr(sock, "receive_frames", None)
+        if callable(batch_receiver):
+            batch = batch_receiver(count, self.config.max_frame_bytes)
+            frames = [frame for frame in batch if predicate is None or predicate(frame)][:count]
+            if require_count and len(frames) != count:
+                raise TransportError(f"captured {len(frames)} AF_PACKET frames, expected {count}")
+            return tuple(frames)
         while len(frames) < count:
             try:
                 frame = sock.recv(self.config.max_frame_bytes)

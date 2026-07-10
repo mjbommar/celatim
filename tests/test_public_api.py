@@ -152,7 +152,7 @@ class RecordingRunner:
 
 def test_package_exposes_versioned_facade_metadata():
     assert version("celatim") == celatim.__version__
-    assert celatim.__version__ == "0.1.0"
+    assert celatim.__version__ == "0.2.0"
     assert any(
         entry_point.value == "celatim.cli:main"
         for entry_point in entry_points(group="console_scripts")
@@ -168,6 +168,7 @@ def test_package_docs_lock_install_profiles_and_release_workflow():
     assert pyproject["project"]["requires-python"] == ">=3.14"
     assert pyproject["project"]["dependencies"] == []
     assert pyproject["project"]["optional-dependencies"] == {
+        "transfer": ["cryptography>=46.0.3"],
         "packet": ["scapy>=2.6.1"],
         "crypto": ["cryptography>=46.0.3"],
         "daemon": ["aioquic>=1.3.0", "h2>=4.3.0"],

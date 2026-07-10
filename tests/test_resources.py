@@ -206,7 +206,9 @@ def test_unified_celatim_project_owns_the_only_distribution_and_namespace():
     pyprojects = [
         path
         for path in search_root.rglob("pyproject.toml")
-        if ".venv" not in path.parts and "artifacts" not in path.parts
+        if ".venv" not in path.parts
+        and "artifacts" not in path.parts
+        and not {"tests", "fixtures"}.issubset(path.parts)
     ]
     project_pyprojects = [
         path for path in pyprojects if "project" in tomllib.loads(path.read_text())
@@ -217,7 +219,7 @@ def test_unified_celatim_project_owns_the_only_distribution_and_namespace():
     project = pyproject["project"]
 
     assert project["name"] == "celatim"
-    assert project["version"] == "0.1.0"
+    assert project["version"] == "0.2.0"
     assert project["requires-python"] == ">=3.14"
     assert project["license"] == "Apache-2.0"
     assert project["license-files"] == ["LICENSE"]
@@ -469,7 +471,7 @@ def test_api_guide_python_examples_execute_against_packaged_resources(tmp_path, 
     monkeypatch.syspath_prepend(str(CELATIM / "src"))
     blocks = re.findall(r"```python\n(.*?)\n```", doc_text("api-guide"), flags=re.S)
 
-    assert len(blocks) == 7
+    assert len(blocks) == 9
     for index, block in enumerate(blocks, start=1):
         exec(
             compile(block, f"api-guide.md python block {index}", "exec"),

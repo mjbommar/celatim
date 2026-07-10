@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celatim.org/schemas/carrier-endpoint-v1.schema.json",
+  "title": "celatim local carrier endpoint profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "mechanism_id", "packet_service_socket", "priority", "packet_path"],
+  "properties": {
+    "schema_version": {"const": "celatim.carrier_endpoint.v1"},
+    "mechanism_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "packet_service_socket": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "priority": {"type": "integer", "minimum": 0},
+    "packet_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sender_interface",
+        "receiver_interface",
+        "src_mac",
+        "dst_mac",
+        "src_ip",
+        "dst_ip",
+        "src_port",
+        "dst_port",
+        "protocol",
+        "ttl",
+        "tcp_flags",
+        "tcp_window",
+        "ip_id_base",
+        "timeout_s"
+      ],
+      "properties": {
+        "sender_interface": {"type": "string", "minLength": 1, "maxLength": 64},
+        "receiver_interface": {"type": "string", "minLength": 1, "maxLength": 64},
+        "src_mac": {"type": "string", "pattern": "^[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}$"},
+        "dst_mac": {"type": "string", "pattern": "^[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}$"},
+        "src_ip": {"type": "string", "format": "ipv4"},
+        "dst_ip": {"type": "string", "format": "ipv4"},
+        "src_port": {"type": "integer", "minimum": 1, "maximum": 65535},
+        "dst_port": {"type": "integer", "minimum": 1, "maximum": 65535},
+        "protocol": {"enum": ["tcp", "udp"]},
+        "ttl": {"type": "integer", "minimum": 1, "maximum": 255},
+        "tcp_flags": {"type": "integer", "minimum": 0, "maximum": 255},
+        "tcp_window": {"type": "integer", "minimum": 0, "maximum": 65535},
+        "ip_id_base": {"type": "integer", "minimum": 0, "maximum": 65535},
+        "timeout_s": {"type": ["number", "null"], "exclusiveMinimum": 0}
+      }
+    }
+  }
+}

@@ -37,6 +37,7 @@ TOOL_VERSION_COMMANDS = {
     "tshark": ("tshark", "--version"),
 }
 PACKAGE_EXTRA_MODULES = {
+    "transfer": (("cryptography", "cryptography"),),
     "packet": (("scapy", "scapy"),),
     "crypto": (("cryptography", "cryptography"),),
     "daemon": (("aioquic", "aioquic"), ("h2", "h2")),
@@ -699,7 +700,7 @@ def _package_version() -> str:
     try:
         return version("celatim")
     except PackageNotFoundError:
-        return "0.1.0"
+        return "0.2.0"
 
 
 __all__ = [

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celatim.org/schemas/transfer-state-v1.schema.json",
+  "title": "celatim transfer state",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "transfer_id",
+    "role",
+    "status",
+    "manifest",
+    "acknowledged_chunks",
+    "source_path",
+    "spool_path",
+    "destination_path",
+    "offer",
+    "provider_state",
+    "created_at",
+    "updated_at",
+    "error_code"
+  ],
+  "properties": {
+    "schema_version": {"const": "celatim.transfer_state.v1"},
+    "transfer_id": {"type": "string", "format": "uuid"},
+    "role": {"enum": ["sender", "receiver"]},
+    "status": {
+      "enum": [
+        "created",
+        "preflighting",
+        "negotiating",
+        "handshaking",
+        "transferring",
+        "paused",
+        "verifying",
+        "finalizing",
+        "completed",
+        "cancelled",
+        "expired",
+        "failed",
+        "quarantined"
+      ]
+    },
+    "manifest": {"type": "object"},
+    "acknowledged_chunks": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "integer", "minimum": 0}
+    },
+    "source_path": {"type": ["string", "null"], "maxLength": 4096},
+    "spool_path": {"type": ["string", "null"], "maxLength": 4096},
+    "destination_path": {"type": ["string", "null"], "maxLength": 4096},
+    "offer": {"type": "object"},
+    "provider_state": {"type": "object"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "error_code": {
+      "type": ["string", "null"],
+      "enum": [
+        null,
+        "input_invalid",
+        "offer_invalid",
+        "offer_expired",
+        "offer_replayed",
+        "trust_failed",
+        "policy_blocked",
+        "crypto_unavailable",
+        "crypto_failed",
+        "provider_unavailable",
+        "provider_incompatible",
+        "privilege_required",
+        "network_failed",
+        "timeout",
+        "integrity_failed",
+        "storage_failed",
+        "compatibility_failed",
+        "cancelled",
+        "internal_error"
+      ]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celatim.org/schemas/packet-service-preflight-v1.schema.json",
+  "title": "celatim packet service preflight",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "platform",
+    "so_peercred_available",
+    "af_packet_available",
+    "socket_path",
+    "socket_parent_exists",
+    "socket_parent_writable",
+    "allowed_uids",
+    "allowed_providers",
+    "allowed_interfaces",
+    "ready"
+  ],
+  "properties": {
+    "schema_version": {"const": "celatim.packet_service_preflight.v1"},
+    "platform": {"type": "string"},
+    "so_peercred_available": {"type": "boolean"},
+    "af_packet_available": {"type": "boolean"},
+    "socket_path": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "socket_parent_exists": {"type": "boolean"},
+    "socket_parent_writable": {"type": "boolean"},
+    "allowed_uids": {"type": "array", "uniqueItems": true, "items": {"type": "integer", "minimum": 0}},
+    "allowed_providers": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "allowed_interfaces": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "ready": {"type": "boolean"}
+  }
+}

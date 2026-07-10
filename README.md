@@ -1,10 +1,10 @@
 # Celatim
 
-Celatim is a typed Python 3.14+ toolkit for reproducible research on covert channels
-and steganographic carriers in IETF protocol fields. It provides channel codecs,
-protocol data-unit implementations, controlled endpoint transports, structural capacity
-models, detector and scrub guidance, scenario execution, and evidence artifacts from one
-distribution and one import namespace.
+Celatim is a typed Python 3.14+ package for authenticated file transfer and reproducible
+research on covert channels and steganographic carriers in IETF protocol fields. It
+provides an offer-based transfer CLI and async SDK alongside channel codecs, protocol
+data-unit implementations, controlled endpoint transports, capacity models, detector
+and scrub guidance, scenario execution, and evidence artifacts.
 
 The project accompanies a survey and measurement paper. Its channel and defensive
 implementations are published together so researchers can reproduce the measurements,
@@ -13,11 +13,96 @@ inspect assumptions, and evaluate both communication and normalization behavior.
 Use Celatim only in controlled environments and on systems and networks you are
 authorized to test.
 
+The transfer surface is experimental in 0.2.x. Its network paths are encrypted and
+refuse ambiguous completion, but the independent security-review gate remains open;
+see [the compatibility policy](docs/transfer-compatibility-policy.md) and the
+[current validation record](docs/file-transfer-validation-20260710.md).
+
 ## Requirements
 
 - CPython 3.14 or newer.
 - Linux for AF_PACKET, network-namespace, tcpdump, and QEMU/TAP workflows.
 - No optional protocol stack is imported by the base package.
+
+## Hello world: Alice and Bob
+
+Install the transfer extra on both machines:
+
+```bash
+python -m pip install 'celatim[transfer]'
+```
+
+Bob starts a receiver and writes a short-lived offer to a file:
+
+```console
+bob$ celatim transfer listen \
+  --output-dir ~/Downloads \
+  --host 0.0.0.0 \
+  --advertise-host 192.0.2.20 \
+  --offer-out bob.offer
+Ready: celatim://v1/eyJ...
+```
+
+Bob sends `bob.offer` to Alice through the channel they already use. Alice sends one
+file with that offer:
+
+```console
+alice$ celatim transfer send report.pdf --to-file bob.offer
+Complete: 193024 bytes, authenticated, acknowledged, and verified
+```
+
+Bob receives `~/Downloads/report.pdf` only after durable chunk acknowledgements,
+whole-file verification, and atomic placement. The default `offer_bound` trust mode
+authenticates the exact receiver certificate embedded in the offer; a receiver label is
+not a verified person. Use `celatim transfer status` and
+`celatim transfer resume TRANSFER_ID` after an interruption.
+
+## Hello world: application developer
+
+The CLI and SDK use the same typed transfer core:
+
+```python
+from pathlib import Path
+
+from celatim.transfer import TransferClient, TransferOffer
+
+
+async def send_report(invite: str) -> None:
+    offer = TransferOffer.parse(invite)
+    async with TransferClient.open_default() as client:
+        operation = await client.send_file(Path("report.pdf"), offer)
+        async for event in operation.events():
+            print(event.status.value, event.bytes_transferred)
+        receipt = await operation.result()
+        assert receipt.authenticated
+        assert receipt.acknowledged
+        assert receipt.verified
+```
+
+`TransferServer`, `TransferOperation`, versioned offers/manifests/receipts/events,
+structured `TransferFailure` values, provider discovery through `celatim.providers`,
+and the reusable provider conformance suite are public under `celatim.transfer`.
+`send_stream()` accepts an async iterable of byte chunks through a bounded private disk
+spool; `send_bytes()` is the in-memory convenience form.
+
+## Hello world: academic researcher
+
+The research API remains available without the transfer extra:
+
+```python
+from celatim import PayloadSource, roundtrip_payload
+
+result = roundtrip_payload(
+    "http2-ping-opaque",
+    PayloadSource.hex("00 ff 80 41"),
+)
+assert result.ok
+assert result.payload == b"\x00\xff\x80A"
+```
+
+This is an in-memory codec/session result, not native-stack network evidence. Use
+packaged scenarios and inspect each result's evidence label when making empirical
+claims.
 
 ## Installation
 
@@ -40,6 +125,7 @@ Optional dependencies are grouped by capability:
 
 | Extra | Capability |
 |---|---|
+| `celatim[transfer]` | TLS 1.3 file transfer, offer pinning, and encrypted carrier records |
 | `celatim[packet]` | Scapy packet construction, parsing, and pcap integration |
 | `celatim[crypto]` | ECDSA and RSA-PSS transcript experiments |
 | `celatim[daemon]` | hyper-h2 and aioquic production-stack paths |
@@ -54,20 +140,7 @@ For example:
 python -m pip install 'celatim[packet,crypto,daemon]'
 ```
 
-## Python API
-
-The top-level API covers common endpoint operations and typed results:
-
-```python
-from celatim import PayloadSource, roundtrip_payload
-
-result = roundtrip_payload(
-    "http2-ping-opaque",
-    PayloadSource.hex("00 ff 80 41"),
-)
-assert result.ok
-assert result.payload == b"\x00\xff\x80A"
-```
+## Research Python API
 
 Mechanism discovery exposes executable transport metadata without importing optional
 stacks:
@@ -138,6 +211,8 @@ Celatim is one PEP 621 project with one `celatim` package:
 - `celatim.metrics`: separate storage, timing, and subliminal capacity models.
 - `celatim.report`: deterministic tables, figures, matrices, and defensive guidance.
 - `celatim.scenario`: versioned scenario loading and controlled execution.
+- `celatim.transfer`: secure offers, clients, servers, providers, state, receipts, and
+  privilege-separated packet I/O.
 
 The wheel includes its default catalog, protocol-rate assumptions, JSON Schemas,
 scenario definitions, and operator documentation. CLI defaults resolve those resources
@@ -200,10 +275,10 @@ source change.
 
 The installed-wheel smoke builds an sdist, builds the wheel from that sdist, installs it
 without dependencies into a fresh virtual environment, changes to a directory outside
-the checkout, and exercises all five console entry points plus representative public API
-and binary-payload workflows. After proving the base import does not load optional
-stacks, it installs every wheel-declared extra into the isolated environment, imports
-each integration dependency, and records the resolved versions.
+the checkout, and exercises all five console entry points plus representative public
+API, binary-payload, and two-process Alice/Bob workflows. After proving the base import
+does not load optional stacks, it installs every wheel-declared extra into the isolated
+environment, imports each integration dependency, and records the resolved versions.
 
 Build and validate release distributions with:
 

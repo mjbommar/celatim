@@ -99,6 +99,7 @@ from .testbed import (
     testbed_profile_ids,
 )
 from .timing_sweep import ObservedTimingCaseInput, run_observed_timing_sweep, run_timing_sweep
+from .transfer import cli as transfer_cli
 
 
 def support_matrix_main(argv: list[str] | None = None) -> int:
@@ -280,6 +281,8 @@ def _session_main(argv: list[str] | None = None, *, program_name: str) -> int:
     _add_transport_arg(recv)
     _add_expected_payload_args(recv)
     _add_output_arg(recv)
+
+    transfer_cli.add_transfer_parser(subparsers)
 
     evidence = subparsers.add_parser("evidence", help="Run scenario evidence commands.")
     evidence_subparsers = evidence.add_subparsers(dest="evidence_command", required=True)
@@ -1072,6 +1075,8 @@ def _session_main(argv: list[str] | None = None, *, program_name: str) -> int:
 
     args = parser.parse_args(raw_argv)
     args._invocation = (program_name, *raw_argv)
+    if args.command == "transfer":
+        return transfer_cli.run_transfer_command(args)
     with catalog_path(args.catalog) as catalog:
         args.catalog = catalog
         if args.command == "send":

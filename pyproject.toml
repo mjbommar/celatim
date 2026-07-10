@@ -1,7 +1,7 @@
 [project]
 name = "celatim"
-version = "0.1.0"
-description = "Typed covert-channel research, measurement, and endpoint tooling for IETF protocol fields."
+version = "0.2.0"
+description = "Typed secure file transfer and reproducible covert-channel measurement for IETF protocol fields."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -31,6 +31,9 @@ Issues = "https://github.com/mjbommar/celatim/issues"
 Repository = "https://github.com/mjbommar/celatim.git"
 
 [project.optional-dependencies]
+transfer = [
+    "cryptography>=46.0.3",
+]
 packet = [
     "scapy>=2.6.1",
 ]

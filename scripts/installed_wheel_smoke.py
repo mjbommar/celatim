@@ -15,7 +15,16 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
-EXPECTED_EXTRAS = ("crypto", "daemon", "dns", "iot", "packet", "realtime", "ssh")
+EXPECTED_EXTRAS = (
+    "crypto",
+    "daemon",
+    "dns",
+    "iot",
+    "packet",
+    "realtime",
+    "ssh",
+    "transfer",
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1073,9 +1082,46 @@ def main(argv: list[str] | None = None) -> int:
             cwd=smoke_dir,
             commands=commands,
         )
+        _run(
+            [
+                str(python),
+                "-c",
+                (
+                    "import json, subprocess; from pathlib import Path; "
+                    f"cli = {str(celatim_cli)!r}; "
+                    "source = Path('installed-transfer-source.bin'); "
+                    "payload = b'\\x00\\xffinstalled wheel transfer' * 100; "
+                    "source.write_bytes(payload); "
+                    "receiver = subprocess.Popen([cli, 'transfer', 'listen', "
+                    "'--output-dir', 'installed-transfer-received', '--home', "
+                    "'installed-transfer-bob', '--idle-timeout-s', '10', '--format', 'jsonl'], "
+                    "stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True); "
+                    "ready = json.loads(receiver.stdout.readline()); "
+                    "sender = subprocess.run([cli, 'transfer', 'send', str(source), "
+                    "'--to', ready['offer_uri'], '--home', 'installed-transfer-alice', "
+                    "'--format', 'json'], capture_output=True, text=True, timeout=15); "
+                    "remaining, receiver_stderr = receiver.communicate(timeout=15); "
+                    "assert sender.returncode == 0, sender.stderr; "
+                    "assert receiver.returncode == 0, receiver_stderr; "
+                    "send_receipt = json.loads(sender.stdout); "
+                    "receive_event = json.loads(remaining); "
+                    "assert send_receipt['authenticated'] is True; "
+                    "assert send_receipt['acknowledged'] is True; "
+                    "assert send_receipt['verified'] is True; "
+                    "assert receive_event['event'] == 'completed'; "
+                    "assert Path('installed-transfer-received/installed-transfer-source.bin').read_bytes() == payload; "
+                    "Path('installed-transfer.json').write_text(json.dumps({"
+                    "'sender': send_receipt, 'receiver': receive_event['receipt']}, "
+                    "sort_keys=True) + '\\n')"
+                ),
+            ],
+            cwd=smoke_dir,
+            commands=commands,
+        )
 
         performance = json.loads((smoke_dir / "performance.json").read_text())
         extras_report = json.loads((smoke_dir / "all-extras.json").read_text())
+        transfer_report = json.loads((smoke_dir / "installed-transfer.json").read_text())
         summary = {
             "ok": True,
             "work_dir": str(work_dir),
@@ -1083,6 +1129,7 @@ def main(argv: list[str] | None = None) -> int:
             "celatim_wheel": str(celatim_wheel),
             "performance": performance,
             "extras": extras_report,
+            "transfer": transfer_report,
             "commands": commands,
         }
         print(json.dumps(summary, indent=2, sort_keys=True))

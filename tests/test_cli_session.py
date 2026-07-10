@@ -1373,7 +1373,7 @@ def test_session_cli_bundle_manifest_hashes_reviewer_artifacts(tmp_path):
     detector_replay = tmp_path / "detector-replay.json"
     scrub_report = tmp_path / "scrub-report.json"
     paper_table = tmp_path / "field-catalog-longtable.tex"
-    package_wheel = tmp_path / "celatim-0.1.0-py3-none-any.whl"
+    package_wheel = tmp_path / "celatim-0.2.0-py3-none-any.whl"
     lockfile = tmp_path / "uv.lock"
     scenario_spec = tmp_path / "http2-ping-opaque.toml"
     testbed_package = tmp_path / "Dockerfile"

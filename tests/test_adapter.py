@@ -22,6 +22,8 @@ def test_every_catalog_row_has_adapter_metadata():
     assert adapters["edns0-padding"].status is AdapterStatus.REAL_DAEMON_PATH
     assert adapters["rsa-pss-salt"].status is AdapterStatus.REAL_CRYPTO_PATH
     assert adapters["ntp-timing"].status is AdapterStatus.TIMING_SCHEME
+    assert adapters["tls-record-padding"].status is AdapterStatus.CODEC_ONLY
+    assert AdapterCapability.REAL_PDU_FIXTURE not in adapters["tls-record-padding"].capabilities
 
 
 def test_real_pdu_adapters_build_parser_validated_carrier_bytes():

@@ -72,7 +72,7 @@ def test_claim_ledger_separates_capability_counts_from_run_backed_counts(tmp_pat
     )
 
     assert ledger["schema_version"] == "celatim.claim_ledger.v1"
-    assert claim_count(ledger, REAL_PDU_CAPABLE_CLAIM) == 130
+    assert claim_count(ledger, REAL_PDU_CAPABLE_CLAIM) == 129
     assert claim_count(ledger, REAL_DAEMON_OR_CRYPTO_CAPABLE_CLAIM) == 8
     assert claim_count(ledger, ALL_USABLE_EXACT_RECOVERY_CLAIM) == 2
     assert claim_count(ledger, REAL_PDU_EXECUTED_CLAIM) == 1

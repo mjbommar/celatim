@@ -249,6 +249,28 @@ def adapter_for(mechanism: Mechanism) -> MechanismAdapter:
             _carrier_parser=parser,
         )
 
+    if mechanism.id == "tls-record-padding":
+        builder, parser = _tls_field_carrier(mechanism)
+        paths = _paths_for(mechanism, evidence, register_packet_artifact_paths=False)
+        return MechanismAdapter(
+            mechanism=mechanism,
+            evidence=evidence,
+            status=AdapterStatus.CODEC_ONLY,
+            capabilities=frozenset(
+                {
+                    AdapterCapability.CODEC_SESSION,
+                    AdapterCapability.JSON_ENVELOPE,
+                    AdapterCapability.PARSER_VALIDATED,
+                }
+            ),
+            required_privilege="none",
+            required_binaries=_required_binaries_for_paths(paths),
+            required_extras=_required_extras_for_paths(paths),
+            paths=paths,
+            _carrier_builder=builder,
+            _carrier_parser=parser,
+        )
+
     if (
         format_carriers.supports(mechanism.id)
         or http2_fields.supports(mechanism.id)
@@ -683,7 +705,7 @@ def _struct_field_carrier(mechanism: Mechanism) -> tuple[CarrierBuilder, Carrier
 
 
 def _tls_field_carrier(mechanism: Mechanism) -> tuple[CarrierBuilder, CarrierParser]:
-    """Real TLS wire-structure carrier (covert value in the genuine TLS field)."""
+    """Serialized TLS structure fixture with the symbol in its protocol element."""
 
     def build(symbol: Symbol) -> bytes:
         return tls_fields.build_record(mechanism.id, symbol)

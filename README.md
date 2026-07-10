@@ -194,6 +194,9 @@ That target runs:
 The type gate covers the package, tests, release scripts, and production experiment
 drivers. There are no directory-wide type-check exclusions; optional-stack boundaries
 use their concrete library modules so they remain statically resolvable.
+GitHub runs the same gate on pushes, pull requests, manual dispatches, and a weekly
+schedule so newly published dependency advisories are detected without waiting for a
+source change.
 
 The installed-wheel smoke builds an sdist, builds the wheel from that sdist, installs it
 without dependencies into a fresh virtual environment, changes to a directory outside

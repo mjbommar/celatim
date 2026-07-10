@@ -1,0 +1,301 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/evidence-index-v1.schema.json",
+  "title": "celatim evidence index result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at_unix_s",
+    "evidence_roots",
+    "evidence_count",
+    "ok_count",
+    "failed_count",
+    "run_log_artifact_count",
+    "transport_artifact_count",
+    "observer_validation_count",
+    "observer_validation_ok_count",
+    "detector_count",
+    "detector_executed_count",
+    "mutation_control_count",
+    "mutation_control_ok_count",
+    "evidence_tier_counts",
+    "privilege_counts",
+    "expected_runtime_s_total",
+    "required_tools",
+    "required_extras",
+    "skipped_json_count",
+    "items"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.evidence_index.v1" },
+    "generated_at_unix_s": { "type": "number" },
+    "evidence_roots": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "evidence_count": { "type": "integer" },
+    "ok_count": { "type": "integer" },
+    "failed_count": { "type": "integer" },
+    "run_log_artifact_count": { "type": "integer" },
+    "transport_artifact_count": { "type": "integer" },
+    "observer_validation_count": { "type": "integer" },
+    "observer_validation_ok_count": { "type": "integer" },
+    "detector_count": { "type": "integer" },
+    "detector_executed_count": { "type": "integer" },
+    "mutation_control_count": { "type": "integer" },
+    "mutation_control_ok_count": { "type": "integer" },
+    "evidence_tier_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "privilege_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "expected_runtime_s_total": { "type": ["number", "null"] },
+    "required_tools": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_extras": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "skipped_json_count": { "type": "integer" },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidence_item" }
+    }
+  },
+  "$defs": {
+    "evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "size_bytes",
+        "run_id",
+        "scenario_id",
+        "mechanism_id",
+        "ok",
+        "adapter_status",
+        "adapter_capabilities",
+        "started_at_unix_s",
+        "control_kind",
+        "scenario_metadata",
+        "catalog_sha256",
+        "package_version",
+        "python_version",
+        "platform",
+        "system",
+        "release",
+        "machine",
+        "scenario_spec_path",
+        "command",
+        "run_log",
+        "transport_artifacts",
+        "cases"
+      ],
+      "properties": {
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "size_bytes": { "type": "integer" },
+        "run_id": { "type": "string" },
+        "scenario_id": { "type": "string" },
+        "mechanism_id": { "type": "string" },
+        "ok": { "type": "boolean" },
+        "adapter_status": { "type": "string" },
+        "adapter_capabilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "started_at_unix_s": { "type": "number" },
+        "control_kind": { "type": "string" },
+        "scenario_metadata": { "$ref": "#/$defs/scenario_metadata" },
+        "catalog_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "package_version": { "type": ["string", "null"] },
+        "python_version": { "type": ["string", "null"] },
+        "platform": { "type": ["string", "null"] },
+        "system": { "type": ["string", "null"] },
+        "release": { "type": ["string", "null"] },
+        "machine": { "type": ["string", "null"] },
+        "scenario_spec_path": { "type": ["string", "null"] },
+        "command": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "run_log": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["kind", "path", "sha256", "size_bytes"],
+          "properties": {
+            "kind": { "const": "run_log" },
+            "path": { "type": "string" },
+            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "size_bytes": { "type": "integer" }
+          }
+        },
+        "transport_artifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact_record" }
+        },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/case_item" }
+        }
+      }
+    },
+    "case_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case",
+        "session_id",
+        "matches",
+        "evidence_ok",
+        "expected_len",
+        "recovered_len",
+        "expected_sha256",
+        "recovered_sha256",
+        "parser_validated",
+        "observer_validation_count",
+        "observer_validation_ok_count",
+        "observer_validators",
+        "detector_count",
+        "detector_executed_count",
+        "detector_implementation_kinds",
+        "mutation_control_count",
+        "mutation_control_ok_count",
+        "carrier_structure",
+        "control_strength",
+        "endpoint_topology_kind",
+        "independent_receiver_os",
+        "transport_kind",
+        "transport_record",
+        "transport_artifact",
+        "transport_metadata",
+        "carrier_artifact_count",
+        "carrier_artifact_sha256"
+      ],
+      "properties": {
+        "case": { "enum": ["covert", "benign_control"] },
+        "session_id": { "type": "string" },
+        "matches": { "type": "boolean" },
+        "evidence_ok": { "type": "boolean" },
+        "expected_len": { "type": "integer" },
+        "recovered_len": { "type": "integer" },
+        "expected_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "recovered_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "parser_validated": { "type": ["boolean", "null"] },
+        "observer_validation_count": { "type": "integer" },
+        "observer_validation_ok_count": { "type": "integer" },
+        "observer_validators": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "detector_count": { "type": "integer" },
+        "detector_executed_count": { "type": "integer" },
+        "detector_implementation_kinds": {
+          "type": "array",
+          "items": {
+            "enum": ["same_code", "generated_kernel_rule", "independent_tool_output"]
+          }
+        },
+        "mutation_control_count": { "type": "integer" },
+        "mutation_control_ok_count": { "type": "integer" },
+        "carrier_structure": { "type": "string" },
+        "control_strength": { "type": "string" },
+        "endpoint_topology_kind": {
+          "enum": [
+            "same_process",
+            "same_host_artifact",
+            "same_kernel_netns",
+            "cross_stack_vm",
+            "cross_host",
+            "unknown"
+          ]
+        },
+        "independent_receiver_os": { "type": "boolean" },
+        "transport_kind": {
+          "enum": [
+            "memory",
+            "file",
+            "pcap",
+            "timed_memory",
+                  "afpacket_ipv4",
+                  "dns_edns0_padding",
+                  "http2_hyper_h2",
+                  "http3_aioquic_reserved_settings",
+                  "quic_aioquic_connection_id",
+                  "crypto_ecdsa_nonce",
+                  "crypto_rsa_pss_salt"
+                ]
+              },
+        "transport_record": { "type": ["string", "null"] },
+        "transport_metadata": { "type": ["object", "null"] },
+        "transport_artifact": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["kind", "path", "sha256", "size_bytes"],
+          "properties": {
+            "kind": { "type": "string" },
+            "path": { "type": "string" },
+            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "size_bytes": { "type": "integer" }
+          }
+        },
+        "carrier_artifact_count": { "type": "integer" },
+        "carrier_artifact_sha256": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        }
+      }
+    },
+    "scenario_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "evidence_tier",
+        "privilege",
+        "expected_runtime_s",
+        "requires_tools",
+        "requires_extras"
+      ],
+      "properties": {
+        "description": { "type": ["string", "null"] },
+        "evidence_tier": {
+          "type": ["string", "null"]
+        },
+        "privilege": {
+          "type": ["string", "null"]
+        },
+        "expected_runtime_s": { "type": ["number", "null"] },
+        "requires_tools": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "requires_extras": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "artifact_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256", "size_bytes"],
+      "properties": {
+        "kind": { "type": "string" },
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "size_bytes": { "type": "integer" }
+      }
+    }
+  }
+}

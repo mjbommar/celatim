@@ -1,0 +1,20 @@
+schema_version = "celatim.scenario.v1"
+scenario_id = "http3-reserved-settings-aioquic"
+mechanism_id = "http3-reserved-settings"
+description = "Non-privileged aioquic HTTP/3 reserved SETTINGS value stack scenario."
+evidence_tier = "real_daemon_path"
+privilege = "none"
+expected_runtime_s = 5.0
+requires_tools = []
+requires_extras = ["daemon"]
+payload_hex = "00 ff 80 48 33"
+control_message = "control"
+
+[transport]
+kind = "http3_aioquic_reserved_settings"
+transcript_json = "out/transcripts/{scenario_id}-{case}.json"
+validate_receiver_settings = true
+
+[pacing]
+unit_rate_hz = 20.0
+timing_quantum_s = 0.005

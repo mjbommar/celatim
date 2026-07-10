@@ -1,0 +1,947 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/evidence-run-v1.schema.json",
+  "title": "celatim evidence run result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "scenario_id",
+    "mechanism_id",
+    "adapter_status",
+    "adapter_capabilities",
+    "started_at_unix_s",
+    "control_kind",
+    "scenario_metadata",
+    "reproducibility",
+    "run_log",
+    "ok",
+    "covert",
+    "benign_control"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.evidence_run.v1" },
+    "run_id": { "type": "string" },
+    "scenario_id": { "type": "string" },
+    "mechanism_id": { "type": "string" },
+    "adapter_status": { "type": "string" },
+    "adapter_capabilities": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "started_at_unix_s": { "type": "number" },
+    "control_kind": { "type": "string" },
+    "ok": { "type": "boolean" },
+    "scenario_metadata": { "$ref": "#/$defs/scenario_metadata" },
+    "run_log": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256", "size_bytes"],
+      "properties": {
+        "kind": { "const": "run_log" },
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "size_bytes": { "type": "integer" }
+      }
+    },
+    "reproducibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "catalog_path",
+        "catalog_sha256",
+        "package_version",
+        "python_version",
+        "platform",
+        "system",
+        "release",
+        "machine",
+        "command",
+        "scenario_spec_path"
+      ],
+      "properties": {
+        "catalog_path": { "type": "string" },
+        "catalog_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "package_version": { "type": "string" },
+        "python_version": { "type": "string" },
+        "platform": { "type": "string" },
+        "system": { "type": "string" },
+        "release": { "type": "string" },
+        "machine": { "type": "string" },
+        "command": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "scenario_spec_path": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "covert": { "$ref": "#/$defs/case_result" },
+    "benign_control": { "$ref": "#/$defs/case_result" }
+  },
+  "$defs": {
+    "scenario_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "evidence_tier",
+        "privilege",
+        "expected_runtime_s",
+        "requires_tools",
+        "requires_extras"
+      ],
+      "properties": {
+        "description": { "type": ["string", "null"] },
+        "evidence_tier": {
+          "enum": [
+            "in_memory_regression",
+            "crafted_production_path",
+            "real_pdu_packet_path",
+            "real_daemon_path",
+            "real_crypto_path",
+            "timing_path",
+            "cross_stack_vm_path"
+          ]
+        },
+        "privilege": {
+          "enum": ["none", "cap_net_raw", "cap_net_admin", "root", "docker", "kvm"]
+        },
+        "expected_runtime_s": { "type": ["number", "null"] },
+        "requires_tools": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "requires_extras": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "case_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case",
+        "session_id",
+        "expected_len",
+        "recovered_len",
+        "expected_sha256",
+        "recovered_sha256",
+        "matches",
+        "recovered_hex",
+        "parser_validated",
+        "parser_provenance",
+        "detector_provenance",
+        "observer_validations",
+        "mutation_controls",
+        "carrier_units_with_bytes",
+        "carrier_unit_sha256",
+        "transport_kind",
+        "transport_record",
+        "transport_artifact",
+        "transport_metadata",
+        "artifacts",
+        "evidence"
+      ],
+      "properties": {
+        "case": { "enum": ["covert", "benign_control"] },
+        "session_id": { "type": "string" },
+        "expected_len": { "type": "integer" },
+        "recovered_len": { "type": "integer" },
+        "expected_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "recovered_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "matches": { "type": "boolean" },
+        "recovered_hex": { "type": "string" },
+        "parser_validated": { "type": ["boolean", "null"] },
+        "parser_provenance": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/parser_provenance" }
+        },
+        "detector_provenance": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/detector_provenance" }
+        },
+        "observer_validations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/observer_validation" }
+        },
+        "mutation_controls": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/mutation_control" }
+        },
+        "carrier_units_with_bytes": { "type": "integer" },
+        "carrier_unit_sha256": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        },
+        "transport_kind": {
+          "enum": [
+            "memory",
+            "file",
+            "pcap",
+            "timed_memory",
+            "afpacket_ipv4",
+            "dns_edns0_padding",
+            "http2_hyper_h2",
+            "http3_aioquic_reserved_settings",
+            "quic_aioquic_connection_id",
+            "crypto_ecdsa_nonce",
+            "crypto_rsa_pss_salt"
+          ]
+        },
+        "transport_record": { "type": ["string", "null"] },
+        "transport_metadata": { "type": ["object", "null"] },
+        "transport_artifact": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["kind", "path", "sha256", "size_bytes"],
+          "properties": {
+            "kind": { "type": "string" },
+            "path": { "type": "string" },
+            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "size_bytes": { "type": "integer" }
+          }
+        },
+        "artifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact_record" }
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mechanism_id",
+            "session_id",
+            "adapter_status",
+            "adapter_capabilities",
+            "evidence_bucket",
+            "carrier_structure",
+            "control_strength",
+            "independent_validator",
+            "throughput_status",
+            "endpoint_os",
+            "payload_len",
+            "recovered_len",
+            "carrier_units",
+            "elapsed_s",
+            "pacing",
+            "scheduled_duration_s",
+            "timing_trace",
+            "timing_profile",
+            "throughput_profile",
+            "session_framing",
+            "chunk_count",
+            "integrity_sha256",
+            "reliability",
+            "ok",
+            "error"
+          ],
+          "properties": {
+            "mechanism_id": { "type": "string" },
+            "session_id": { "type": "string" },
+            "adapter_status": { "type": "string" },
+            "adapter_capabilities": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "evidence_bucket": { "type": "string" },
+            "carrier_structure": { "type": "string" },
+            "control_strength": { "type": "string" },
+            "independent_validator": { "type": "string" },
+            "throughput_status": { "type": "string" },
+            "endpoint_os": { "$ref": "#/$defs/endpoint_os" },
+            "payload_len": { "type": "integer" },
+            "recovered_len": { "type": "integer" },
+            "carrier_units": { "type": "integer" },
+            "elapsed_s": { "type": "number" },
+            "pacing": {
+              "type": ["object", "null"]
+            },
+            "scheduled_duration_s": {
+              "type": ["number", "null"]
+            },
+            "timing_trace": {
+              "type": ["object", "null"],
+              "additionalProperties": false,
+              "required": [
+                "sample_count",
+                "scheduled_duration_s",
+                "observed_duration_s",
+                "mean_abs_error_s",
+                "max_abs_error_s",
+                "inter_arrival_s",
+                "inter_arrival_error_s",
+                "samples"
+              ],
+              "properties": {
+                "sample_count": { "type": "integer" },
+                "scheduled_duration_s": { "type": ["number", "null"] },
+                "observed_duration_s": { "type": ["number", "null"] },
+                "mean_abs_error_s": { "type": ["number", "null"] },
+                "max_abs_error_s": { "type": ["number", "null"] },
+                "inter_arrival_s": {
+                  "type": "array",
+                  "items": { "type": "number" }
+                },
+                "inter_arrival_error_s": {
+                  "type": "array",
+                  "items": { "type": "number" }
+                },
+                "samples": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "index",
+                      "scheduled_offset_s",
+                      "observed_offset_s",
+                      "error_s"
+                    ],
+                    "properties": {
+                      "index": { "type": "integer" },
+                      "scheduled_offset_s": { "type": "number" },
+                      "observed_offset_s": { "type": "number" },
+                      "error_s": { "type": "number" }
+                    }
+                  }
+                }
+              }
+            },
+            "timing_profile": {
+              "type": ["object", "null"],
+              "additionalProperties": false,
+              "required": [
+                "sample_count",
+                "nominal_symbol_period_s",
+                "timing_quantum_s",
+                "decode_tolerance_s",
+                "tolerance_source",
+                "error_basis",
+                "jitter_sample_count",
+                "jitter_mean_abs_s",
+                "jitter_p50_abs_s",
+                "jitter_p95_abs_s",
+                "jitter_max_abs_s",
+                "jitter_stddev_s",
+                "snr_db",
+                "symbol_error_count",
+                "symbol_error_rate",
+                "scheduled_unit_rate_hz",
+                "observed_unit_rate_hz",
+                "effective_goodput_bps",
+                "rate_status"
+              ],
+              "properties": {
+                "sample_count": { "type": "integer" },
+                "nominal_symbol_period_s": { "type": ["number", "null"] },
+                "timing_quantum_s": { "type": ["number", "null"] },
+                "decode_tolerance_s": { "type": ["number", "null"] },
+                "tolerance_source": { "type": ["string", "null"] },
+                "error_basis": { "type": ["string", "null"] },
+                "jitter_sample_count": { "type": "integer" },
+                "jitter_mean_abs_s": { "type": ["number", "null"] },
+                "jitter_p50_abs_s": { "type": ["number", "null"] },
+                "jitter_p95_abs_s": { "type": ["number", "null"] },
+                "jitter_max_abs_s": { "type": ["number", "null"] },
+                "jitter_stddev_s": { "type": ["number", "null"] },
+                "snr_db": { "type": ["number", "null"] },
+                "symbol_error_count": { "type": ["integer", "null"] },
+                "symbol_error_rate": { "type": ["number", "null"] },
+                "scheduled_unit_rate_hz": { "type": ["number", "null"] },
+                "observed_unit_rate_hz": { "type": ["number", "null"] },
+                "effective_goodput_bps": { "type": ["number", "null"] },
+                "rate_status": { "type": "string" }
+              }
+            },
+            "throughput_profile": {
+              "type": ["object", "null"],
+              "additionalProperties": false,
+              "required": [
+                "payload_len",
+                "recovered_len",
+                "carrier_units",
+                "scheduled_unit_rate_hz",
+                "measurement_window_s",
+                "observed_unit_rate_hz",
+                "payload_rate_bps",
+                "throughput_status",
+                "rate_basis",
+                "claim_status"
+              ],
+              "properties": {
+                "payload_len": { "type": "integer" },
+                "recovered_len": { "type": "integer" },
+                "carrier_units": { "type": "integer" },
+                "scheduled_unit_rate_hz": { "type": ["number", "null"] },
+                "measurement_window_s": { "type": ["number", "null"] },
+                "observed_unit_rate_hz": { "type": ["number", "null"] },
+                "payload_rate_bps": { "type": ["number", "null"] },
+                "throughput_status": { "type": "string" },
+                "rate_basis": { "type": "string" },
+                "claim_status": { "type": "string" }
+              }
+            },
+            "session_framing": { "enum": ["raw", "chunked", "unknown"] },
+            "chunk_count": { "type": "integer" },
+            "integrity_sha256": {
+              "type": ["string", "null"],
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "reliability": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "policy",
+                "receive_attempts",
+                "retry_count",
+                "retransmit_requests",
+                "duplicate_chunks",
+                "loss_detected",
+                "timed_out",
+                "expected_chunks",
+                "recovered_chunks",
+                "last_error"
+              ],
+              "properties": {
+                "policy": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "max_receive_attempts",
+                    "retry_backoff_s",
+                    "suppress_duplicate_chunks",
+                    "max_retransmissions"
+                  ],
+                  "properties": {
+                    "max_receive_attempts": { "type": "integer" },
+                    "retry_backoff_s": { "type": "number" },
+                    "suppress_duplicate_chunks": { "type": "boolean" },
+                    "max_retransmissions": { "type": "integer" }
+                  }
+                },
+                "receive_attempts": { "type": "integer" },
+                "retry_count": { "type": "integer" },
+                "retransmit_requests": { "type": "integer" },
+                "duplicate_chunks": { "type": "integer" },
+                "loss_detected": { "type": "boolean" },
+                "timed_out": { "type": "boolean" },
+                "expected_chunks": { "type": ["integer", "null"] },
+                "recovered_chunks": { "type": "integer" },
+                "last_error": { "type": ["string", "null"] }
+              }
+            },
+            "ok": { "type": "boolean" },
+            "error": {
+              "type": ["string", "null"]
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "transport_kind": { "const": "dns_edns0_padding" }
+            },
+            "required": ["transport_kind"]
+          },
+          "then": {
+            "properties": {
+              "transport_metadata": {
+                "anyOf": [
+                  { "type": "null" },
+                  { "$ref": "#/$defs/dns_edns0_transport_metadata" }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "transport_kind": { "const": "crypto_ecdsa_nonce" }
+            },
+            "required": ["transport_kind"]
+          },
+          "then": {
+            "properties": {
+              "transport_metadata": {
+                "anyOf": [
+                  { "type": "null" },
+                  { "$ref": "#/$defs/crypto_ecdsa_nonce_transport_metadata" }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "transport_kind": { "const": "crypto_rsa_pss_salt" }
+            },
+            "required": ["transport_kind"]
+          },
+          "then": {
+            "properties": {
+              "transport_metadata": {
+                "anyOf": [
+                  { "type": "null" },
+                  { "$ref": "#/$defs/crypto_rsa_pss_salt_transport_metadata" }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "crypto_rsa_pss_salt_transport_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "transcript_schema_version",
+        "key_bits",
+        "public_exponent",
+        "hash_name",
+        "mgf_hash_name",
+        "salt_payload_bits",
+        "signature_count",
+        "verified_signature_count",
+        "recovered_symbol_count",
+        "public_key_sha256",
+        "modulus_sha256",
+        "claim_status",
+        "honest_random_control",
+        "transcript_sha256",
+        "transcript_size_bytes"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "celatim.transport_metadata.crypto_rsa_pss_salt.v1"
+        },
+        "transcript_schema_version": {
+          "const": "celatim.crypto_transcript.rsa_pss_salt.v1"
+        },
+        "key_bits": { "type": "integer" },
+        "public_exponent": { "type": "integer" },
+        "hash_name": { "type": "string" },
+        "mgf_hash_name": { "type": "string" },
+        "salt_payload_bits": { "type": "integer" },
+        "signature_count": { "type": "integer" },
+        "verified_signature_count": { "type": "integer" },
+        "recovered_symbol_count": { "type": "integer" },
+        "public_key_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "modulus_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "claim_status": { "type": "string" },
+        "honest_random_control": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "signature_count",
+            "verified_signature_count",
+            "recovered_salt_count",
+            "distinct_recovered_salt_sha256_count",
+            "embedded_payload_match_count"
+          ],
+          "properties": {
+            "signature_count": { "type": "integer" },
+            "verified_signature_count": { "type": "integer" },
+            "recovered_salt_count": { "type": "integer" },
+            "distinct_recovered_salt_sha256_count": { "type": "integer" },
+            "embedded_payload_match_count": { "type": "integer" }
+          }
+        },
+        "transcript_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "transcript_size_bytes": { "type": ["integer", "null"] }
+      }
+    },
+    "crypto_ecdsa_nonce_transport_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "transcript_schema_version",
+        "curve",
+        "hash_name",
+        "nonce_payload_bits",
+        "signature_count",
+        "verified_signature_count",
+        "recovered_symbol_count",
+        "public_key_sha256",
+        "claim_status",
+        "honest_random_control",
+        "transcript_sha256",
+        "transcript_size_bytes"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "celatim.transport_metadata.crypto_ecdsa_nonce.v1"
+        },
+        "transcript_schema_version": {
+          "const": "celatim.crypto_transcript.ecdsa_nonce.v1"
+        },
+        "curve": { "type": "string" },
+        "hash_name": { "type": "string" },
+        "nonce_payload_bits": { "type": "integer" },
+        "signature_count": { "type": "integer" },
+        "verified_signature_count": { "type": "integer" },
+        "recovered_symbol_count": { "type": "integer" },
+        "public_key_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "claim_status": { "type": "string" },
+        "honest_random_control": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "signature_count",
+            "verified_signature_count",
+            "embedded_symbol_like_count"
+          ],
+          "properties": {
+            "signature_count": { "type": "integer" },
+            "verified_signature_count": { "type": "integer" },
+            "embedded_symbol_like_count": { "type": "integer" }
+          }
+        },
+        "transcript_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "transcript_size_bytes": { "type": ["integer", "null"] }
+      }
+    },
+    "dns_edns0_transport_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "query_name",
+        "resolver_address",
+        "port",
+        "padding_optcode",
+        "answer_count",
+        "answers",
+        "daemon_readiness",
+        "tool_versions"
+      ],
+      "properties": {
+        "schema_version": { "const": "celatim.transport_metadata.dns_edns0_padding.v1" },
+        "query_name": { "type": "string" },
+        "resolver_address": { "type": "string" },
+        "port": { "type": "integer" },
+        "padding_optcode": { "type": "integer" },
+        "answer_count": { "type": "integer" },
+        "answers": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "daemon_readiness": { "type": ["object", "null"] },
+        "tool_versions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/tool_version_record" }
+        }
+      }
+    },
+    "tool_version_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool",
+        "argv",
+        "returncode",
+        "stdout_sha256",
+        "stderr_sha256",
+        "stdout_excerpt",
+        "stderr_excerpt",
+        "error"
+      ],
+      "properties": {
+        "tool": { "type": "string" },
+        "argv": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "returncode": { "type": ["integer", "null"] },
+        "stdout_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "stderr_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "stdout_excerpt": { "type": ["string", "null"] },
+        "stderr_excerpt": { "type": ["string", "null"] },
+        "error": { "type": ["string", "null"] }
+      }
+    },
+    "endpoint_os": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "topology_kind",
+        "independent_receiver_os",
+        "sender",
+        "receiver",
+        "tap",
+        "notes"
+      ],
+      "properties": {
+        "topology_kind": {
+          "enum": [
+            "same_process",
+            "same_host_artifact",
+            "same_kernel_netns",
+            "cross_stack_vm",
+            "cross_host",
+            "unknown"
+          ]
+        },
+        "independent_receiver_os": { "type": "boolean" },
+        "sender": { "$ref": "#/$defs/endpoint_os_info" },
+        "receiver": { "$ref": "#/$defs/endpoint_os_info" },
+        "tap": {
+          "anyOf": [
+            { "$ref": "#/$defs/endpoint_os_info" },
+            { "type": "null" }
+          ]
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "endpoint_os_info": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "system",
+        "release",
+        "version",
+        "machine",
+        "platform",
+        "node",
+        "namespace",
+        "interface",
+        "source"
+      ],
+      "properties": {
+        "role": { "type": "string" },
+        "system": { "type": "string" },
+        "release": { "type": "string" },
+        "version": { "type": "string" },
+        "machine": { "type": "string" },
+        "platform": { "type": "string" },
+        "node": { "type": "string" },
+        "namespace": { "type": ["string", "null"] },
+        "interface": { "type": ["string", "null"] },
+        "source": { "type": "string" }
+      }
+    },
+    "parser_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "parser_family",
+        "implementation",
+        "implementation_kind",
+        "executed",
+        "result",
+        "field_paths",
+        "decode_as",
+        "display_filter",
+        "checked_units",
+        "parsed_units",
+        "failed_units",
+        "command",
+        "returncode",
+        "stdout_sha256",
+        "stderr_sha256",
+        "stderr_excerpt",
+        "notes"
+      ],
+      "properties": {
+        "name": { "type": "string" },
+        "parser_family": { "type": "string" },
+        "implementation": { "type": "string" },
+        "implementation_kind": {
+          "enum": ["same_code", "second_parser", "independent_tool_output"]
+        },
+        "executed": { "type": "boolean" },
+        "result": { "type": "string" },
+        "field_paths": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "decode_as": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "display_filter": { "type": ["string", "null"] },
+        "checked_units": { "type": "integer" },
+        "parsed_units": { "type": "integer" },
+        "failed_units": { "type": "integer" },
+        "command": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "returncode": { "type": ["integer", "null"] },
+        "stdout_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "stderr_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "stderr_excerpt": { "type": ["string", "null"] },
+        "notes": { "type": "string" }
+      }
+    },
+    "observer_validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "validator",
+        "ok",
+        "checked_units",
+        "failed_units",
+        "field_offset",
+        "field_len",
+        "extracted_field_sha256",
+        "nonzero_surrounding_bytes_min",
+        "error"
+      ],
+      "properties": {
+        "name": { "type": "string" },
+        "validator": { "type": "string" },
+        "ok": { "type": "boolean" },
+        "checked_units": { "type": "integer" },
+        "failed_units": { "type": "integer" },
+        "field_offset": { "type": ["integer", "null"] },
+        "field_len": { "type": ["integer", "null"] },
+        "extracted_field_sha256": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        },
+        "nonzero_surrounding_bytes_min": { "type": ["integer", "null"] },
+        "error": { "type": ["string", "null"] }
+      }
+    },
+    "mutation_control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "control_type",
+        "expected_failure",
+        "ok",
+        "tested_units",
+        "expected_failure_units",
+        "unexpected_pass_units",
+        "setup_failed_units",
+        "error_samples"
+      ],
+      "properties": {
+        "name": { "type": "string" },
+        "control_type": { "type": "string" },
+        "expected_failure": { "type": "string" },
+        "ok": { "type": "boolean" },
+        "tested_units": { "type": "integer" },
+        "expected_failure_units": { "type": "integer" },
+        "unexpected_pass_units": { "type": "integer" },
+        "setup_failed_units": { "type": "integer" },
+        "error_samples": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "detector_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "detector_family",
+        "implementation",
+        "implementation_kind",
+        "executed",
+        "result",
+        "detectability",
+        "predicate",
+        "disposition",
+        "rule_format",
+        "rule",
+        "checked_units",
+        "matched_units",
+        "failed_units",
+        "detected",
+        "benign_basis",
+        "false_positive_estimate",
+        "command",
+        "returncode",
+        "stdout_sha256",
+        "stderr_sha256",
+        "stderr_excerpt",
+        "notes"
+      ],
+      "properties": {
+        "name": { "type": "string" },
+        "detector_family": { "type": "string" },
+        "implementation": { "type": "string" },
+        "implementation_kind": {
+          "enum": ["same_code", "generated_kernel_rule", "independent_tool_output"]
+        },
+        "executed": { "type": "boolean" },
+        "result": { "type": "string" },
+        "detectability": { "type": "string" },
+        "predicate": { "type": ["string", "null"] },
+        "disposition": { "type": "string" },
+        "rule_format": { "type": ["string", "null"] },
+        "rule": { "type": ["string", "null"] },
+        "checked_units": { "type": "integer" },
+        "matched_units": { "type": "integer" },
+        "failed_units": { "type": "integer" },
+        "detected": { "type": ["boolean", "null"] },
+        "benign_basis": { "type": "string" },
+        "false_positive_estimate": { "type": "boolean" },
+        "command": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "returncode": { "type": ["integer", "null"] },
+        "stdout_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "stderr_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "stderr_excerpt": { "type": ["string", "null"] },
+        "notes": { "type": "string" }
+      }
+    },
+    "artifact_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256", "size_bytes"],
+      "properties": {
+        "kind": { "type": "string" },
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "size_bytes": { "type": "integer" }
+      }
+    }
+  }
+}

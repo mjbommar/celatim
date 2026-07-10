@@ -1,0 +1,450 @@
+[
+  {
+    "mechanism": "ipv4-id-atomic",
+    "result": "pass",
+    "frames": 27,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "tcp-reserved-bits",
+    "result": "pass",
+    "frames": 108,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "icmpv4-unused",
+    "result": "pass",
+    "frames": 14,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "icmpv6-unused",
+    "result": "pass",
+    "frames": 14,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "tcp-urgent-ptr",
+    "result": "pass",
+    "frames": 27,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "tcp-isn",
+    "result": "pass",
+    "frames": 14,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "sctp-chunk-flags",
+    "result": "pass",
+    "frames": 54,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "sctp-ppid",
+    "result": "pass",
+    "frames": 14,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "vxlan-reserved",
+    "result": "pass",
+    "frames": 12,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "nsh-unassigned",
+    "result": "pass",
+    "frames": 87,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "gre-reserved",
+    "result": "pass",
+    "frames": 54,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "nvgre-flowid",
+    "result": "pass",
+    "frames": 26,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "l2tpv2-reserved",
+    "result": "pass",
+    "frames": 72,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "l2tpv3-xbits",
+    "result": "pass",
+    "frames": 108,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "lisp-dataplane",
+    "result": "pass",
+    "frames": 13,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "lisp-gpe-bits",
+    "result": "pass",
+    "frames": 23,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "lisp-lcaf-reserved",
+    "result": "pass",
+    "frames": 18,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "mpls-exp-tc",
+    "result": "pass",
+    "frames": 144,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "iptfs-reserved",
+    "result": "pass",
+    "frames": 54,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "smcr-reserved",
+    "result": "pass",
+    "frames": 7,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "quic-connection-id",
+    "result": "pass",
+    "frames": 3,
+    "proto": "udp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "bmp-reserved",
+    "result": "pass",
+    "frames": 87,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "ospfv2-auth-null",
+    "result": "pass",
+    "frames": 7,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "pim-sm-reserved",
+    "result": "pass",
+    "frames": 34,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "igmpv2-maxresp",
+    "result": "pass",
+    "frames": 54,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "mldv1-reserved",
+    "result": "pass",
+    "frames": 11,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "ldp-reserved",
+    "result": "pass",
+    "frames": 27,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "pcep-reserved",
+    "result": "pass",
+    "frames": 62,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "nhrp-reserved",
+    "result": "pass",
+    "frames": 40,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "bfd-auth-reserved",
+    "result": "pass",
+    "frames": 54,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "sbfd-reserved",
+    "result": "pass",
+    "frames": 14,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "dlep-reserved",
+    "result": "pass",
+    "frames": 62,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "capwap-reserved",
+    "result": "pass",
+    "frames": 144,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "mobileip6-reserved",
+    "result": "pass",
+    "frames": 14,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "pcp-reserved",
+    "result": "pass",
+    "frames": 3,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "amt-reserved",
+    "result": "pass",
+    "frames": 18,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "ah-reserved",
+    "result": "pass",
+    "frames": 27,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "ipcomp-flags",
+    "result": "pass",
+    "frames": 54,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "ikev2-reserved",
+    "result": "pass",
+    "frames": 14,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "isakmp-reserved",
+    "result": "pass",
+    "frames": 18,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "tcpcrypt-reserved",
+    "result": "pass",
+    "frames": 34,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "http2-ping-opaque",
+    "result": "pass",
+    "frames": 7,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "dns-caa-flags",
+    "result": "pass",
+    "frames": 62,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "rtp-appbits",
+    "result": "pass",
+    "frames": 108,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "rtp-rtcp-ext-app",
+    "result": "pass",
+    "frames": 1,
+    "proto": "udp",
+    "dport": "5004",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "rtp-vp8-rbits",
+    "result": "pass",
+    "frames": 87,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "rtp-vp9-reserved",
+    "result": "pass",
+    "frames": 216,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "rtp-h265-fu-res",
+    "result": "pass",
+    "frames": 72,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "stun-attr-padding",
+    "result": "pass",
+    "frames": 5,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "stun-transmit-counter",
+    "result": "pass",
+    "frames": 27,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "hip-locator-reserved",
+    "result": "pass",
+    "frames": 72,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "diameter-flags-padding",
+    "result": "pass",
+    "frames": 7,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "dhcp-option-tunnel",
+    "result": "pass",
+    "frames": 1,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "ipv4-tos-dscp",
+    "result": "pass",
+    "frames": 54,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "ipv4-reserved-flag",
+    "result": "pass",
+    "frames": 432,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  },
+  {
+    "mechanism": "ipv6-flow-label",
+    "result": "pass",
+    "frames": 22,
+    "proto": "tcp",
+    "dport": "443",
+    "recv_sha": "c7bb41036c7f"
+  }
+]

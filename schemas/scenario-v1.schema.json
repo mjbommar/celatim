@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/scenario-v1.schema.json",
+  "title": "celatim scenario spec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scenario_id", "mechanism_id"],
+  "properties": {
+    "schema_version": { "const": "celatim.scenario.v1" },
+    "scenario_id": { "type": "string" },
+    "mechanism_id": { "type": "string" },
+    "description": { "type": "string" },
+    "evidence_tier": {
+      "enum": [
+        "in_memory_regression",
+        "crafted_production_path",
+        "real_pdu_packet_path",
+        "real_daemon_path",
+        "real_crypto_path",
+        "timing_path",
+        "cross_stack_vm_path"
+      ]
+    },
+    "privilege": {
+      "enum": ["none", "cap_net_raw", "cap_net_admin", "root", "docker", "kvm"]
+    },
+    "expected_runtime_s": { "type": "number" },
+    "requires_tools": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "requires_extras": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "payload_message": { "type": "string" },
+    "payload_hex": { "type": "string" },
+    "payload_file": { "type": "string" },
+    "control_message": { "type": "string" },
+    "control_hex": { "type": "string" },
+    "control_file": { "type": "string" },
+    "artifact_dir": { "type": "string" },
+    "log_dir": { "type": "string" },
+    "run_id": { "type": "string" },
+    "transport_dir": { "type": "string" },
+    "pacing": { "$ref": "#/$defs/pacing" },
+    "reliability": { "$ref": "#/$defs/reliability" },
+    "transport": { "$ref": "#/$defs/transport" }
+  },
+  "$defs": {
+    "pacing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "unit_rate_hz": { "type": ["number", "null"] },
+        "symbol_period_s": { "type": ["number", "null"] },
+        "base_delay_s": { "type": "number" },
+        "timing_quantum_s": { "type": ["number", "null"] },
+        "decode_tolerance_s": { "type": ["number", "null"] },
+        "timeout_s": { "type": ["number", "null"] },
+        "adaptive": { "type": "boolean" },
+        "jitter_sample_window": { "type": "integer" }
+      }
+    },
+    "reliability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_receive_attempts": { "type": "integer" },
+        "retry_backoff_s": { "type": "number" },
+        "suppress_duplicate_chunks": { "type": "boolean" },
+        "max_retransmissions": { "type": "integer" }
+      }
+    },
+    "transport": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "memory",
+            "file",
+            "pcap",
+            "timed_memory",
+            "afpacket_ipv4",
+            "dns_edns0_padding",
+            "dns_txt_dnspython",
+            "dns_null_dnspython",
+            "ssh_kexinit_paramiko",
+            "coap_aiocoap",
+            "websocket_websockets",
+            "bgp_scapy",
+            "http2_hyper_h2",
+            "http3_aioquic_reserved_settings",
+            "quic_aioquic_connection_id",
+            "crypto_ecdsa_nonce",
+            "crypto_rsa_pss_salt"
+          ]
+        },
+        "root": { "type": "string" },
+        "sender_interface": { "type": "string" },
+        "receiver_interface": { "type": "string" },
+        "src_mac": { "type": "string" },
+        "dst_mac": { "type": "string" },
+        "src_ip": { "type": "string" },
+        "dst_ip": { "type": "string" },
+        "src_port": { "type": "integer" },
+        "dst_port": { "type": "integer" },
+        "protocol": { "enum": ["tcp", "udp"] },
+        "timeout_s": { "type": ["number", "null"] },
+        "expected_frames": { "type": ["integer", "null"] },
+        "require_expected_frames": { "type": "boolean" },
+        "capture_pcap": { "type": "string" },
+        "capture_namespace": { "type": "string" },
+        "capture_interface": { "type": ["string", "null"] },
+        "capture_filter": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "capture_snaplen": { "type": "integer" },
+        "capture_require_output": { "type": "boolean" },
+        "dns_sender_namespace": { "type": "string" },
+        "dns_resolver_namespace": { "type": "string" },
+        "dns_query_name": { "type": "string" },
+        "dns_answer_address": { "type": ["string", "null"] },
+        "dns_padding_optcode": { "type": "integer" },
+        "dns_tries": { "type": "integer" },
+        "dns_capture_start_delay_s": { "type": "number" },
+        "dns_require_answer": { "type": "boolean" },
+        "transcript_json": { "type": "string" },
+        "validate_ack": { "type": "boolean" },
+        "validate_receiver_settings": { "type": "boolean" },
+        "validate_server_response": { "type": "boolean" },
+        "curve": { "type": "string" },
+        "key_bits": { "type": "integer" },
+        "public_exponent": { "type": "integer" },
+        "hash_name": { "type": "string" },
+        "mgf_hash_name": { "type": "string" },
+        "nonce_payload_bits": { "type": "integer" },
+        "salt_payload_bits": { "type": "integer" },
+        "honest_random_control_signatures": { "type": "integer" },
+        "message_prefix": { "type": "string" }
+      }
+    }
+  }
+}

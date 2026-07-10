@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/reviewer-bundle-v1.schema.json",
+  "title": "celatim reviewer bundle manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at_unix_s",
+    "bundle_name",
+    "bundle_root",
+    "artifact_count",
+    "doctor_ok",
+    "scenario_count",
+    "evidence_count",
+    "ok_count",
+    "failed_count",
+    "run_log_artifact_count",
+    "transport_artifact_count",
+    "evidence_tier_counts",
+    "privilege_counts",
+    "expected_runtime_s_total",
+    "required_tools",
+    "required_extras",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.reviewer_bundle.v1" },
+    "generated_at_unix_s": { "type": "number" },
+    "bundle_name": { "type": "string" },
+    "bundle_root": { "type": "string" },
+    "artifact_count": { "type": "integer" },
+    "doctor_ok": { "type": "boolean" },
+    "scenario_count": { "type": "integer" },
+    "evidence_count": { "type": "integer" },
+    "ok_count": { "type": "integer" },
+    "failed_count": { "type": "integer" },
+    "run_log_artifact_count": { "type": "integer" },
+    "transport_artifact_count": { "type": "integer" },
+    "evidence_tier_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "privilege_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "expected_runtime_s_total": { "type": ["number", "null"] },
+    "required_tools": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_extras": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" }
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256", "size_bytes"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "doctor_report",
+            "scenario_inventory",
+            "evidence_index",
+            "detector_replay",
+            "scrub_report",
+            "paper_table",
+            "package_wheel",
+            "lockfile",
+            "scenario_spec",
+            "testbed_package",
+            "testbed_preflight"
+          ]
+        },
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "size_bytes": { "type": "integer" }
+      }
+    }
+  }
+}

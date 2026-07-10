@@ -1,0 +1,19 @@
+schema_version = "celatim.scenario.v1"
+scenario_id = "ecdsa-nonce-128ctrl-crypto-transcript"
+mechanism_id = "ecdsa-nonce"
+description = "Non-privileged local ECDSA nonce transcript with 128 honest-random controls (reproducibility scenario for subliminal-controls target)."
+evidence_tier = "real_crypto_path"
+privilege = "none"
+expected_runtime_s = 60.0
+requires_tools = []
+requires_extras = ["crypto"]
+payload_hex = "00 ff 80 45 43 44 53 41"
+control_message = "control"
+
+[transport]
+kind = "crypto_ecdsa_nonce"
+transcript_json = "../out/transcripts/subliminal-ctrl/{scenario_id}-{case}.json"
+curve = "NIST521p"
+hash_name = "sha256"
+nonce_payload_bits = 256
+honest_random_control_signatures = 128

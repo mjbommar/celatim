@@ -1,0 +1,15 @@
+schema_version = "celatim.scenario.v1"
+scenario_id = "rtp-rtcp-ext-app-real-pdu-smoke"
+mechanism_id = "rtp-rtcp-ext-app"
+description = "Non-privileged RTCP APP real-PDU smoke scenario."
+evidence_tier = "real_pdu_packet_path"
+privilege = "none"
+expected_runtime_s = 5.0
+requires_tools = []
+requires_extras = []
+payload_hex = "00 ff 80 52 54 43 50"
+control_message = "control"
+
+[pacing]
+unit_rate_hz = 20.0
+timing_quantum_s = 0.005

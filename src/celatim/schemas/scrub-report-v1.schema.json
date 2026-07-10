@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/scrub-report-v1.schema.json",
+  "title": "celatim pcap scrub report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "ok",
+    "mechanism_id",
+    "claim_status",
+    "command",
+    "input",
+    "output",
+    "packet_count",
+    "checked_unit_count",
+    "scrubbed_unit_count",
+    "before_matched_unit_count",
+    "after_matched_unit_count",
+    "unchanged_unit_count",
+    "error"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.scrub_report.v1" },
+    "ok": { "type": "boolean" },
+    "mechanism_id": { "type": "string" },
+    "claim_status": {
+      "const": "same_code_offline_pcap_scrub_smoke_not_live_middlebox"
+    },
+    "command": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "input": { "$ref": "#/$defs/artifact" },
+    "output": { "$ref": "#/$defs/artifact" },
+    "packet_count": { "type": "integer" },
+    "checked_unit_count": { "type": "integer" },
+    "scrubbed_unit_count": { "type": "integer" },
+    "before_matched_unit_count": { "type": "integer" },
+    "after_matched_unit_count": { "type": "integer" },
+    "unchanged_unit_count": { "type": "integer" },
+    "error": { "type": ["string", "null"] }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes"],
+      "properties": {
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "size_bytes": { "type": "integer" }
+      }
+    }
+  }
+}

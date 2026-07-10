@@ -1,0 +1,20 @@
+schema_version = "celatim.scenario.v1"
+scenario_id = "quic-connection-id-aioquic"
+mechanism_id = "quic-connection-id"
+description = "Non-privileged aioquic client/server QUIC Initial DCID stack scenario."
+evidence_tier = "real_daemon_path"
+privilege = "none"
+expected_runtime_s = 5.0
+requires_tools = []
+requires_extras = ["daemon"]
+payload_hex = "00 ff 80 51 55 49 43"
+control_message = "control"
+
+[transport]
+kind = "quic_aioquic_connection_id"
+transcript_json = "out/transcripts/{scenario_id}-{case}.json"
+validate_server_response = true
+
+[pacing]
+unit_rate_hz = 20.0
+timing_quantum_s = 0.005

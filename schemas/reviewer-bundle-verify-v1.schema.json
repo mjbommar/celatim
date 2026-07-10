@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/reviewer-bundle-verify-v1.schema.json",
+  "title": "celatim reviewer bundle verification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at_unix_s",
+    "manifest_path",
+    "manifest_schema_version",
+    "bundle_name",
+    "ok",
+    "error",
+    "artifact_count",
+    "ok_count",
+    "missing_count",
+    "mismatch_count",
+    "invalid_count",
+    "consistency_check_count",
+    "consistency_ok_count",
+    "consistency_failed_count",
+    "artifacts",
+    "consistency_checks"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.reviewer_bundle_verify.v1" },
+    "generated_at_unix_s": { "type": "number" },
+    "manifest_path": { "type": "string" },
+    "manifest_schema_version": { "type": ["string", "null"] },
+    "bundle_name": { "type": ["string", "null"] },
+    "ok": { "type": "boolean" },
+    "error": { "type": ["string", "null"] },
+    "artifact_count": { "type": "integer" },
+    "ok_count": { "type": "integer" },
+    "missing_count": { "type": "integer" },
+    "mismatch_count": { "type": "integer" },
+    "invalid_count": { "type": "integer" },
+    "consistency_check_count": { "type": "integer" },
+    "consistency_ok_count": { "type": "integer" },
+    "consistency_failed_count": { "type": "integer" },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact_check" }
+    },
+    "consistency_checks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/consistency_check" }
+    }
+  },
+  "$defs": {
+    "artifact_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "path",
+        "expected_sha256",
+        "actual_sha256",
+        "expected_size_bytes",
+        "actual_size_bytes",
+        "ok",
+        "error"
+      ],
+      "properties": {
+        "kind": { "type": ["string", "null"] },
+        "path": { "type": ["string", "null"] },
+        "expected_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "actual_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "expected_size_bytes": { "type": ["integer", "null"] },
+        "actual_size_bytes": { "type": ["integer", "null"] },
+        "ok": { "type": "boolean" },
+        "error": { "type": ["string", "null"] }
+      }
+    },
+    "consistency_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check", "expected", "actual", "ok", "error"],
+      "properties": {
+        "check": { "type": "string" },
+        "expected": {
+          "type": ["array", "boolean", "integer", "number", "object", "string", "null"]
+        },
+        "actual": {
+          "type": ["array", "boolean", "integer", "number", "object", "string", "null"]
+        },
+        "ok": { "type": "boolean" },
+        "error": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

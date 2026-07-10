@@ -1,0 +1,57 @@
+# Carrier-unit rates used only for structural throughput upper-bound figures.
+#
+# Each row is traceable to an in-repository source path. These are not measured
+# production-goodput results; the generated figure and report code label them as
+# structural upper bounds from cited/unit-rate assumptions.
+
+[[rate]]
+id = "ipv6-flow-label-wiki-1000pps"
+mechanism_id = "ipv6-flow-label"
+protocol = "IPv6"
+carrier_unit = "packet"
+unit_rate_hz = 1000.0
+source_path = "sources/wiki/infosec/ipv6-extension-headers.md"
+source_detail = "Capacity analysis table: flow label only, packets per second = 1000 pps."
+citation_label = "local-wiki-ipv6-extension-headers-capacity-analysis"
+citation_status = "local_prior_art"
+claim_status = "structural_upper_bound_not_measured_goodput"
+notes = "Prior wiki capacity table; replace with a public trace or venue-ready citation before paper submission if used as a deployment-rate claim."
+
+[[rate]]
+id = "ntp-extension-field-wiki-10pps"
+mechanism_id = "ntp-extension-field"
+protocol = "NTP"
+carrier_unit = "packet"
+unit_rate_hz = 10.0
+source_path = "sources/wiki/infosec/ntp-extension-field-tunneling.md"
+source_detail = "Performance example sets packets_per_second = 10 to avoid detection."
+citation_label = "local-wiki-ntp-extension-field-performance"
+citation_status = "local_prior_art"
+claim_status = "structural_upper_bound_not_measured_goodput"
+notes = "Prior wiki performance example; not a measured celatim production-path sender window."
+
+[[rate]]
+id = "dns-timing-wiki-10qps"
+mechanism_id = "dns-timing"
+protocol = "DNS"
+carrier_unit = "query"
+unit_rate_hz = 10.0
+source_path = "sources/wiki/infosec/dns-timing-channels.md"
+source_detail = "Timing normalizer example uses target_rate = 10 queries per second."
+citation_label = "local-wiki-dns-timing-normalizer"
+citation_status = "local_prior_art"
+claim_status = "structural_upper_bound_not_measured_goodput"
+notes = "Normalizer example rate; timing-channel evidence remains scheme-only until netns/daemon jitter and SNR sweeps support a rate claim."
+
+[[rate]]
+id = "mqtt-wiki-10msgps-threshold"
+mechanism_id = "mqtt-tunnel"
+protocol = "MQTT"
+carrier_unit = "message"
+unit_rate_hz = 10.0
+source_path = "sources/wiki/infosec/mqtt-tunneling.md"
+source_detail = "Detection example treats more than 10 messages per second sustained as high message rate."
+citation_label = "local-wiki-mqtt-high-message-rate-threshold"
+citation_status = "local_prior_art"
+claim_status = "structural_upper_bound_not_measured_goodput"
+notes = "Policy-threshold style rate from prior wiki, included as an illustrative bound rather than benign baseline."

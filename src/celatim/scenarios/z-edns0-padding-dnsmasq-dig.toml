@@ -1,0 +1,30 @@
+schema_version = "celatim.scenario.v1"
+scenario_id = "edns0-padding-dnsmasq-dig-real-daemon"
+mechanism_id = "edns0-padding"
+description = "Privileged EDNS(0) Padding scenario using real dig, dnsmasq, netns, and tcpdump."
+evidence_tier = "real_daemon_path"
+privilege = "cap_net_admin"
+expected_runtime_s = 30.0
+requires_tools = ["dig", "dnsmasq", "ip", "tcpdump"]
+requires_extras = ["packet"]
+payload_message = "realistic-dns-channel"
+
+[pacing]
+unit_rate_hz = 5.0
+
+[transport]
+kind = "dns_edns0_padding"
+src_ip = "10.10.0.1"
+dst_ip = "10.10.0.2"
+dst_port = 53
+timeout_s = 2.0
+capture_pcap = "../out/pcaps/{scenario_id}-{case}.pcap"
+capture_interface = "vr"
+capture_filter = ["udp", "port", "53", "and", "src", "host", "10.10.0.1"]
+dns_sender_namespace = "snd"
+dns_resolver_namespace = "rcv"
+dns_query_name = "covert.test"
+dns_answer_address = "10.10.0.2"
+dns_padding_optcode = 12
+dns_tries = 1
+dns_capture_start_delay_s = 1.0

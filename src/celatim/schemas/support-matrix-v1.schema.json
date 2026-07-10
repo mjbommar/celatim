@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/support-matrix-v1.schema.json",
+  "title": "celatim support matrix",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mechanism_count",
+    "marquee_count",
+    "evidence_bucket_counts",
+    "carrier_structure_counts",
+    "control_strength_counts",
+    "independent_validator_counts",
+    "throughput_status_counts",
+    "upgrade_priority_counts",
+    "adapter_status_counts",
+    "adapter_path_kind_counts",
+    "rows"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.support_matrix.v1" },
+    "mechanism_count": { "type": "integer" },
+    "marquee_count": { "type": "integer" },
+    "evidence_bucket_counts": { "$ref": "#/$defs/count_map" },
+    "carrier_structure_counts": { "$ref": "#/$defs/count_map" },
+    "control_strength_counts": { "$ref": "#/$defs/count_map" },
+    "independent_validator_counts": { "$ref": "#/$defs/count_map" },
+    "throughput_status_counts": { "$ref": "#/$defs/count_map" },
+    "upgrade_priority_counts": { "$ref": "#/$defs/count_map" },
+    "adapter_status_counts": { "$ref": "#/$defs/count_map" },
+    "adapter_path_kind_counts": { "$ref": "#/$defs/count_map" },
+    "rows": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/support_matrix_row" }
+    }
+  },
+  "$defs": {
+    "count_map": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "support_matrix_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mechanism_id",
+        "protocol",
+        "carrier_class",
+        "status",
+        "adapter_status",
+        "adapter_capabilities",
+        "adapter_paths",
+        "required_privilege",
+        "required_binaries",
+        "required_extras",
+        "evidence_bucket",
+        "carrier_structure",
+        "control_strength",
+        "independent_validator",
+        "throughput_status",
+        "upgrade_priority",
+        "negative_result",
+        "notes"
+      ],
+      "properties": {
+        "mechanism_id": { "type": "string" },
+        "protocol": { "type": "string" },
+        "carrier_class": { "enum": ["A", "B", "C", "D", "E", "F", "G"] },
+        "status": { "type": "string" },
+        "adapter_status": {
+          "enum": [
+            "codec_only",
+            "minimal_packet_template",
+            "offset_represented_zero_blob",
+            "real_pdu_fixture",
+            "real_daemon_path",
+            "real_crypto_path",
+            "timing_scheme",
+            "negative_result"
+          ]
+        },
+        "adapter_capabilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "adapter_paths": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/adapter_path" }
+        },
+        "required_privilege": { "type": "string" },
+        "required_binaries": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "required_extras": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "evidence_bucket": {
+          "enum": [
+            "codec_roundtrip",
+            "offset_represented_zero_blob",
+            "real_pdu_packet_path",
+            "real_daemon_or_crypto_path",
+            "timing_scheme",
+            "negative_result"
+          ]
+        },
+        "carrier_structure": {
+          "enum": [
+            "real_protocol_pdu",
+            "minimal_protocol_pdu",
+            "zero_pad_nominal_offset",
+            "timing_only",
+            "crypto_transcript",
+            "negative_control",
+            "none"
+          ]
+        },
+        "control_strength": {
+          "enum": [
+            "vacuous_zero_carrier",
+            "zero_target_field_only",
+            "nonzero_surrounding_bytes",
+            "independent_parser_checked",
+            "real_benign_trace",
+            "daemon_control",
+            "honest_random_control",
+            "constant_rate_control",
+            "negative_crypto_control",
+            "none"
+          ]
+        },
+        "independent_validator": {
+          "enum": [
+            "none",
+            "bpf_calibration",
+            "second_parser",
+            "tshark_or_wireshark",
+            "daemon_accepted",
+            "real_crypto_verify",
+            "public_trace_replay"
+          ]
+        },
+        "throughput_status": {
+          "enum": [
+            "not_applicable",
+            "not_reported",
+            "scheme_only",
+            "sender_bound",
+            "production_path_measured"
+          ]
+        },
+        "upgrade_priority": { "enum": ["marquee", "high", "normal"] },
+        "negative_result": { "type": "boolean" },
+        "notes": { "type": "string" }
+      }
+    },
+    "adapter_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "transport_kind",
+        "evidence_tier",
+        "claim_status",
+        "privilege",
+        "required_binaries",
+        "required_extras",
+        "scenario_id",
+        "records_artifact",
+        "notes"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "memory",
+            "file_record",
+            "timed_memory",
+            "pcap_artifact",
+            "afpacket_ipv4",
+            "scapy_packet",
+            "bgp_scapy",
+            "http2_hyper_h2",
+            "http3_aioquic_reserved_settings",
+            "quic_aioquic_connection_id",
+            "dns_txt_dnspython",
+            "dns_null_dnspython",
+            "ssh_kexinit_paramiko",
+            "coap_aiocoap",
+            "websocket_websockets",
+            "dns_edns0_padding_daemon",
+            "crypto_ecdsa_nonce",
+            "crypto_rsa_pss_salt"
+          ]
+        },
+        "transport_kind": { "type": "string" },
+        "evidence_tier": { "type": "string" },
+        "claim_status": { "type": "string" },
+        "privilege": { "type": "string" },
+        "required_binaries": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "required_extras": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "scenario_id": { "type": ["string", "null"] },
+        "records_artifact": { "type": "boolean" },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

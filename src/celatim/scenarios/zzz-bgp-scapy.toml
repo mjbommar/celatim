@@ -1,0 +1,14 @@
+schema_version = "celatim.scenario.v1"
+scenario_id = "bgp-optional-transitive-scapy"
+mechanism_id = "bgp-optional-transitive"
+description = "Non-privileged paired real-codec client/server scenario for bgp-optional-transitive."
+evidence_tier = "real_pdu_packet_path"
+privilege = "none"
+expected_runtime_s = 5.0
+requires_tools = []
+requires_extras = ["packet"]
+payload_hex = "00 ff 80 51 55 49 43"
+control_message = "control"
+
+[transport]
+kind = "bgp_scapy"

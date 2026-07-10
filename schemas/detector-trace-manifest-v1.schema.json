@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/detector-trace-manifest-v1.schema.json",
+  "title": "celatim detector trace manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "traces"],
+  "properties": {
+    "schema_version": { "const": "celatim.detector_trace_manifest.v1" },
+    "traces": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/trace_spec" }
+    }
+  },
+  "$defs": {
+    "trace_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "source_kind",
+        "trace_name",
+        "origin_url",
+        "license",
+        "filtering_assumptions"
+      ],
+      "properties": {
+        "path": { "type": "string" },
+        "source_kind": {
+          "enum": [
+            "public_benign_trace",
+            "authorized_benign_trace",
+            "local_generated_control",
+            "scenario_control_fixture",
+            "unknown"
+          ]
+        },
+        "trace_name": { "type": ["string", "null"] },
+        "origin_url": { "type": ["string", "null"] },
+        "license": { "type": ["string", "null"] },
+        "filtering_assumptions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

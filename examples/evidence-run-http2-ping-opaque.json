@@ -1,0 +1,434 @@
+{
+  "adapter_capabilities": [
+    "codec_session",
+    "json_envelope",
+    "packet_path_template",
+    "parser_validated",
+    "real_pdu_fixture"
+  ],
+  "adapter_status": "real_pdu_fixture",
+  "benign_control": {
+    "artifacts": [],
+    "carrier_unit_sha256": [
+      "81d5c4e2b3cf92867b95b8a2ef9a0a26fe7760b7701d63c99139d1b901d81adf",
+      "a30ae4942b29b3425ce6426e2163ff6eb6d938238838747cf014bae59d209b9c"
+    ],
+    "carrier_units_with_bytes": 2,
+    "case": "benign_control",
+    "detector_provenance": [
+      {
+        "benign_basis": "scenario_control_fixture_not_fp_estimate",
+        "checked_units": 0,
+        "command": [],
+        "detectability": "endpoint_only",
+        "detected": null,
+        "detector_family": "catalog_detectability",
+        "disposition": "log",
+        "executed": true,
+        "failed_units": 0,
+        "false_positive_estimate": false,
+        "implementation": "celatim.model.Mechanism.detectability",
+        "implementation_kind": "same_code",
+        "matched_units": 0,
+        "name": "http2-ping-opaque-detectability-classification",
+        "notes": "classified only; packet-filter detector not generated for this detectability tier",
+        "predicate": "statistical",
+        "result": "not_stateless_filterable",
+        "returncode": null,
+        "rule": null,
+        "rule_format": null,
+        "stderr_excerpt": null,
+        "stderr_sha256": null,
+        "stdout_sha256": null
+      }
+    ],
+    "evidence": {
+      "adapter_capabilities": [
+        "codec_session",
+        "json_envelope",
+        "packet_path_template",
+        "parser_validated",
+        "real_pdu_fixture"
+      ],
+      "adapter_status": "real_pdu_fixture",
+      "carrier_structure": "real_protocol_pdu",
+      "carrier_units": 2,
+      "chunk_count": 1,
+      "control_strength": "nonzero_surrounding_bytes",
+      "elapsed_s": 0.0,
+      "endpoint_os": {
+        "independent_receiver_os": false,
+        "notes": [
+          "sender, receiver, and tap execute in one local Python process"
+        ],
+        "receiver": {
+          "interface": null,
+          "machine": "NORMALIZED",
+          "namespace": null,
+          "node": "NORMALIZED",
+          "platform": "NORMALIZED",
+          "release": "NORMALIZED",
+          "role": "receiver",
+          "source": "local_platform",
+          "system": "NORMALIZED",
+          "version": "NORMALIZED"
+        },
+        "sender": {
+          "interface": null,
+          "machine": "NORMALIZED",
+          "namespace": null,
+          "node": "NORMALIZED",
+          "platform": "NORMALIZED",
+          "release": "NORMALIZED",
+          "role": "sender",
+          "source": "local_platform",
+          "system": "NORMALIZED",
+          "version": "NORMALIZED"
+        },
+        "tap": null,
+        "topology_kind": "same_process"
+      },
+      "error": null,
+      "evidence_bucket": "real_pdu_packet_path",
+      "independent_validator": "second_parser",
+      "integrity_sha256": "0fcd568a5cb9bdb4677b69354b11ee415af8f784519cff3da49a26f84eaee7f2",
+      "mechanism_id": "http2-ping-opaque",
+      "ok": true,
+      "pacing": {
+        "adaptive": false,
+        "base_delay_s": 0.0,
+        "decode_tolerance_s": null,
+        "jitter_sample_window": 0,
+        "symbol_period_s": null,
+        "timeout_s": null,
+        "timing_quantum_s": 0.005,
+        "unit_rate_hz": 20.0
+      },
+      "payload_len": 7,
+      "recovered_len": 7,
+      "reliability": {
+        "duplicate_chunks": 0,
+        "expected_chunks": 1,
+        "last_error": null,
+        "loss_detected": false,
+        "policy": {
+          "max_receive_attempts": 1,
+          "max_retransmissions": 0,
+          "retry_backoff_s": 0.0,
+          "suppress_duplicate_chunks": true
+        },
+        "receive_attempts": 1,
+        "recovered_chunks": 1,
+        "retransmit_requests": 0,
+        "retry_count": 0,
+        "timed_out": false
+      },
+      "scheduled_duration_s": 0.05,
+      "session_framing": "raw",
+      "session_id": "http2-ping-opaque-real-pdu-smoke:benign_control",
+      "throughput_profile": {
+        "carrier_units": 2,
+        "claim_status": "sender_bound_no_bits_per_second_claim",
+        "measurement_window_s": null,
+        "observed_unit_rate_hz": null,
+        "payload_len": 7,
+        "payload_rate_bps": null,
+        "rate_basis": "sender_bound_no_production_window",
+        "recovered_len": 7,
+        "scheduled_unit_rate_hz": 20.0,
+        "throughput_status": "sender_bound"
+      },
+      "throughput_status": "sender_bound",
+      "timing_profile": null,
+      "timing_trace": null
+    },
+    "expected_len": 7,
+    "expected_sha256": "0fcd568a5cb9bdb4677b69354b11ee415af8f784519cff3da49a26f84eaee7f2",
+    "matches": true,
+    "mutation_controls": [
+      {
+        "control_type": "wrong_nominal_offset",
+        "error_samples": [
+          "unit 0: missing HTTP/2 connection preface",
+          "unit 1: missing HTTP/2 connection preface"
+        ],
+        "expected_failure": "mutated carrier writes the symbol at carrier byte zero instead of the parsed field",
+        "expected_failure_units": 2,
+        "name": "http2-ping-opaque-wrong_nominal_offset-mutation-control",
+        "ok": true,
+        "setup_failed_units": 0,
+        "tested_units": 2,
+        "unexpected_pass_units": 0
+      },
+      {
+        "control_type": "zero_surrounding_bytes",
+        "error_samples": [
+          "unit 0: missing HTTP/2 connection preface",
+          "unit 1: missing HTTP/2 connection preface"
+        ],
+        "expected_failure": "mutated carrier preserves the parsed field but removes non-zero protocol structure",
+        "expected_failure_units": 2,
+        "name": "http2-ping-opaque-zero_surrounding_bytes-mutation-control",
+        "ok": true,
+        "setup_failed_units": 0,
+        "tested_units": 2,
+        "unexpected_pass_units": 0
+      }
+    ],
+    "observer_validations": [
+      {
+        "checked_units": 2,
+        "error": null,
+        "extracted_field_sha256": [
+          "0c053f193a7d46fc467125e9dd92387ba6add5b4acbdebb232d3a29f00e575db",
+          "0e42616c28c6997d624bb54b2003eb9b902c789aaddb385b05d3550bd1d822eb"
+        ],
+        "failed_units": 0,
+        "field_len": 8,
+        "field_offset": 42,
+        "name": "http2-ping-opaque-carrier-structure-oracle",
+        "nonzero_surrounding_bytes_min": 27,
+        "ok": true,
+        "validator": "second_parser"
+      }
+    ],
+    "parser_provenance": [],
+    "parser_validated": true,
+    "recovered_hex": "636f6e74726f6c",
+    "recovered_len": 7,
+    "recovered_sha256": "0fcd568a5cb9bdb4677b69354b11ee415af8f784519cff3da49a26f84eaee7f2",
+    "session_id": "http2-ping-opaque-real-pdu-smoke:benign_control",
+    "transport_artifact": null,
+    "transport_kind": "memory",
+    "transport_metadata": null,
+    "transport_record": null
+  },
+  "control_kind": "control_message",
+  "covert": {
+    "artifacts": [],
+    "carrier_unit_sha256": [
+      "a8a69e80051546fc4bcc8640452a87861e6ffc87fcb8dbd2fe42b1c2eddac22e"
+    ],
+    "carrier_units_with_bytes": 1,
+    "case": "covert",
+    "detector_provenance": [
+      {
+        "benign_basis": "scenario_control_fixture_not_fp_estimate",
+        "checked_units": 0,
+        "command": [],
+        "detectability": "endpoint_only",
+        "detected": null,
+        "detector_family": "catalog_detectability",
+        "disposition": "log",
+        "executed": true,
+        "failed_units": 0,
+        "false_positive_estimate": false,
+        "implementation": "celatim.model.Mechanism.detectability",
+        "implementation_kind": "same_code",
+        "matched_units": 0,
+        "name": "http2-ping-opaque-detectability-classification",
+        "notes": "classified only; packet-filter detector not generated for this detectability tier",
+        "predicate": "statistical",
+        "result": "not_stateless_filterable",
+        "returncode": null,
+        "rule": null,
+        "rule_format": null,
+        "stderr_excerpt": null,
+        "stderr_sha256": null,
+        "stdout_sha256": null
+      }
+    ],
+    "evidence": {
+      "adapter_capabilities": [
+        "codec_session",
+        "json_envelope",
+        "packet_path_template",
+        "parser_validated",
+        "real_pdu_fixture"
+      ],
+      "adapter_status": "real_pdu_fixture",
+      "carrier_structure": "real_protocol_pdu",
+      "carrier_units": 1,
+      "chunk_count": 1,
+      "control_strength": "nonzero_surrounding_bytes",
+      "elapsed_s": 0.0,
+      "endpoint_os": {
+        "independent_receiver_os": false,
+        "notes": [
+          "sender, receiver, and tap execute in one local Python process"
+        ],
+        "receiver": {
+          "interface": null,
+          "machine": "NORMALIZED",
+          "namespace": null,
+          "node": "NORMALIZED",
+          "platform": "NORMALIZED",
+          "release": "NORMALIZED",
+          "role": "receiver",
+          "source": "local_platform",
+          "system": "NORMALIZED",
+          "version": "NORMALIZED"
+        },
+        "sender": {
+          "interface": null,
+          "machine": "NORMALIZED",
+          "namespace": null,
+          "node": "NORMALIZED",
+          "platform": "NORMALIZED",
+          "release": "NORMALIZED",
+          "role": "sender",
+          "source": "local_platform",
+          "system": "NORMALIZED",
+          "version": "NORMALIZED"
+        },
+        "tap": null,
+        "topology_kind": "same_process"
+      },
+      "error": null,
+      "evidence_bucket": "real_pdu_packet_path",
+      "independent_validator": "second_parser",
+      "integrity_sha256": "a5c487f4182e1d621fa1a896443c19b6118cd7ed60f92b7e6d7c7413c93fc4a0",
+      "mechanism_id": "http2-ping-opaque",
+      "ok": true,
+      "pacing": {
+        "adaptive": false,
+        "base_delay_s": 0.0,
+        "decode_tolerance_s": null,
+        "jitter_sample_window": 0,
+        "symbol_period_s": null,
+        "timeout_s": null,
+        "timing_quantum_s": 0.005,
+        "unit_rate_hz": 20.0
+      },
+      "payload_len": 6,
+      "recovered_len": 6,
+      "reliability": {
+        "duplicate_chunks": 0,
+        "expected_chunks": 1,
+        "last_error": null,
+        "loss_detected": false,
+        "policy": {
+          "max_receive_attempts": 1,
+          "max_retransmissions": 0,
+          "retry_backoff_s": 0.0,
+          "suppress_duplicate_chunks": true
+        },
+        "receive_attempts": 1,
+        "recovered_chunks": 1,
+        "retransmit_requests": 0,
+        "retry_count": 0,
+        "timed_out": false
+      },
+      "scheduled_duration_s": 0.0,
+      "session_framing": "raw",
+      "session_id": "http2-ping-opaque-real-pdu-smoke:covert",
+      "throughput_profile": {
+        "carrier_units": 1,
+        "claim_status": "sender_bound_no_bits_per_second_claim",
+        "measurement_window_s": null,
+        "observed_unit_rate_hz": null,
+        "payload_len": 6,
+        "payload_rate_bps": null,
+        "rate_basis": "sender_bound_no_production_window",
+        "recovered_len": 6,
+        "scheduled_unit_rate_hz": 20.0,
+        "throughput_status": "sender_bound"
+      },
+      "throughput_status": "sender_bound",
+      "timing_profile": null,
+      "timing_trace": null
+    },
+    "expected_len": 6,
+    "expected_sha256": "a5c487f4182e1d621fa1a896443c19b6118cd7ed60f92b7e6d7c7413c93fc4a0",
+    "matches": true,
+    "mutation_controls": [
+      {
+        "control_type": "wrong_nominal_offset",
+        "error_samples": [
+          "unit 0: missing HTTP/2 connection preface"
+        ],
+        "expected_failure": "mutated carrier writes the symbol at carrier byte zero instead of the parsed field",
+        "expected_failure_units": 1,
+        "name": "http2-ping-opaque-wrong_nominal_offset-mutation-control",
+        "ok": true,
+        "setup_failed_units": 0,
+        "tested_units": 1,
+        "unexpected_pass_units": 0
+      },
+      {
+        "control_type": "zero_surrounding_bytes",
+        "error_samples": [
+          "unit 0: missing HTTP/2 connection preface"
+        ],
+        "expected_failure": "mutated carrier preserves the parsed field but removes non-zero protocol structure",
+        "expected_failure_units": 1,
+        "name": "http2-ping-opaque-zero_surrounding_bytes-mutation-control",
+        "ok": true,
+        "setup_failed_units": 0,
+        "tested_units": 1,
+        "unexpected_pass_units": 0
+      }
+    ],
+    "observer_validations": [
+      {
+        "checked_units": 1,
+        "error": null,
+        "extracted_field_sha256": [
+          "6736f0a49922b22cba5fda904eb35acdf5eb37a17b7698fef142258dd1e8c9a3"
+        ],
+        "failed_units": 0,
+        "field_len": 8,
+        "field_offset": 42,
+        "name": "http2-ping-opaque-carrier-structure-oracle",
+        "nonzero_surrounding_bytes_min": 27,
+        "ok": true,
+        "validator": "second_parser"
+      }
+    ],
+    "parser_provenance": [],
+    "parser_validated": true,
+    "recovered_hex": "00ff80414243",
+    "recovered_len": 6,
+    "recovered_sha256": "a5c487f4182e1d621fa1a896443c19b6118cd7ed60f92b7e6d7c7413c93fc4a0",
+    "session_id": "http2-ping-opaque-real-pdu-smoke:covert",
+    "transport_artifact": null,
+    "transport_kind": "memory",
+    "transport_metadata": null,
+    "transport_record": null
+  },
+  "mechanism_id": "http2-ping-opaque",
+  "ok": true,
+  "reproducibility": {
+    "catalog_path": "data/mechanisms.jsonl",
+    "catalog_sha256": "76c14b2ae46ad36c17bc0631232bd7f9cc0a552daf43d17610635bf98702f25b",
+    "command": [
+      "celatim",
+      "--catalog",
+      "data/mechanisms.jsonl",
+      "scenario",
+      "run",
+      "--scenario",
+      "scenarios/http2-ping-opaque.toml"
+    ],
+    "machine": "NORMALIZED",
+    "package_version": "NORMALIZED",
+    "platform": "NORMALIZED",
+    "python_version": "NORMALIZED",
+    "release": "NORMALIZED",
+    "scenario_spec_path": "scenarios/http2-ping-opaque.toml",
+    "system": "NORMALIZED"
+  },
+  "run_id": "NORMALIZED",
+  "run_log": null,
+  "scenario_id": "http2-ping-opaque-real-pdu-smoke",
+  "scenario_metadata": {
+    "description": "Non-privileged HTTP/2 PING opaque-bytes real-PDU smoke scenario.",
+    "evidence_tier": "real_pdu_packet_path",
+    "expected_runtime_s": 5.0,
+    "privilege": "none",
+    "requires_extras": [],
+    "requires_tools": []
+  },
+  "schema_version": "celatim.evidence_run.v1",
+  "started_at_unix_s": 0.0
+}

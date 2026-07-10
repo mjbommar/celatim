@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/testbed-requirements-v1.schema.json",
+  "title": "celatim testbed requirements inventory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at_unix_s",
+    "profile_count",
+    "profile_ids",
+    "required_privileges",
+    "required_tools",
+    "optional_tools",
+    "required_extras",
+    "profiles"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.testbed_requirements.v1" },
+    "generated_at_unix_s": { "type": "number" },
+    "profile_count": { "type": "integer" },
+    "profile_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_privileges": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_tools": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "optional_tools": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_extras": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "profiles": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/profile" }
+    }
+  },
+  "$defs": {
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_id",
+        "description",
+        "status",
+        "evidence_tiers",
+        "required_privileges",
+        "required_tools",
+        "optional_tools",
+        "required_extras",
+        "reviewer_commands",
+        "legacy_experiments",
+        "notes"
+      ],
+      "properties": {
+        "profile_id": { "type": "string" },
+        "description": { "type": "string" },
+        "status": {
+          "enum": ["packaged", "legacy_experiment", "planned", "planned_manual"]
+        },
+        "evidence_tiers": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "required_privileges": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "required_tools": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "optional_tools": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "required_extras": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "reviewer_commands": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "legacy_experiments": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,134 @@
+"""Generate public detector and scrubber guidance from the mechanism catalog."""
+
+from __future__ import annotations
+
+from collections import Counter
+from collections.abc import Iterable
+
+from ..evidence import classify_evidence
+from ..model import Detectability, DetectionAnnotationSource, Mechanism, ScrubStrategy
+
+
+def detector_scrub_guidance_markdown(mechanisms: Iterable[Mechanism]) -> str:
+    """Render public-safe detector/scrub guidance for catalog mechanisms."""
+
+    mechs = sorted(mechanisms, key=lambda mechanism: mechanism.id)
+    scrub_counts = Counter(mechanism.scrub_strategy for mechanism in mechs)
+    detect_counts = Counter(mechanism.detectability for mechanism in mechs)
+    annotation_counts = Counter(mechanism.detection_annotation_source for mechanism in mechs)
+    rows = [
+        "# Detector and Scrub Guidance",
+        "",
+        "Generated from `measurement/data/mechanisms.jsonl`. This public-safe guidance",
+        "summarizes defensive posture by catalog field semantics; it does not include",
+        "channel implementation code, evidence JSON, pcaps, run logs, or carrier dumps.",
+        "",
+        "## Detection Posture",
+        "",
+        "| Detectability | Count | Operational reading |",
+        "|---|---:|---|",
+    ]
+    rows.extend(
+        f"| `{detectability.value}` | {detect_counts[detectability]} | "
+        f"{_detectability_note(detectability)} |"
+        for detectability in Detectability
+    )
+    rows.extend(
+        [
+            "",
+            "## Scrub Strategy",
+            "",
+            "| Scrub strategy | Count | Defensive action |",
+            "|---|---:|---|",
+        ]
+    )
+    rows.extend(
+        f"| `{strategy.value}` | {scrub_counts[strategy]} | {_scrub_note(strategy)} |"
+        for strategy in ScrubStrategy
+    )
+    rows.extend(
+        [
+            "",
+            "## Annotation Coverage",
+            "",
+            "| Annotation source | Count | Interpretation |",
+            "|---|---:|---|",
+        ]
+    )
+    rows.extend(
+        f"| `{source.value}` | {annotation_counts[source]} | {_annotation_source_note(source)} |"
+        for source in DetectionAnnotationSource
+    )
+    rows.extend(
+        [
+            "",
+            "## Mechanism Guidance",
+            "",
+            "| Mechanism | Protocol | Class | Detectability | Predicate | False-positive posture | Annotation source | Scrub strategy | Evidence bucket | Guidance |",
+            "|---|---|---:|---|---|---|---|---|---|---|",
+        ]
+    )
+    rows.extend(_mechanism_row(mechanism) for mechanism in mechs)
+    rows.append("")
+    return "\n".join(rows)
+
+
+def _mechanism_row(mechanism: Mechanism) -> str:
+    profile = classify_evidence(mechanism)
+    return (
+        f"| `{mechanism.id}` | {_md(mechanism.protocol)} | {mechanism.carrier_class.value} | "
+        f"`{mechanism.detectability.value}` | `{mechanism.effective_detect_predicate.value}` | "
+        f"`{mechanism.effective_false_positive.value}` | "
+        f"`{mechanism.detection_annotation_source.value}` | `{mechanism.scrub_strategy.value}` | "
+        f"`{profile.bucket.value}` | "
+        f"{_mechanism_guidance(mechanism)} |"
+    )
+
+
+def _mechanism_guidance(mechanism: Mechanism) -> str:
+    if mechanism.detectability is Detectability.STATELESS_FILTER:
+        return "Candidate for fixed-offset packet-filter alerts; pair alerts with canonicalization where protocol-safe."
+    if mechanism.detectability is Detectability.STATEFUL_DPI:
+        return "Requires protocol parsing, entropy checks, or element presence logic before enforcement."
+    if mechanism.detectability is Detectability.STATISTICAL:
+        return "Treat as baseline or timing analysis; avoid per-packet alert claims without benign-trace replay."
+    if mechanism.detectability is Detectability.ENDPOINT_ONLY:
+        return "In-path scrubbing is not protocol-safe; enforce at the endpoint or negotiated implementation boundary."
+    return "No reliable on-wire detector; mitigation is design-time or endpoint-controlled."
+
+
+def _detectability_note(detectability: Detectability) -> str:
+    return {
+        Detectability.STATELESS_FILTER: "Fixed offset, mask, or value checks can be expressed as packet-filter rules.",
+        Detectability.STATEFUL_DPI: "Needs protocol parsing, flow state, entropy, or presence checks.",
+        Detectability.STATISTICAL: "Needs timing, count, or baseline analysis over traffic populations.",
+        Detectability.ENDPOINT_ONLY: "Visible only at endpoints because the carrier is protected or normalized by protocol state.",
+        Detectability.UNDETECTABLE_ONWIRE: "Not distinguishable on the wire under the catalog threat model.",
+    }[detectability]
+
+
+def _scrub_note(strategy: ScrubStrategy) -> str:
+    return {
+        ScrubStrategy.CANONICALIZE_ZERO: "Reset reserved or MBZ bits to zero when forwarding.",
+        ScrubStrategy.REPLACE_PADDING: "Overwrite padding with conformant padding generated by the normalizer.",
+        ScrubStrategy.REWRITE_FIELD: "Rewrite or re-randomize the opaque field at the forwarding boundary.",
+        ScrubStrategy.BLOCK_CODEPOINT: "Block or drop reserved codepoints unless explicitly allowed.",
+        ScrubStrategy.STRIP_ELEMENT: "Strip optional or unrecognized elements at the policy boundary.",
+        ScrubStrategy.SHAPE_TIMING: "Shape timing or counts and report rates only after benign baseline measurement.",
+        ScrubStrategy.ENFORCE_DETERMINISTIC: "Use deterministic or policy-constrained cryptographic randomness.",
+        ScrubStrategy.ENDPOINT_ONLY: "Mitigate at the endpoint; in-path rewriting would break authenticated semantics.",
+    }[strategy]
+
+
+def _annotation_source_note(source: DetectionAnnotationSource) -> str:
+    return {
+        DetectionAnnotationSource.EXPLICIT_CATALOG: "Predicate and false-positive posture are authored in the mechanism row.",
+        DetectionAnnotationSource.DERIVED_DEFAULT: "Predicate or false-positive posture still comes from the carrier-class default.",
+    }[source]
+
+
+def _md(value: str) -> str:
+    return value.replace("|", "\\|").replace("\n", " ")
+
+
+__all__ = ["detector_scrub_guidance_markdown"]

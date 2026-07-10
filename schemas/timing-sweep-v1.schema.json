@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "celatim timing sweep result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "mechanism_id",
+    "path_kind",
+    "claim_status",
+    "capacity_model",
+    "capacity_model_comparison_status",
+    "payload_len",
+    "payload_sha256",
+    "baseline",
+    "trials",
+    "ok"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.timing_sweep.v1" },
+    "run_id": { "type": "string" },
+    "mechanism_id": { "type": "string" },
+    "path_kind": { "type": "string" },
+    "claim_status": { "type": "string" },
+    "capacity_model": { "type": "string" },
+    "capacity_model_comparison_status": { "type": "string" },
+    "path_metadata": { "type": ["object", "null"] },
+    "payload_len": { "type": "integer" },
+    "payload_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "baseline": { "$ref": "#/$defs/sweep_case" },
+    "trials": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sweep_case" }
+    },
+    "ok": { "type": "boolean" }
+  },
+  "$defs": {
+    "pacing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unit_rate_hz",
+        "symbol_period_s",
+        "base_delay_s",
+        "timing_quantum_s",
+        "decode_tolerance_s",
+        "timeout_s",
+        "adaptive",
+        "jitter_sample_window"
+      ],
+      "properties": {
+        "unit_rate_hz": { "type": ["number", "null"] },
+        "symbol_period_s": { "type": ["number", "null"] },
+        "base_delay_s": { "type": "number" },
+        "timing_quantum_s": { "type": ["number", "null"] },
+        "decode_tolerance_s": { "type": ["number", "null"] },
+        "timeout_s": { "type": ["number", "null"] },
+        "adaptive": { "type": "boolean" },
+        "jitter_sample_window": { "type": "integer" }
+      }
+    },
+    "sweep_case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session_id",
+        "payload_len",
+        "recovered_len",
+        "carrier_units",
+        "pacing",
+        "quantum_s",
+        "matches",
+        "payload_error_count",
+        "payload_error_rate",
+        "capacity_model_upper_bound_bps",
+        "achieved_goodput_bps",
+        "claim_status",
+        "timing_trace",
+        "timing_profile"
+      ],
+      "properties": {
+        "session_id": { "type": "string" },
+        "payload_len": { "type": "integer" },
+        "recovered_len": { "type": "integer" },
+        "carrier_units": { "type": "integer" },
+        "pacing": { "$ref": "#/$defs/pacing" },
+        "quantum_s": { "type": ["number", "null"] },
+        "matches": { "type": "boolean" },
+        "payload_error_count": { "type": "integer" },
+        "payload_error_rate": { "type": "number" },
+        "capacity_model_upper_bound_bps": { "type": ["number", "null"] },
+        "achieved_goodput_bps": { "type": ["number", "null"] },
+        "claim_status": { "type": "string" },
+        "timing_trace": { "$ref": "#/$defs/timing_trace" },
+        "timing_profile": { "$ref": "#/$defs/timing_profile" }
+      }
+    },
+    "timing_trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sample_count",
+        "scheduled_duration_s",
+        "observed_duration_s",
+        "mean_abs_error_s",
+        "max_abs_error_s",
+        "inter_arrival_s",
+        "inter_arrival_error_s",
+        "samples"
+      ],
+      "properties": {
+        "sample_count": { "type": "integer" },
+        "scheduled_duration_s": { "type": ["number", "null"] },
+        "observed_duration_s": { "type": ["number", "null"] },
+        "mean_abs_error_s": { "type": ["number", "null"] },
+        "max_abs_error_s": { "type": ["number", "null"] },
+        "inter_arrival_s": {
+          "type": "array",
+          "items": { "type": "number" }
+        },
+        "inter_arrival_error_s": {
+          "type": "array",
+          "items": { "type": "number" }
+        },
+        "samples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "index",
+              "scheduled_offset_s",
+              "observed_offset_s",
+              "error_s"
+            ],
+            "properties": {
+              "index": { "type": "integer" },
+              "scheduled_offset_s": { "type": "number" },
+              "observed_offset_s": { "type": "number" },
+              "error_s": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "timing_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sample_count",
+        "nominal_symbol_period_s",
+        "timing_quantum_s",
+        "decode_tolerance_s",
+        "tolerance_source",
+        "error_basis",
+        "jitter_sample_count",
+        "jitter_mean_abs_s",
+        "jitter_p50_abs_s",
+        "jitter_p95_abs_s",
+        "jitter_max_abs_s",
+        "jitter_stddev_s",
+        "snr_db",
+        "symbol_error_count",
+        "symbol_error_rate",
+        "scheduled_unit_rate_hz",
+        "observed_unit_rate_hz",
+        "effective_goodput_bps",
+        "rate_status"
+      ],
+      "properties": {
+        "sample_count": { "type": "integer" },
+        "nominal_symbol_period_s": { "type": ["number", "null"] },
+        "timing_quantum_s": { "type": ["number", "null"] },
+        "decode_tolerance_s": { "type": ["number", "null"] },
+        "tolerance_source": { "type": ["string", "null"] },
+        "error_basis": { "type": ["string", "null"] },
+        "jitter_sample_count": { "type": "integer" },
+        "jitter_mean_abs_s": { "type": ["number", "null"] },
+        "jitter_p50_abs_s": { "type": ["number", "null"] },
+        "jitter_p95_abs_s": { "type": ["number", "null"] },
+        "jitter_max_abs_s": { "type": ["number", "null"] },
+        "jitter_stddev_s": { "type": ["number", "null"] },
+        "snr_db": { "type": ["number", "null"] },
+        "symbol_error_count": { "type": ["integer", "null"] },
+        "symbol_error_rate": { "type": ["number", "null"] },
+        "scheduled_unit_rate_hz": { "type": ["number", "null"] },
+        "observed_unit_rate_hz": { "type": ["number", "null"] },
+        "effective_goodput_bps": { "type": ["number", "null"] },
+        "rate_status": { "type": "string" }
+      }
+    }
+  }
+}

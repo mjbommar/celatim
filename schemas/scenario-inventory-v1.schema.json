@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/scenario-inventory-v1.schema.json",
+  "title": "celatim scenario inventory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "path",
+    "scenario_count",
+    "scenario_ids",
+    "evidence_tier_counts",
+    "privilege_counts",
+    "expected_runtime_s_total",
+    "required_tools",
+    "required_extras",
+    "scenarios"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.scenario_inventory.v1" },
+    "path": { "type": "string" },
+    "scenario_count": { "type": "integer" },
+    "scenario_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "evidence_tier_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "privilege_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "expected_runtime_s_total": { "type": ["number", "null"] },
+    "required_tools": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_extras": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "scenarios": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/scenario" }
+    }
+  },
+  "$defs": {
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "scenario_id",
+        "mechanism_id",
+        "description",
+        "evidence_tier",
+        "privilege",
+        "expected_runtime_s",
+        "requires_tools",
+        "requires_extras"
+      ],
+      "properties": {
+        "path": { "type": "string" },
+        "scenario_id": { "type": "string" },
+        "mechanism_id": { "type": "string" },
+        "description": { "type": ["string", "null"] },
+        "evidence_tier": { "type": "string" },
+        "privilege": { "type": "string" },
+        "expected_runtime_s": { "type": ["number", "null"] },
+        "requires_tools": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "requires_extras": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

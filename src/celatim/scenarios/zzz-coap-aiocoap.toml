@@ -1,0 +1,14 @@
+schema_version = "celatim.scenario.v1"
+scenario_id = "coap-tunnel-aiocoap"
+mechanism_id = "coap-tunnel"
+description = "Non-privileged paired real-codec client/server scenario for coap-tunnel."
+evidence_tier = "real_daemon_path"
+privilege = "none"
+expected_runtime_s = 5.0
+requires_tools = []
+requires_extras = ["iot"]
+payload_hex = "00 ff 80 51 55 49 43"
+control_message = "control"
+
+[transport]
+kind = "coap_aiocoap"

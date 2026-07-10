@@ -1,0 +1,21 @@
+schema_version = "celatim.scenario.v1"
+scenario_id = "rsa-pss-salt-local-crypto-transcript"
+mechanism_id = "rsa-pss-salt"
+description = "Non-privileged local RSA-PSS salt transcript smoke scenario."
+evidence_tier = "real_crypto_path"
+privilege = "none"
+expected_runtime_s = 10.0
+requires_tools = []
+requires_extras = ["crypto"]
+payload_hex = "00 ff 80 52 53 41 50 53 53"
+control_message = "control"
+
+[transport]
+kind = "crypto_rsa_pss_salt"
+transcript_json = "../out/transcripts/{scenario_id}-{case}.json"
+key_bits = 2048
+public_exponent = 65537
+hash_name = "sha256"
+mgf_hash_name = "sha256"
+salt_payload_bits = 256
+honest_random_control_signatures = 2

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/doctor-v1.schema.json",
+  "title": "celatim doctor result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at_unix_s",
+    "ok",
+    "checks"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.doctor.v1" },
+    "generated_at_unix_s": { "type": "number" },
+    "ok": { "type": "boolean" },
+    "checks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/check" }
+    }
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_id",
+        "status",
+        "message",
+        "details"
+      ],
+      "properties": {
+        "check_id": { "type": "string" },
+        "status": { "enum": ["pass", "warn", "fail"] },
+        "message": { "type": "string" },
+        "details": { "type": "object" }
+      }
+    }
+  }
+}

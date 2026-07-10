@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/scenario-execution-plan-v1.schema.json",
+  "title": "celatim scenario execution plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at_unix_s",
+    "path",
+    "scenario_count",
+    "scenario_ids",
+    "default_included_count",
+    "manual_review_count",
+    "evidence_tier_counts",
+    "privilege_counts",
+    "execution_mode_counts",
+    "expected_runtime_s_total",
+    "required_tools",
+    "required_extras",
+    "recommended_targets",
+    "scenarios"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.scenario_execution_plan.v1" },
+    "generated_at_unix_s": { "type": "number" },
+    "path": { "type": "string" },
+    "scenario_count": { "type": "integer" },
+    "scenario_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "default_included_count": { "type": "integer" },
+    "manual_review_count": { "type": "integer" },
+    "evidence_tier_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "privilege_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "execution_mode_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "expected_runtime_s_total": { "type": ["number", "null"] },
+    "required_tools": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_extras": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "recommended_targets": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "scenarios": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/scenario" }
+    }
+  },
+  "$defs": {
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "scenario_id",
+        "mechanism_id",
+        "description",
+        "evidence_tier",
+        "privilege",
+        "expected_runtime_s",
+        "requires_tools",
+        "requires_extras",
+        "execution_mode",
+        "default_included",
+        "skip_reason",
+        "reviewer_command"
+      ],
+      "properties": {
+        "path": { "type": "string" },
+        "scenario_id": { "type": "string" },
+        "mechanism_id": { "type": "string" },
+        "description": { "type": ["string", "null"] },
+        "evidence_tier": { "type": "string" },
+        "privilege": { "type": "string" },
+        "expected_runtime_s": { "type": ["number", "null"] },
+        "requires_tools": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "requires_extras": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "execution_mode": {
+          "enum": [
+            "default_non_privileged",
+            "non_privileged_with_dependencies",
+            "requires_linux_capability",
+            "requires_root",
+            "requires_docker",
+            "requires_kvm",
+            "manual"
+          ]
+        },
+        "default_included": { "type": "boolean" },
+        "skip_reason": { "type": ["string", "null"] },
+        "reviewer_command": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+schema_version = "celatim.scenario.v1"
+scenario_id = "dns-null-dnspython"
+mechanism_id = "dns-null-tunnel"
+description = "Non-privileged paired real-codec client/server scenario for dns-null-tunnel."
+evidence_tier = "real_daemon_path"
+privilege = "none"
+expected_runtime_s = 5.0
+requires_tools = []
+requires_extras = ["dns"]
+payload_hex = "00 ff 80 51 55 49 43"
+control_message = "control"
+
+[transport]
+kind = "dns_null_dnspython"
+dns_query_name = "covert.example."

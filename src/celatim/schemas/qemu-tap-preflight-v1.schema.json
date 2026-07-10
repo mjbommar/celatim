@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/qemu-tap-preflight-v1.schema.json",
+  "title": "celatim QEMU TAP preflight report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at_unix_s",
+    "claim_status",
+    "profile_id",
+    "ok",
+    "checks",
+    "guest_config",
+    "tap_config",
+    "tcpdump_binary",
+    "kvm_device",
+    "qemu_argv",
+    "tap_cleanup_commands",
+    "tap_up_commands",
+    "tap_down_commands",
+    "notes"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.qemu_tap_preflight.v1" },
+    "generated_at_unix_s": { "type": "number" },
+    "claim_status": { "const": "preflight_only_no_vm_started" },
+    "profile_id": { "const": "qemu-cross-stack" },
+    "ok": { "type": "boolean" },
+    "checks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/check" }
+    },
+    "guest_config": { "$ref": "#/$defs/guest_config" },
+    "tap_config": { "$ref": "#/$defs/tap_config" },
+    "tcpdump_binary": { "type": "string" },
+    "kvm_device": { "type": "string" },
+    "qemu_argv": { "$ref": "#/$defs/argv" },
+    "tap_cleanup_commands": { "$ref": "#/$defs/commands" },
+    "tap_up_commands": { "$ref": "#/$defs/commands" },
+    "tap_down_commands": { "$ref": "#/$defs/commands" },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "argv": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "commands": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/argv" }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_id",
+        "status",
+        "message",
+        "required",
+        "details"
+      ],
+      "properties": {
+        "check_id": {
+          "enum": [
+            "disk_image",
+            "qemu_binary",
+            "ip_binary",
+            "tcpdump_binary",
+            "kvm_device"
+          ]
+        },
+        "status": { "enum": ["pass", "fail", "skip"] },
+        "message": { "type": "string" },
+        "required": { "type": "boolean" },
+        "details": { "type": "object" }
+      }
+    },
+    "guest_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "disk_image",
+        "qemu_binary",
+        "memory_mib",
+        "smp",
+        "mac_address",
+        "netdev_id",
+        "network_device",
+        "drive_interface",
+        "disk_format",
+        "enable_kvm",
+        "snapshot",
+        "display",
+        "machine",
+        "cpu",
+        "extra_args",
+        "stop_timeout_s"
+      ],
+      "properties": {
+        "disk_image": { "type": "string" },
+        "qemu_binary": { "type": "string" },
+        "memory_mib": { "type": "integer" },
+        "smp": { "type": "integer" },
+        "mac_address": { "type": "string" },
+        "netdev_id": { "type": "string" },
+        "network_device": { "type": "string" },
+        "drive_interface": { "type": "string" },
+        "disk_format": { "type": ["string", "null"] },
+        "enable_kvm": { "type": "boolean" },
+        "snapshot": { "type": "boolean" },
+        "display": { "type": ["string", "null"] },
+        "machine": { "type": ["string", "null"] },
+        "cpu": { "type": ["string", "null"] },
+        "extra_args": { "$ref": "#/$defs/argv" },
+        "stop_timeout_s": { "type": "number" }
+      }
+    },
+    "tap_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tap_name",
+        "host_ipv4_cidr",
+        "mtu",
+        "ip_binary",
+        "owner",
+        "group",
+        "cleanup_existing"
+      ],
+      "properties": {
+        "tap_name": { "type": "string" },
+        "host_ipv4_cidr": { "type": ["string", "null"] },
+        "mtu": { "type": "integer" },
+        "ip_binary": { "type": "string" },
+        "owner": { "type": ["string", "null"] },
+        "group": { "type": ["string", "null"] },
+        "cleanup_existing": { "type": "boolean" }
+      }
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/public-bundle-v1.schema.json",
+  "title": "celatim public-safe bundle manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at_unix_s",
+    "bundle_name",
+    "bundle_root",
+    "release_scope",
+    "private_reference_policy",
+    "artifact_count",
+    "private_reviewer_bundle_name",
+    "private_reviewer_bundle_verified",
+    "private_reviewer_artifact_count",
+    "private_reviewer_artifact_kinds",
+    "scenario_count",
+    "evidence_count",
+    "ok_count",
+    "failed_count",
+    "run_log_artifact_count",
+    "transport_artifact_count",
+    "evidence_tier_counts",
+    "privilege_counts",
+    "expected_runtime_s_total",
+    "required_tools",
+    "required_extras",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.public_bundle.v1" },
+    "generated_at_unix_s": { "type": "number" },
+    "bundle_name": { "type": "string" },
+    "bundle_root": { "type": "string" },
+    "release_scope": { "const": "public_safe" },
+    "private_reference_policy": { "const": "hash_only_no_channel_artifacts" },
+    "artifact_count": { "type": "integer" },
+    "private_reviewer_bundle_name": { "type": ["string", "null"] },
+    "private_reviewer_bundle_verified": { "type": "boolean" },
+    "private_reviewer_artifact_count": { "type": "integer" },
+    "private_reviewer_artifact_kinds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "scenario_count": { "type": "integer" },
+    "evidence_count": { "type": "integer" },
+    "ok_count": { "type": "integer" },
+    "failed_count": { "type": "integer" },
+    "run_log_artifact_count": { "type": "integer" },
+    "transport_artifact_count": { "type": "integer" },
+    "evidence_tier_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "privilege_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "expected_runtime_s_total": { "type": ["number", "null"] },
+    "required_tools": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_extras": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" }
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256", "size_bytes"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "mechanism_catalog",
+            "support_matrix",
+            "detector_scrub_guidance",
+            "detector_rule_artifact",
+            "windows_capture_guidance",
+            "scenario_inventory",
+            "scenario_execution_plan",
+            "testbed_requirements",
+            "evidence_index",
+            "paper_table",
+            "reviewer_bundle_manifest",
+            "reviewer_bundle_verification"
+          ]
+        },
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "size_bytes": { "type": "integer" }
+      }
+    }
+  }
+}

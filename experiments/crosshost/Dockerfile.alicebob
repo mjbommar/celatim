@@ -1,0 +1,14 @@
+FROM python:3.14-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /work
+
+COPY measurement /work/measurement
+
+RUN python -m pip install --upgrade pip \
+    && python -m pip install -e "/work/measurement[packet,crypto,daemon,dns,ssh,iot,realtime]"
+
+ENV PATH="/usr/local/bin:${PATH}"

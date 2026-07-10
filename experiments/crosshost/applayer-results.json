@@ -1,0 +1,489 @@
+[
+  {
+    "mechanism": "quic-spin-bit",
+    "result": "pass",
+    "carrier_bytes": 43863,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "http3-reserved-frame-types",
+    "result": "pass",
+    "carrier_bytes": 5615,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "quic-padding-frame-count",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "rsa-pss-salt",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "ipv6-frag-reserved",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "ipv6-rh0-reserved",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "ipv6-conex-cdo",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "icmp-extended-echo",
+    "result": "pass",
+    "carrier_bytes": 3467,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "tcp-timestamp-lsb",
+    "result": "pass",
+    "carrier_bytes": 11749,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "sctp-idata-reserved",
+    "result": "pass",
+    "carrier_bytes": 3701,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "sctp-padding",
+    "result": "pass",
+    "carrier_bytes": 2627,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "geneve-reserved",
+    "result": "pass",
+    "carrier_bytes": 3911,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "srv6-srh",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "srv6-sid-arg",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "trill-rbits",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "mpls-mbz",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "bier-reserved",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "quic-grease-bit",
+    "result": "pass",
+    "carrier_bytes": 43867,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "quic-reserved-transport-params",
+    "result": "pass",
+    "carrier_bytes": 4823,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "quic-new-token",
+    "result": "pass",
+    "carrier_bytes": 1303,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "quic-path-challenge",
+    "result": "pass",
+    "carrier_bytes": 1599,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "quic-reserved-version",
+    "result": "pass",
+    "carrier_bytes": 2633,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "quic-stateless-reset",
+    "result": "pass",
+    "carrier_bytes": 1321,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "bgp-path-attr-flags",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "bgp-optional-transitive",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "bgp-opaque-ext-comm",
+    "result": "pass",
+    "carrier_bytes": 1761,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "bgp-ls-asla-reserved",
+    "result": "pass",
+    "carrier_bytes": 3471,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "ospfv3-trailing-byte",
+    "result": "pass",
+    "carrier_bytes": 7127,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "ospf-ri-lsa-padding",
+    "result": "pass",
+    "carrier_bytes": 2681,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "isis-eco",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "isis-reverse-metric",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "isis-srv6-sid-flags",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "ripv2-unused",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "ripv1-ignored",
+    "result": "pass",
+    "carrier_bytes": 2388,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "igmpv3-reserved",
+    "result": "pass",
+    "carrier_bytes": 2771,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "rsvp-reserved",
+    "result": "pass",
+    "carrier_bytes": 2319,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "ssh-random-padding",
+    "result": "pass",
+    "carrier_bytes": 1315,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "ssh-kexinit-cookie",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "tls-legacy-session-id",
+    "result": "pass",
+    "carrier_bytes": 1287,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "tls-legacy-record-version",
+    "result": "pass",
+    "carrier_bytes": 3539,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "tls-record-padding",
+    "result": "pass",
+    "carrier_bytes": 4903,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "tls-grease",
+    "result": "pass",
+    "carrier_bytes": 1185,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "tls-clienthello-padding",
+    "result": "pass",
+    "carrier_bytes": 29204,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "tls-heartbeat-padding",
+    "result": "pass",
+    "carrier_bytes": 4901,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "tls-gmt-unix-time",
+    "result": "pass",
+    "carrier_bytes": 3137,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "dtls-legacy-version",
+    "result": "pass",
+    "carrier_bytes": 3527,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "esp-tfc-padding",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "owamp-twamp-padding",
+    "result": "pass",
+    "carrier_bytes": 1331,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "http3-reserved-stream-types",
+    "result": "pass",
+    "carrier_bytes": 4813,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "http3-reserved-settings",
+    "result": "pass",
+    "carrier_bytes": 1643,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "http3-reserved-error-codes",
+    "result": "pass",
+    "carrier_bytes": 2269,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "http2-reserved-r-bit",
+    "result": "pass",
+    "carrier_bytes": 49445,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "http2-padding",
+    "result": "pass",
+    "carrier_bytes": 1823,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "http2-unused-flags",
+    "result": "pass",
+    "carrier_bytes": 8973,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "edns0-padding",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "dns-dso-zbits",
+    "result": "pass",
+    "carrier_bytes": 3689,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "doq-reserved-error",
+    "result": "pass",
+    "carrier_bytes": 2145,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "rtcp-xr-reserved",
+    "result": "pass",
+    "carrier_bytes": 5611,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "turn-rffu",
+    "result": "pass",
+    "carrier_bytes": 1946,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "vrrpv3-rsvd",
+    "result": "pass",
+    "carrier_bytes": 1647,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "kerberos-kdcoptions",
+    "result": "pass",
+    "carrier_bytes": 10361,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "ppp-magic-number",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "pptp-vendor-name",
+    "result": "pass",
+    "carrier_bytes": 1065,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "jwt-private-claims",
+    "result": "pass",
+    "carrier_bytes": 6507,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "uuidv8-custom",
+    "result": "pass",
+    "carrier_bytes": 1275,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "binary-http-padding",
+    "result": "pass",
+    "carrier_bytes": 4805,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "openpgp-padding-packet",
+    "result": "pass",
+    "carrier_bytes": 4813,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "edhoc-ead-padding",
+    "result": "pass",
+    "carrier_bytes": 1309,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "tzif-unused",
+    "result": "pass",
+    "carrier_bytes": 1493,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "ogg-opus-comment",
+    "result": "pass",
+    "carrier_bytes": 1461,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "ecdsa-nonce",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "ntp-extension-field",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "ntp-timing",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "dns-txt-tunnel",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "dns-null-tunnel",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "dns-timing",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "icmp-echo-payload",
+    "result": "pass",
+    "carrier_bytes": 4807,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "doh-tunnel",
+    "result": "pass",
+    "carrier_bytes": 4877,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "http-tunnel",
+    "result": "pass",
+    "carrier_bytes": 5529,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "websocket-tunnel",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "webrtc-datachannel",
+    "result": "pass",
+    "carrier_bytes": 4799,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "coap-tunnel",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "mqtt-tunnel",
+    "result": "pass",
+    "carrier_bytes": 1191,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "lorawan-frame",
+    "result": "pass",
+    "carrier_bytes": 2157,
+    "recv_sha": "206b48d2b3a9"
+  },
+  {
+    "mechanism": "ipv4-options",
+    "result": "skip",
+    "reason": "no carrier bytes (symbol-only)"
+  },
+  {
+    "mechanism": "http2-priority-deprecated",
+    "result": "pass",
+    "carrier_bytes": 2098,
+    "recv_sha": "206b48d2b3a9"
+  }
+]

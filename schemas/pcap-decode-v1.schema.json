@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "celatim pcap decode result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mechanism_id",
+    "session_id",
+    "claim_status",
+    "pcap",
+    "carrier_units",
+    "carrier_units_with_bytes",
+    "carrier_unit_sha256",
+    "parser_validated",
+    "parser_provenance_count",
+    "parser_provenance_executed_count",
+    "parser_provenance",
+    "payload_len",
+    "recovered_hex",
+    "recovered_sha256",
+    "expected_sha256",
+    "matches_expected",
+    "ok",
+    "evidence"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.pcap_decode.v1" },
+    "mechanism_id": { "type": "string" },
+    "session_id": { "type": "string" },
+    "claim_status": { "const": "same_code_pcap_decode_not_independent_trace_validation" },
+    "pcap": { "$ref": "#/$defs/pcap_artifact" },
+    "carrier_units": { "type": "integer" },
+    "carrier_units_with_bytes": { "type": "integer" },
+    "carrier_unit_sha256": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+    },
+    "parser_validated": { "type": "boolean" },
+    "parser_provenance_count": { "type": "integer" },
+    "parser_provenance_executed_count": { "type": "integer" },
+    "parser_provenance": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "payload_len": { "type": "integer" },
+    "recovered_hex": { "type": "string" },
+    "recovered_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "expected_sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+    "matches_expected": { "type": ["boolean", "null"] },
+    "ok": { "type": "boolean" },
+    "evidence": { "type": "object" }
+  },
+  "$defs": {
+    "pcap_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "packet_count", "linktype"],
+      "properties": {
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "size_bytes": { "type": "integer" },
+        "packet_count": { "type": "integer" },
+        "linktype": { "type": "integer" }
+      }
+    }
+  }
+}

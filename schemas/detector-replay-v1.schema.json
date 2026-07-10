@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/celatim/detector-replay-v1.schema.json",
+  "title": "celatim detector replay result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at_unix_s",
+    "ok",
+    "command",
+    "trace",
+    "mechanism_count",
+    "executed_count",
+    "failed_count",
+    "matched_mechanism_count",
+    "checked_unit_count",
+    "matched_unit_count",
+    "aggregate_matched_rate",
+    "false_positive_estimate",
+    "false_positive_claim_status",
+    "false_positive_claim_blockers",
+    "aggregate_false_positive_rate",
+    "mechanisms"
+  ],
+  "properties": {
+    "schema_version": { "const": "celatim.detector_replay.v1" },
+    "generated_at_unix_s": { "type": "number" },
+    "ok": { "type": "boolean" },
+    "command": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "trace": { "$ref": "#/$defs/trace" },
+    "mechanism_count": { "type": "integer" },
+    "executed_count": { "type": "integer" },
+    "failed_count": { "type": "integer" },
+    "matched_mechanism_count": { "type": "integer" },
+    "checked_unit_count": { "type": "integer" },
+    "matched_unit_count": { "type": "integer" },
+    "aggregate_matched_rate": { "type": ["number", "null"] },
+    "false_positive_estimate": { "type": "boolean" },
+    "false_positive_claim_status": {
+      "enum": ["false_positive_estimate_ready", "not_false_positive_estimate"]
+    },
+    "false_positive_claim_blockers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/false_positive_claim_blocker" }
+    },
+    "aggregate_false_positive_rate": { "type": ["number", "null"] },
+    "mechanisms": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/mechanism_result" }
+    }
+  },
+  "$defs": {
+    "false_positive_claim_blocker": {
+      "enum": [
+        "not_false_positive_source",
+        "missing_trace_name",
+        "missing_trace_license",
+        "missing_filtering_assumptions",
+        "missing_public_trace_origin",
+        "detector_execution_incomplete",
+        "empty_mechanism_set"
+      ]
+    },
+    "trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "size_bytes",
+        "packet_count",
+        "source_kind",
+        "trace_name",
+        "origin_url",
+        "license",
+        "filtering_assumptions"
+      ],
+      "properties": {
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "size_bytes": { "type": "integer" },
+        "packet_count": { "type": "integer" },
+        "source_kind": {
+          "enum": [
+            "public_benign_trace",
+            "authorized_benign_trace",
+            "local_generated_control",
+            "scenario_control_fixture",
+            "unknown"
+          ]
+        },
+        "trace_name": { "type": ["string", "null"] },
+        "origin_url": { "type": ["string", "null"] },
+        "license": { "type": ["string", "null"] },
+        "filtering_assumptions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "mechanism_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mechanism_id",
+        "mechanism_name",
+        "ok",
+        "error",
+        "matched_rate",
+        "false_positive_estimate",
+        "false_positive_rate",
+        "detector_provenance"
+      ],
+      "properties": {
+        "mechanism_id": { "type": "string" },
+        "mechanism_name": { "type": "string" },
+        "ok": { "type": "boolean" },
+        "error": { "type": ["string", "null"] },
+        "matched_rate": { "type": ["number", "null"] },
+        "false_positive_estimate": { "type": "boolean" },
+        "false_positive_rate": { "type": ["number", "null"] },
+        "detector_provenance": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "detector_family",
+            "implementation",
+            "implementation_kind",
+            "executed",
+            "result",
+            "detectability",
+            "predicate",
+            "disposition",
+            "rule_format",
+            "rule",
+            "checked_units",
+            "matched_units",
+            "failed_units",
+            "detected",
+            "benign_basis",
+            "false_positive_estimate",
+            "command",
+            "returncode",
+            "stdout_sha256",
+            "stderr_sha256",
+            "stderr_excerpt",
+            "notes"
+          ],
+          "properties": {
+            "name": { "type": "string" },
+            "detector_family": { "type": "string" },
+            "implementation": { "type": "string" },
+            "implementation_kind": {
+              "enum": ["same_code", "generated_kernel_rule", "independent_tool_output"]
+            },
+            "executed": { "type": "boolean" },
+            "result": { "type": "string" },
+            "detectability": { "type": "string" },
+            "predicate": { "type": ["string", "null"] },
+            "disposition": { "type": "string" },
+            "rule_format": { "type": ["string", "null"] },
+            "rule": { "type": ["string", "null"] },
+            "checked_units": { "type": "integer" },
+            "matched_units": { "type": "integer" },
+            "failed_units": { "type": "integer" },
+            "detected": { "type": ["boolean", "null"] },
+            "benign_basis": { "type": "string" },
+            "false_positive_estimate": { "type": "boolean" },
+            "command": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "returncode": { "type": ["integer", "null"] },
+            "stdout_sha256": {
+              "type": ["string", "null"],
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "stderr_sha256": {
+              "type": ["string", "null"],
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "stderr_excerpt": { "type": ["string", "null"] },
+            "notes": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

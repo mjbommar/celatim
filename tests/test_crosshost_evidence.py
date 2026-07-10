@@ -11,9 +11,7 @@ from celatim.analysis.crosshost_evidence import (
     MESSAGE_CARRIER_EXECUTED_CLAIM,
     PACKET_PATH_EXECUTED_CLAIM,
     REAL_DAEMON_OR_CRYPTO_CAPABLE_CLAIM,
-    REAL_DAEMON_OR_CRYPTO_EXECUTED_CLAIM,
     REAL_PDU_CAPABLE_CLAIM,
-    REAL_PDU_EXECUTED_CLAIM,
     build_claim_ledger,
     build_crosshost_public_index,
     claim_count,
@@ -31,12 +29,17 @@ def test_crosshost_public_index_strips_payload_and_counts_run_backed_buckets(tmp
         generated_at_unix_s=1.0,
     )
 
-    assert index["schema_version"] == "celatim.alice_bob_public_index.v1"
+    assert index["schema_version"] == "celatim.alice_bob_public_index.v2"
     assert index["run_count"] == 1
     assert index["exact_recovery_count"] == 2
-    assert index["exact_recovery_evidence_bucket_counts"] == {
+    assert index["exact_recovery_capability_bucket_counts"] == {
         "real_daemon_or_crypto_path": 1,
         "real_pdu_packet_path": 1,
+    }
+    assert index["execution_path_counts"] == {
+        "afpacket_generated_frames_over_vxlan": 1,
+        "json_carrier_artifact_handoff_over_ssh": 1,
+        "json_hex_pdu_control_exchange_over_tcp": 1,
     }
     run = index["runs"][0]
     assert run["private_artifacts_excluded"] == ["payload.bin"]
@@ -71,15 +74,51 @@ def test_claim_ledger_separates_capability_counts_from_run_backed_counts(tmp_pat
         generated_at_unix_s=1.0,
     )
 
-    assert ledger["schema_version"] == "celatim.claim_ledger.v1"
+    assert ledger["schema_version"] == "celatim.claim_ledger.v2"
     assert claim_count(ledger, REAL_PDU_CAPABLE_CLAIM) == 129
     assert claim_count(ledger, REAL_DAEMON_OR_CRYPTO_CAPABLE_CLAIM) == 8
     assert claim_count(ledger, ALL_USABLE_EXACT_RECOVERY_CLAIM) == 2
-    assert claim_count(ledger, REAL_PDU_EXECUTED_CLAIM) == 1
-    assert claim_count(ledger, REAL_DAEMON_OR_CRYPTO_EXECUTED_CLAIM) == 1
     assert claim_count(ledger, PACKET_PATH_EXECUTED_CLAIM) == 1
     assert claim_count(ledger, ENVELOPE_EXECUTED_CLAIM) == 1
     assert claim_count(ledger, MESSAGE_CARRIER_EXECUTED_CLAIM) == 1
+    assert ledger["execution_path_counts"] == {
+        "afpacket_generated_frames_over_vxlan": 1,
+        "json_carrier_artifact_handoff_over_ssh": 1,
+        "json_hex_pdu_control_exchange_over_tcp": 1,
+    }
+    claims = {claim["id"]: claim for claim in ledger["claims"]}
+    assert claims[PACKET_PATH_EXECUTED_CLAIM]["mechanism_ids"] == ["http2-ping-opaque"]
+    assert claims[ENVELOPE_EXECUTED_CLAIM]["mechanism_ids"] == ["rsa-pss-salt"]
+    assert claims[MESSAGE_CARRIER_EXECUTED_CLAIM]["mechanism_ids"] == ["dns-txt-tunnel"]
+    assert all("run_backed_real_pdu" not in claim["id"] for claim in ledger["claims"])
+
+
+def test_crosshost_index_intersects_failed_runs_instead_of_ignoring_them(tmp_path):
+    passing = _write_minimal_run(tmp_path / "passing")
+    failing = _write_minimal_run(tmp_path / "failing")
+    packet_path = failing / "packet-results.json"
+    packet = json.loads(packet_path.read_text())
+    packet[0]["result"] = "fail"
+    packet_path.write_text(json.dumps(packet, indent=2, sort_keys=True) + "\n")
+    summary_path = failing / "summary.json"
+    summary = json.loads(summary_path.read_text())
+    summary["required_pass"] = False
+    summary["packet"] = {"enabled": True, "pass": 0, "total": 1}
+    summary["usable_covered_by_required_suites"] = 1
+    summary["missing_usable"] = ["http2-ping-opaque"]
+    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
+
+    index = build_crosshost_public_index(
+        [passing, failing],
+        load_mechanisms(DATA),
+        generated_at_unix_s=1.0,
+    )
+
+    assert index["all_runs_required_pass"] is False
+    assert index["exact_recovery_mechanisms"] == ["rsa-pss-salt"]
+    assert index["exact_recovery_count"] == 1
+    assert index["mechanism_pass_counts_by_suite"]["packet"] == 0
+    assert index["execution_path_counts"]["afpacket_generated_frames_over_vxlan"] == 0
 
 
 def _write_minimal_run(run_dir: Path) -> Path:

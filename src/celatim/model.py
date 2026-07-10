@@ -71,6 +71,19 @@ class Survivability(str, Enum):
     #                                      without breaking authentication (cf. §7 negative results)
 
 
+class OnPathVisibility(str, Enum):
+    """Whether an ordinary in-path observer can read the carrier field itself.
+
+    This is independent of integrity. A cleartext authenticated field can be observed
+    but not transparently rewritten, while an encrypted field requires endpoint keys.
+    Some application protocols can run in either mode and must remain conditional.
+    """
+
+    CLEARTEXT = "cleartext"
+    ENCRYPTED = "encrypted"
+    DEPLOYMENT_DEPENDENT = "deployment_dependent"
+
+
 class ScrubStrategy(str, Enum):
     """The conformant defense that neutralizes a mechanism — derived from
     ``carrier_class`` and ``survivability`` (see ``Mechanism.scrub_strategy``).
@@ -140,15 +153,18 @@ class DetectionAnnotationSource(str, Enum):
 
 class Detectability(str, Enum):
     """Where (if anywhere) the mechanism is observable — derived from
-    ``capacity_model`` + ``survivability`` + ``detect_predicate``. Timing is
-    observable even under encryption (arrival times leak); a storage field inside
-    a crypto integrity check is not visible on-path; a subliminal channel is not
-    visible at all."""
+    ``capacity_model`` + ``on_path_visibility`` + ``detect_predicate``. Timing is
+    observable even under encryption (arrival times leak). Integrity and
+    confidentiality are separate: a cleartext authenticated field remains observable,
+    while an encrypted field requires endpoint keys."""
 
     STATELESS_FILTER = "stateless_filter"  # fixed offset+mask: nftables/iptables/BPF
     STATEFUL_DPI = "stateful_dpi"  # needs flow state / parsing / entropy: Zeek/Suricata
     STATISTICAL = "statistical"  # baseline / timing analysis, offline
-    ENDPOINT_ONLY = "endpoint_only"  # encrypted/authenticated; only the endpoint sees it
+    ENDPOINT_ONLY = "endpoint_only"  # protocol-encrypted; endpoint keys reveal the field
+    VISIBILITY_DEPENDENT = (
+        "visibility_dependent"  # cleartext or encrypted depending on deployment/mode
+    )
     UNDETECTABLE_ONWIRE = (
         "undetectable_onwire"  # subliminal: indistinguishable from required randomness
     )
@@ -244,6 +260,7 @@ class Mechanism:
         None  # what observation flags misuse (None => unassessed)
     )
     false_positive: FalsePositive | None = None  # benign base rate: alert-vs-log dial
+    on_path_visibility: OnPathVisibility = OnPathVisibility.CLEARTEXT
     reserved_value_matches: tuple[FieldValueMatch, ...] = ()
     negative_result: bool = False  # §7 contrast case: field exists but is NOT a usable
     #                                channel (validated / signed / header-protected against
@@ -349,17 +366,20 @@ class Mechanism:
 
     @property
     def detectability(self) -> Detectability:
-        """Where the mechanism is observable. Timing leaks through encryption
-        (arrival times), so it is checked before the integrity gate; a storage
-        field under a crypto integrity check is invisible on-path; a subliminal
-        channel is invisible everywhere on the wire. A located, fixed-value
-        cleartext field is the only thing a stateless packet filter can catch."""
+        """Where the mechanism is observable, independently of rewrite safety."""
         if self.capacity_model is CapacityModel.SUBLIMINAL:
             return Detectability.UNDETECTABLE_ONWIRE
         if self.capacity_model is CapacityModel.TIMING:
             return Detectability.STATISTICAL
-        if self.survivability is Survivability.INTEGRITY_BOUND:
+        if self.on_path_visibility is OnPathVisibility.ENCRYPTED:
             return Detectability.ENDPOINT_ONLY
+        if self.on_path_visibility is OnPathVisibility.DEPLOYMENT_DEPENDENT:
+            return Detectability.VISIBILITY_DEPENDENT
+        if self.survivability is Survivability.INTEGRITY_BOUND:
+            # The field is observable but authenticated. Keep it out of automatic
+            # fixed-offset rule emission until the enclosing authenticated protocol is
+            # parsed; integrity constrains rewriting, not inspection.
+            return Detectability.STATEFUL_DPI
         stateless = {
             DetectPredicate.NONZERO,
             DetectPredicate.RESERVED_VALUE,

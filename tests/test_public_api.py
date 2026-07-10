@@ -152,7 +152,7 @@ class RecordingRunner:
 
 def test_package_exposes_versioned_facade_metadata():
     assert version("celatim") == celatim.__version__
-    assert celatim.__version__ == "0.2.1"
+    assert celatim.__version__ == "0.2.2"
     assert any(
         entry_point.value == "celatim.cli:main"
         for entry_point in entry_points(group="console_scripts")
@@ -224,6 +224,7 @@ def test_package_mechanism_discovery_api_exposes_adapter_metadata():
     assert detail.mechanism_id == "http2-ping-opaque"
     assert detail_json["command"] == "mechanism show"
     assert detail_json["mechanism"]["id"] == "http2-ping-opaque"
+    assert detail_json["mechanism"]["on_path_visibility"] == "deployment_dependent"
     assert detail_json["adapter"]["evidence"]["bucket"] == "real_pdu_packet_path"
 
     with pytest.raises(KeyError, match="unknown mechanism: no-such-mechanism"):
@@ -2278,6 +2279,7 @@ def test_package_endpoint_cli_mechanism_discovery_commands(tmp_path):
     assert show_document["command"] == "mechanism show"
     assert show_document["mechanism"]["id"] == "http2-ping-opaque"
     assert show_document["mechanism"]["capacity_model"] == "storage"
+    assert show_document["mechanism"]["on_path_visibility"] == "deployment_dependent"
     assert show_document["adapter"]["status"] == "real_pdu_fixture"
     assert show_document["adapter"]["supports_carrier_bytes"] is True
     assert "pcap" in show_document["adapter"]["transport_kinds"]

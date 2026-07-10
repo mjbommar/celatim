@@ -12,9 +12,6 @@ from ..analysis.crosshost_evidence import (
     ENVELOPE_EXECUTED_CLAIM,
     MESSAGE_CARRIER_EXECUTED_CLAIM,
     PACKET_PATH_EXECUTED_CLAIM,
-    REAL_DAEMON_OR_CRYPTO_EXECUTED_CLAIM,
-    REAL_PDU_EXECUTED_CLAIM,
-    TIMING_SCHEME_EXECUTED_CLAIM,
     claim_count,
     load_claim_ledger,
 )
@@ -44,9 +41,6 @@ class SurveyScaleMacros:
     codec_roundtrip_count: int
     structural_residual_count: int
     exact_recovery_executed_count: int = 0
-    real_pdu_executed_count: int = 0
-    real_daemon_or_crypto_executed_count: int = 0
-    timing_scheme_executed_count: int = 0
     packet_path_executed_count: int = 0
     envelope_executed_count: int = 0
     message_carrier_executed_count: int = 0
@@ -69,9 +63,6 @@ class SurveyScaleMacros:
             "codec_roundtrip_count": self.codec_roundtrip_count,
             "structural_residual_count": self.structural_residual_count,
             "exact_recovery_executed_count": self.exact_recovery_executed_count,
-            "real_pdu_executed_count": self.real_pdu_executed_count,
-            "real_daemon_or_crypto_executed_count": self.real_daemon_or_crypto_executed_count,
-            "timing_scheme_executed_count": self.timing_scheme_executed_count,
             "packet_path_executed_count": self.packet_path_executed_count,
             "envelope_executed_count": self.envelope_executed_count,
             "message_carrier_executed_count": self.message_carrier_executed_count,
@@ -118,12 +109,6 @@ def survey_scale_macros(
         codec_roundtrip_count=buckets.count("codec_roundtrip"),
         structural_residual_count=buckets.count("offset_represented_zero_blob"),
         exact_recovery_executed_count=claim_count(ledger, ALL_USABLE_EXACT_RECOVERY_CLAIM),
-        real_pdu_executed_count=claim_count(ledger, REAL_PDU_EXECUTED_CLAIM),
-        real_daemon_or_crypto_executed_count=claim_count(
-            ledger,
-            REAL_DAEMON_OR_CRYPTO_EXECUTED_CLAIM,
-        ),
-        timing_scheme_executed_count=claim_count(ledger, TIMING_SCHEME_EXECUTED_CLAIM),
         packet_path_executed_count=claim_count(ledger, PACKET_PATH_EXECUTED_CLAIM),
         envelope_executed_count=claim_count(ledger, ENVELOPE_EXECUTED_CLAIM),
         message_carrier_executed_count=claim_count(ledger, MESSAGE_CARRIER_EXECUTED_CLAIM),
@@ -161,9 +146,6 @@ def survey_scale_macros_tex(macros: SurveyScaleMacros) -> str:
             f"\\newcommand{{\\nstructuralresidual}}{{{_tex_int(macros.structural_residual_count)}\\xspace}}",
             "% Run-backed counts from the claim ledger. Zero means no ledger was supplied.",
             f"\\newcommand{{\\nexactrecoveryexecuted}}{{{_tex_int(macros.exact_recovery_executed_count)}\\xspace}}",
-            f"\\newcommand{{\\nrealpduexecuted}}{{{_tex_int(macros.real_pdu_executed_count)}\\xspace}}",
-            f"\\newcommand{{\\nrealdaemonexecuted}}{{{_tex_int(macros.real_daemon_or_crypto_executed_count)}\\xspace}}",
-            f"\\newcommand{{\\ntimingschemeexecuted}}{{{_tex_int(macros.timing_scheme_executed_count)}\\xspace}}",
             f"\\newcommand{{\\npacketpathexecuted}}{{{_tex_int(macros.packet_path_executed_count)}\\xspace}}",
             f"\\newcommand{{\\nenvelopeexecuted}}{{{_tex_int(macros.envelope_executed_count)}\\xspace}}",
             f"\\newcommand{{\\nmessagecarrierexecuted}}{{{_tex_int(macros.message_carrier_executed_count)}\\xspace}}",

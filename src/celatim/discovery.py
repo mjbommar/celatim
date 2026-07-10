@@ -206,6 +206,7 @@ def _mechanism_detail(mechanism: Mechanism) -> MechanismDetail:
             "wire_bits_typical": mechanism.wire_bits_typical,
             "reach": mechanism.reach.value,
             "survivability": mechanism.survivability.value,
+            "on_path_visibility": mechanism.on_path_visibility.value,
             "robust_unwitting": mechanism.robust_unwitting,
             "scrub_strategy": mechanism.scrub_strategy.value,
             "detect_predicate": mechanism.effective_detect_predicate.value,

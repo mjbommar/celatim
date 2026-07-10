@@ -186,6 +186,10 @@ That target runs:
 6. `uv run pytest`
 7. `scripts/installed_wheel_smoke.py`
 
+The type gate covers the package, tests, release scripts, and production experiment
+drivers. There are no directory-wide type-check exclusions; optional-stack boundaries
+use their concrete library modules so they remain statically resolvable.
+
 The installed-wheel smoke builds an sdist, builds the wheel from that sdist, installs it
 without dependencies into a fresh virtual environment, changes to a directory outside
 the checkout, and exercises all five console entry points plus representative public API

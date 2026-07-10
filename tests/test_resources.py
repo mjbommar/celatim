@@ -6,6 +6,7 @@ import re
 import tomllib
 from importlib.resources import files
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -221,6 +222,7 @@ def test_unified_celatim_project_owns_the_only_distribution_and_namespace():
     assert project["dependencies"] == []
     assert project["scripts"]["celatim"] == "celatim.cli:main"
     assert pyproject["tool"]["uv"]["build-backend"]["module-name"] == ["celatim"]
+    assert "src" not in pyproject["tool"]["ty"]
     assert not (search_root / "packages" / "celatim").exists()
     retired_namespace = "rfc" + "tunnel"
     assert not (PROJECT / "src" / retired_namespace).exists()
@@ -360,8 +362,40 @@ def test_standalone_docs_and_crosshost_tools_do_not_depend_on_workstation_paths(
     assert "FROM python:3.14-slim" in lab_dockerfile
     assert "python:3.13" not in lab_dockerfile
 
+    lab_script = (PROJECT / "experiments" / "lab.py").read_text()
+    assert 'PROJECT_ROOT / "data" / "mechanisms.jsonl"' in lab_script
+    assert 'CATALOG = "/work/' not in lab_script
+
     for result_file in ("applayer-results.json", "packet-family-results.json"):
         assert (crosshost / result_file).stat().st_mode & 0o111 == 0
+
+
+def test_lab_packet_constructors_resolve_concrete_scapy_modules(monkeypatch):
+    monkeypatch.syspath_prepend(str(PROJECT))
+    from experiments import lab
+
+    assert lab._template_by_id("http2-ping-opaque", lab.SND_IP, lab.RCV_IP) is not None
+    for protocol in (
+        "ICMP",
+        "IPv4",
+        "TCP",
+        "UDP",
+        "IPv6",
+        "ICMPv6",
+        "SCTP",
+        "VXLAN",
+        "GRE",
+        "Geneve",
+        "AH",
+        "IGMP",
+        "RIP",
+        "OSPF",
+        "DHCP",
+        "NTP",
+        "ESP",
+    ):
+        mechanism = SimpleNamespace(id=f"test-{protocol.lower()}", protocol=protocol)
+        assert bytes(lab._base_packet(mechanism, lab.SND_IP, lab.RCV_IP, 1))
 
 
 def test_crosshost_runner_resolves_standalone_and_paper_snapshot_layouts(tmp_path, monkeypatch):

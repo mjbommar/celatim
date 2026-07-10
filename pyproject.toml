@@ -130,8 +130,3 @@ known-first-party = ["celatim"]
 
 [tool.ty.environment]
 python-version = "3.14"
-
-[tool.ty.src]
-# The reusable library boundary is src/ plus tests. Legacy production experiment
-# scripts keep optional Scapy/ECDSA imports and are hardened through runtime tests.
-exclude = ["experiments"]

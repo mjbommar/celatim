@@ -16,6 +16,7 @@ import itertools
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 from celatim.catalog import load_mechanisms
 from celatim.channel.framer import Framer
@@ -28,14 +29,15 @@ from celatim.pdu import (
     build_initial_packet,
 )
 
-CATALOG = "/work/data/mechanisms.jsonl"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+CATALOG = PROJECT_ROOT / "data" / "mechanisms.jsonl"
 SND_IP = "10.10.0.1"
 RCV_IP = "10.10.0.2"
 SND_IP6 = "fd00::1"
 RCV_IP6 = "fd00::2"
 
 
-def _ip_hdr_bits(ipb: bytes) -> int:
+def _ip_hdr_bits(ipb: bytes | bytearray) -> int:
     """Bits from the IP header start to the transport header (version-aware)."""
     ver = ipb[0] >> 4
     if ver == 4:
@@ -291,7 +293,7 @@ _L2_FIELDS = {
 # one protocol hosts several mechanisms with different packet shapes (e.g. ICMP type 3
 # unused vs type 8 echo payload), and for the payload tunnels whose carrier is the L4 body.
 def _template_by_id(mech_id: str, src_ip: str, dst_ip: str):
-    from scapy.all import ICMP, IP, TCP, UDP
+    from scapy.layers.inet import ICMP, IP, TCP, UDP
 
     def ip():
         return IP(src=src_ip, dst=dst_ip)
@@ -317,7 +319,7 @@ def _template_by_id(mech_id: str, src_ip: str, dst_ip: str):
             # represented by the IP payload (offset-represented L2, see TEST-EVIDENCE.md).
             return IP(src=src_ip, dst=dst_ip, proto=port) / pad
         if transport == "IP6":
-            from scapy.all import IPv6
+            from scapy.layers.inet6 import IPv6
 
             # carried over IPv6 (nh=port): extension-header / ICMPv6-body reserved fields.
             return IPv6(src=SND_IP6, dst=RCV_IP6, nh=port) / pad
@@ -349,8 +351,8 @@ def _template_by_id(mech_id: str, src_ip: str, dst_ip: str):
 
 def _base_packet(m, src_ip: str, dst_ip: str, seq: int):
     """A representative IPv4/IPv6 packet whose header (or payload) carries ``m``'s field."""
-    from scapy.all import ICMP, IP, TCP, UDP, IPv6
-    from scapy.layers.inet6 import ICMPv6DestUnreach
+    from scapy.layers.inet import ICMP, IP, TCP, UDP
+    from scapy.layers.inet6 import ICMPv6DestUnreach, IPv6
 
     by_id = _template_by_id(m.id, src_ip, dst_ip)
     if by_id is not None:
@@ -367,7 +369,7 @@ def _base_packet(m, src_ip: str, dst_ip: str, seq: int):
     if p == "ICMPv6":
         return IPv6(src=SND_IP6, dst=RCV_IP6) / ICMPv6DestUnreach() / (b"\x00" * 8)
     if p == "SCTP":
-        from scapy.all import SCTP, SCTPChunkData
+        from scapy.layers.sctp import SCTP, SCTPChunkData
 
         return (
             IP(src=src_ip, dst=dst_ip)
@@ -375,7 +377,8 @@ def _base_packet(m, src_ip: str, dst_ip: str, seq: int):
             / SCTPChunkData(data=b"\x00" * 16)
         )
     if p == "VXLAN":
-        from scapy.all import UDP, VXLAN
+        from scapy.layers.inet import UDP
+        from scapy.layers.vxlan import VXLAN
 
         return (
             IP(src=src_ip, dst=dst_ip)
@@ -384,12 +387,12 @@ def _base_packet(m, src_ip: str, dst_ip: str, seq: int):
             / (b"\x00" * 32)
         )
     if p == "GRE":
-        from scapy.all import GRE
+        from scapy.layers.l2 import GRE
 
         return IP(src=src_ip, dst=dst_ip, proto=47) / GRE(proto=0x0800) / (b"\x00" * 20)
     if p == "Geneve":
-        from scapy.all import UDP
         from scapy.contrib.geneve import GENEVE
+        from scapy.layers.inet import UDP
 
         return IP(src=src_ip, dst=dst_ip) / UDP(sport=40000, dport=6081) / GENEVE() / (b"\x00" * 16)
     if p == "AH":
@@ -405,7 +408,7 @@ def _base_packet(m, src_ip: str, dst_ip: str, seq: int):
 
         return IP(src=src_ip, dst=dst_ip, ttl=1) / IGMP(type=0x11)
     if p == "RIP":
-        from scapy.all import UDP
+        from scapy.layers.inet import UDP
         from scapy.layers.rip import RIP, RIPEntry
 
         return IP(src=src_ip, dst=dst_ip) / UDP(sport=520, dport=520) / RIP() / RIPEntry()
@@ -414,12 +417,12 @@ def _base_packet(m, src_ip: str, dst_ip: str, seq: int):
 
         return IP(src=src_ip, dst=dst_ip, proto=89) / OSPF_Hdr() / OSPF_Hello()
     if p == "DHCP":
-        from scapy.all import UDP
         from scapy.layers.dhcp import BOOTP
+        from scapy.layers.inet import UDP
 
         return IP(src=src_ip, dst=dst_ip) / UDP(sport=68, dport=67) / BOOTP()
     if p == "NTP":
-        from scapy.all import UDP
+        from scapy.layers.inet import UDP
         from scapy.layers.ntp import NTP
 
         return IP(src=src_ip, dst=dst_ip) / UDP(sport=123, dport=123) / NTP() / (b"\x00" * 460)
@@ -430,8 +433,9 @@ def _base_packet(m, src_ip: str, dst_ip: str, seq: int):
     raise SystemExit(f"no packet template for protocol {p}")
 
 
-def _reparse(raw: bytes):
-    from scapy.all import IP, IPv6
+def _reparse(raw: bytes | bytearray):
+    from scapy.layers.inet import IP
+    from scapy.layers.inet6 import IPv6
 
     return IPv6(bytes(raw)) if (raw[0] >> 4) == 6 else IP(bytes(raw))
 
@@ -523,7 +527,9 @@ def calibrate(mech_id: str) -> bool:
     fails loudly — which a self-consistent round-trip test never would."""
     import subprocess
 
-    from scapy.all import IP, TCP, Ether, wrpcap
+    from scapy.layers.inet import IP, TCP
+    from scapy.layers.l2 import Ether
+    from scapy.utils import wrpcap
 
     from celatim.detect import bpf_filter
 
@@ -565,7 +571,7 @@ def benign(n: int, src_mac: str, dst_mac: str) -> None:
     """Send n ordinary TCP SYNs (reserved bits = 0) — benign baseline for FP counting."""
     import socket
 
-    from scapy.all import IP, TCP
+    from scapy.layers.inet import IP, TCP
 
     eth = (
         bytes.fromhex(dst_mac.replace(":", ""))
@@ -593,7 +599,7 @@ TIMING_QUANTUM = 0.010  # seconds per symbol step
 
 
 def _timing_frame(mech_id: str, src_mac: str, dst_mac: str) -> bytes:
-    from scapy.all import IP, UDP
+    from scapy.layers.inet import IP, UDP
 
     port = {"ntp-timing": 123, "dns-timing": 53, "quic-padding-frame-count": 443}.get(mech_id, 9999)
     pkt = IP(src=SND_IP, dst=RCV_IP) / UDP(sport=40000, dport=port) / (b"\x00" * 8)
@@ -673,13 +679,14 @@ def mac_self_peer_src() -> str:
 def _capture_l2(m, loc, codec, iface: str, n: int, out_file: str) -> None:
     """Receive L2-only frames at the tap, filtered by the carrier's ethertype, and read
     the covert field from the Ethernet-frame payload (base=ll, offset 0)."""
-    from scapy.all import Ether, sniff
+    from scapy.layers.l2 import Ether
+    from scapy.sendrecv import sniff
 
     from celatim.channel.codec import VariableLengthCodec
 
     bytes_field = isinstance(codec, VariableLengthCodec)
     et = _L2_FIELDS[m.id]
-    symbols: list[int] = []
+    symbols: list[int | bytes] = []
 
     def on_pkt(pkt) -> None:
         body = bytes(pkt)[14:]  # strip the 14-byte Ethernet header -> L2 payload
@@ -700,7 +707,9 @@ def _capture_l2(m, loc, codec, iface: str, n: int, out_file: str) -> None:
 
 
 def capture(mech_id: str, iface: str, n: int, out_file: str) -> None:
-    from scapy.all import IP, IPv6, sniff
+    from scapy.layers.inet import IP
+    from scapy.layers.inet6 import IPv6
+    from scapy.sendrecv import sniff
 
     m = _mech(mech_id)
     loc = m.locator
@@ -708,7 +717,7 @@ def capture(mech_id: str, iface: str, n: int, out_file: str) -> None:
     if mech_id in _L2_FIELDS:
         _capture_l2(m, loc, codec, iface, n, out_file)
         return
-    symbols: list[int] = []
+    symbols: list[int | bytes] = []
 
     def is_ours(p) -> bool:
         if IP in p:
@@ -740,7 +749,7 @@ def forward(in_if: str, out_if: str, scrub_mech: str) -> None:
     (a real userspace normalizer). ``scrub_mech == 'pass'`` forwards unchanged."""
     import socket
 
-    from scapy.all import IP, TCP
+    from scapy.layers.inet import IP, TCP
 
     loc = None if scrub_mech == "pass" else _mech(scrub_mech).locator
     rx = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0003))

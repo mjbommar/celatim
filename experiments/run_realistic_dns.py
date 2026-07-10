@@ -83,7 +83,8 @@ def dig_once(opt_hex: str | None) -> str:
 
 def padding_from_pcap() -> bytes:
     """Read the EDNS(0) Padding option (code 12) out of the real captured query."""
-    from scapy.all import DNS, DNSRROPT, rdpcap
+    from scapy.layers.dns import DNS, DNSRROPT
+    from scapy.utils import rdpcap
 
     for p in rdpcap(PCAP):
         if DNS not in p or p[DNS].qr != 0:

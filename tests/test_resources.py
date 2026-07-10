@@ -337,6 +337,82 @@ def test_unified_installed_wheel_smoke_covers_public_package_surface():
     assert "rfc" + "tunnel" not in script
 
 
+def test_standalone_docs_and_crosshost_tools_do_not_depend_on_workstation_paths():
+    readme = (PROJECT / "README.md").read_text()
+    assert "../PLAN.md" not in readme
+    assert "make reviewer-" not in readme
+    assert "measurement/data/" not in readme
+
+    crosshost = PROJECT / "experiments" / "crosshost"
+    sources = [*crosshost.glob("*.py"), crosshost / "Dockerfile.alicebob"]
+    forbidden = ("/home/", "/nas", "/work/measurement", "measurement/data/")
+    for source in sources:
+        text = source.read_text()
+        for value in forbidden:
+            assert value not in text, f"{source.name}: {value}"
+
+    dockerfile = (crosshost / "Dockerfile.alicebob").read_text()
+    assert "ARG CELATIM_SOURCE=." in dockerfile
+    assert "COPY ${CELATIM_SOURCE} /work/celatim" in dockerfile
+    assert "FROM python:3.14-slim" in dockerfile
+
+    lab_dockerfile = (PROJECT / "experiments" / "Dockerfile").read_text()
+    assert "FROM python:3.14-slim" in lab_dockerfile
+    assert "python:3.13" not in lab_dockerfile
+
+    for result_file in ("applayer-results.json", "packet-family-results.json"):
+        assert (crosshost / result_file).stat().st_mode & 0o111 == 0
+
+
+def test_crosshost_runner_resolves_standalone_and_paper_snapshot_layouts(tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(str(PROJECT))
+    from experiments.crosshost.alice_bob_runner import Controller, RemoteConfig
+
+    remote = RemoteConfig(
+        host="example",
+        remote_root="/tmp/celatim-run",
+        image="celatim:test",
+        ssh="ssh",
+        docker="docker",
+    )
+
+    def controller(project_subdir: str) -> Controller:
+        return Controller(
+            alice=remote,
+            bob=remote,
+            output_dir=tmp_path,
+            payload=b"test",
+            alice_vx_ip="10.200.0.7",
+            bob_vx_ip="10.200.0.6",
+            alice_vx_mac="02:00:00:00:00:07",
+            bob_vx_mac="02:00:00:00:00:06",
+            vxlan_dev="vxlan0",
+            message_port=9911,
+            receiver_ready_s=0.0,
+            packet_timeout_s=1.0,
+            unit_rate_hz=1.0,
+            packet_backend="host-python",
+            message_backend="host-python",
+            project_subdir=project_subdir,
+        )
+
+    standalone = controller(".")
+    paper_snapshot = controller("measurement")
+    assert standalone.remote_project_dir(remote) == "/tmp/celatim-run/repo"
+    assert paper_snapshot.remote_project_dir(remote) == "/tmp/celatim-run/repo/measurement"
+    assert standalone.helper_runner_path("host-python") == (
+        "experiments/crosshost/alice_bob_runner.py"
+    )
+    assert "PYTHONPATH=/tmp/celatim-run/repo/src:" in standalone.host_python_command(
+        remote, ("python", "--version")
+    )
+    assert "PYTHONPATH=/tmp/celatim-run/repo/measurement/src:" in (
+        paper_snapshot.host_python_command(remote, ("python", "--version"))
+    )
+    with pytest.raises(ValueError, match="unsafe project subdirectory"):
+        controller("../escape")
+
+
 def test_api_guide_python_examples_execute_against_packaged_resources(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.syspath_prepend(str(CELATIM / "src"))

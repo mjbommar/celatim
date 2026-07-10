@@ -18,13 +18,14 @@ import struct
 import sys
 from pathlib import Path
 
-sys.path.insert(0, "/nas4/data/celatim/measurement/src")
-from celatim.catalog import load_mechanisms
-from celatim.channel.framer import Framer
-from celatim.channel.registry import codec_for
-from celatim.testbed.message_carrier import MESSAGE_CARRIER_KINDS
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+from celatim.catalog import load_mechanisms  # noqa: E402
+from celatim.channel.framer import Framer  # noqa: E402
+from celatim.channel.registry import codec_for  # noqa: E402
+from celatim.testbed.message_carrier import MESSAGE_CARRIER_KINDS  # noqa: E402
 
-CATALOG = "/nas4/data/celatim/measurement/data/mechanisms.jsonl"
+CATALOG = PROJECT_ROOT / "data" / "mechanisms.jsonl"
 QNAME = "covert.example."
 MECHS = {
     "dns-txt-tunnel": "dns_txt_dnspython",
@@ -34,7 +35,7 @@ MECHS = {
     "websocket-tunnel": "websocket_websockets",
     "bgp-optional-transitive": "bgp_scapy",
 }
-_MS = {m.id: m for m in load_mechanisms(Path(CATALOG))}
+_MS = {m.id: m for m in load_mechanisms(CATALOG)}
 
 
 def _send(sock: socket.socket, obj: dict) -> None:

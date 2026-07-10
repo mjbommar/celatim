@@ -1,38 +1,78 @@
 #!/usr/bin/env python3
-"""Plain AF_PACKET sniffer on s6 vxlan0: count covert frames 10.200.0.7:40000 -> 10.200.0.6:443."""
+"""Count selected IPv4/TCP frames received through an AF_PACKET interface."""
 
+from __future__ import annotations
+
+import argparse
 import socket
 import struct
-import sys
 import time
+from collections.abc import Sequence
 from pathlib import Path
 
-DUR = float(sys.argv[1]) if len(sys.argv) > 1 else 15.0
-s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0003))
-s.bind(("vxlan0", 0))
-s.settimeout(1.0)
-want_src = socket.inet_aton("10.200.0.7")
-want_dst = socket.inet_aton("10.200.0.6")
-n = 0
-end = time.monotonic() + DUR
-while time.monotonic() < end:
+
+def count_frames(
+    *,
+    duration_s: float,
+    interface: str,
+    source_ip: str,
+    destination_ip: str,
+    source_port: int,
+    destination_port: int,
+) -> int:
+    frame_socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0003))
+    frame_socket.bind((interface, 0))
+    frame_socket.settimeout(1.0)
+    wanted_source = socket.inet_aton(source_ip)
+    wanted_destination = socket.inet_aton(destination_ip)
+    count = 0
+    end = time.monotonic() + duration_s
     try:
-        f = s.recv(65535)
-    except TimeoutError:
-        continue
-    if len(f) < 14 + 20 + 20:
-        continue
-    eth_type = f[12:14]
-    if eth_type != b"\x08\x00":
-        continue
-    ip = f[14:]
-    if ip[9] != 6:  # tcp
-        continue
-    if ip[12:16] != want_src or ip[16:20] != want_dst:
-        continue
-    ihl = (ip[0] & 0x0F) * 4
-    sport, dport = struct.unpack(">HH", ip[ihl : ihl + 4])
-    if (sport, dport) == (40000, 443):
-        n += 1
-Path("/nas4/data/celatim/sniff6_count.txt").write_text(str(n))
-print("CAPTURED", n)
+        while time.monotonic() < end:
+            try:
+                frame = frame_socket.recv(65535)
+            except TimeoutError:
+                continue
+            if len(frame) < 14 + 20 + 20 or frame[12:14] != b"\x08\x00":
+                continue
+            packet = frame[14:]
+            if packet[9] != socket.IPPROTO_TCP:
+                continue
+            if packet[12:16] != wanted_source or packet[16:20] != wanted_destination:
+                continue
+            header_length = (packet[0] & 0x0F) * 4
+            ports = struct.unpack(">HH", packet[header_length : header_length + 4])
+            if ports == (source_port, destination_port):
+                count += 1
+    finally:
+        frame_socket.close()
+    return count
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--duration-s", type=float, default=15.0)
+    parser.add_argument("--interface", default="vxlan0")
+    parser.add_argument("--source-ip", default="10.200.0.7")
+    parser.add_argument("--destination-ip", default="10.200.0.6")
+    parser.add_argument("--source-port", type=int, default=40000)
+    parser.add_argument("--destination-port", type=int, default=443)
+    parser.add_argument("--output", type=Path, default=Path("sniff6-count.txt"))
+    args = parser.parse_args(argv)
+
+    count = count_frames(
+        duration_s=args.duration_s,
+        interface=args.interface,
+        source_ip=args.source_ip,
+        destination_ip=args.destination_ip,
+        source_port=args.source_port,
+        destination_port=args.destination_port,
+    )
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(f"{count}\n")
+    print("CAPTURED", count)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

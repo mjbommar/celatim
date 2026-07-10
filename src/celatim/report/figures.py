@@ -378,7 +378,7 @@ def _svg(width: int, height: int, body: str, title: str) -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
         f'viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">\n'
         f'<title id="title">{escape(title)}</title>\n'
-        '<desc id="desc">Generated from measurement/data/mechanisms.jsonl.</desc>\n'
+        '<desc id="desc">Generated from the packaged Celatim mechanism catalog.</desc>\n'
         '<rect width="100%" height="100%" fill="#ffffff"/>\n'
         f"{body}\n"
         "</svg>\n"

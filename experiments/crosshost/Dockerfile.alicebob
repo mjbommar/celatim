@@ -6,9 +6,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /work
 
-COPY measurement /work/measurement
+ARG CELATIM_SOURCE=.
+COPY ${CELATIM_SOURCE} /work/celatim
 
 RUN python -m pip install --upgrade pip \
-    && python -m pip install -e "/work/measurement[packet,crypto,daemon,dns,ssh,iot,realtime]"
+    && python -m pip install -e "/work/celatim[packet,crypto,daemon,dns,ssh,iot,realtime]"
 
 ENV PATH="/usr/local/bin:${PATH}"

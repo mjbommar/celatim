@@ -8,7 +8,7 @@ import json
 import subprocess
 from pathlib import Path
 
-# layout/loader.py -> celatim -> src -> measurement/  (then measurement/cmeasure)
+# layout/loader.py -> celatim -> src -> project root -> cmeasure
 CMEASURE_DIR = Path(__file__).resolve().parents[3] / "cmeasure"
 
 

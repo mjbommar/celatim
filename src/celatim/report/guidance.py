@@ -19,7 +19,7 @@ def detector_scrub_guidance_markdown(mechanisms: Iterable[Mechanism]) -> str:
     rows = [
         "# Detector and Scrub Guidance",
         "",
-        "Generated from `measurement/data/mechanisms.jsonl`. This public-safe guidance",
+        "Generated from the packaged Celatim mechanism catalog. This public-safe guidance",
         "summarizes defensive posture by catalog field semantics; it does not include",
         "channel implementation code, evidence JSON, pcaps, run logs, or carrier dumps.",
         "",

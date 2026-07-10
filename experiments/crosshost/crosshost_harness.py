@@ -11,28 +11,35 @@ Run on s7:  python crosshost_harness.py [mech1 mech2 ...]   (default: all afpack
 from __future__ import annotations
 
 import json
+import os
+import shlex
 import subprocess
 import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, "/nas4/data/celatim/measurement/src")
-from celatim.adapter import adapter_for
-from celatim.catalog import load_mechanisms
-from celatim.testbed.packet_path import default_ipv4_packet_path_config_for
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+from celatim.adapter import adapter_for  # noqa: E402
+from celatim.catalog import load_mechanisms  # noqa: E402
+from celatim.testbed.packet_path import default_ipv4_packet_path_config_for  # noqa: E402
 
-VENV = "/nas4/data/celatim/venv/bin"
-CATALOG = "/nas4/data/celatim/measurement/data/mechanisms.jsonl"
-NAS = "/nas4/data/celatim"
+CELATIM_BIN = os.environ.get("CELATIM_BIN", str(Path(sys.executable).with_name("celatim")))
+CATALOG = PROJECT_ROOT / "data" / "mechanisms.jsonl"
+OUTPUT_DIR = Path(os.environ.get("CELATIM_CROSSHOST_OUTPUT_DIR", PROJECT_ROOT / "out/crosshost"))
+REMOTE_RESULT_DIR = os.environ.get("CELATIM_REMOTE_RESULT_DIR", "/tmp/celatim-crosshost")
+REMOTE_HOST = os.environ.get("CELATIM_REMOTE_HOST", "s6")
 # overlay
-S7_VX, S6_VX = "10.200.0.7", "10.200.0.6"
-S7_MAC, S6_MAC = "52:ff:ab:1b:a1:69", "8a:7c:91:39:8e:35"
-IFACE = "vxlan0"
+S7_VX = os.environ.get("CELATIM_SENDER_IP", "10.200.0.7")
+S6_VX = os.environ.get("CELATIM_RECEIVER_IP", "10.200.0.6")
+S7_MAC = os.environ.get("CELATIM_SENDER_MAC", "52:ff:ab:1b:a1:69")
+S6_MAC = os.environ.get("CELATIM_RECEIVER_MAC", "8a:7c:91:39:8e:35")
+IFACE = os.environ.get("CELATIM_CROSSHOST_INTERFACE", "vxlan0")
 PAYLOAD = b"the quick brown fox covertly jumps s7->s6 0123456789"
 
 
 def afpacket_mechs() -> list[str]:
-    ms = [m for m in load_mechanisms(Path(CATALOG)) if m.is_usable_channel]
+    ms = [m for m in load_mechanisms(CATALOG) if m.is_usable_channel]
     return [m.id for m in ms if adapter_for(m).supports_transport("afpacket_ipv4")]
 
 
@@ -41,14 +48,13 @@ def run(mech: str) -> dict:
     proto = cfg.protocol.value  # 'tcp' | 'udp'
     dport = str(cfg.dst_port)
     sid = f"xh-{mech}"
-    res_path = f"{NAS}/xhres_{mech}.json"
-    Path(res_path).unlink(missing_ok=True)
+    res_path = f"{REMOTE_RESULT_DIR}/xhres_{mech}.json"
 
     # 1) frame count via a local dry send
     dry = f"/tmp/dry_{mech}.json"
     subprocess.run(
         [
-            f"{VENV}/celatim",
+            CELATIM_BIN,
             "send",
             "--mechanism",
             mech,
@@ -89,13 +95,17 @@ def run(mech: str) -> dict:
     ]
     # 2) receiver on s6 (background ssh, blocks until N frames or timeout)
     recv_cmd = (
-        f"sudo {VENV}/celatim recv --afpacket-ipv4 "
+        f"mkdir -p {shlex.quote(REMOTE_RESULT_DIR)} && "
+        f"sudo {shlex.quote(CELATIM_BIN)} recv --afpacket-ipv4 "
         + " ".join(common)
         + f" --expected-frames {nf} --afpacket-receiver-interface {IFACE} "
-        f"--afpacket-timeout-s 30 --output {res_path}"
+        f"--afpacket-timeout-s 30 --output {shlex.quote(res_path)}"
     )
     recv = subprocess.Popen(
-        ["ssh", "s6", recv_cmd], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+        ["ssh", REMOTE_HOST, recv_cmd],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
     )
     time.sleep(6)  # let the receiver bind
 
@@ -103,7 +113,7 @@ def run(mech: str) -> dict:
     send = subprocess.run(
         [
             "sudo",
-            f"{VENV}/celatim",
+            CELATIM_BIN,
             "send",
             "--afpacket-ipv4",
             *common,
@@ -126,7 +136,7 @@ def run(mech: str) -> dict:
 
     # 4) verify (read on s6 to dodge NAS sync lag)
     got = subprocess.run(
-        ["ssh", "s6", f"cat {res_path} 2>/dev/null || true"],
+        ["ssh", REMOTE_HOST, f"cat {shlex.quote(res_path)} 2>/dev/null || true"],
         capture_output=True,
         text=True,
     ).stdout.strip()
@@ -159,7 +169,8 @@ def main() -> int:
         results.append(r)
         flag = {"pass": "PASS", "fail": "FAIL", "skip": "SKIP"}[r["result"]]
         print(f"[{i:2}/{len(mechs)}] {flag:4} {m:26} {r.get('reason', '')}", flush=True)
-    Path(f"{NAS}/crosshost_results.json").write_text(json.dumps(results, indent=2))
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    (OUTPUT_DIR / "crosshost-results.json").write_text(json.dumps(results, indent=2) + "\n")
     npass = sum(1 for r in results if r["result"] == "pass")
     print(
         f"\nGREEN {npass}/{len(results)}  "

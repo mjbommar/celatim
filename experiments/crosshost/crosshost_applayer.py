@@ -11,21 +11,28 @@ and recovered on a different host.
 from __future__ import annotations
 
 import json
+import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, "/nas4/data/celatim/measurement/src")
-from celatim.adapter import adapter_for
-from celatim.catalog import load_mechanisms
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+from celatim.adapter import adapter_for  # noqa: E402
+from celatim.catalog import load_mechanisms  # noqa: E402
 
-VENV = "/nas4/data/celatim/venv/bin"
-CATALOG = "/nas4/data/celatim/measurement/data/mechanisms.jsonl"
+CELATIM_BIN = os.environ.get("CELATIM_BIN", str(Path(sys.executable).with_name("celatim")))
+CATALOG = PROJECT_ROOT / "data" / "mechanisms.jsonl"
+OUTPUT_DIR = Path(
+    os.environ.get("CELATIM_CROSSHOST_OUTPUT_DIR", str(PROJECT_ROOT / "out/crosshost"))
+)
+REMOTE_HOST = os.environ.get("CELATIM_REMOTE_HOST", "s6")
 PAYLOAD = b"covert app-layer payload s7->s6 :: 0123456789 abcdefghij"
 
 
 def remaining_mechs() -> list[str]:
-    ms = [m for m in load_mechanisms(Path(CATALOG)) if m.is_usable_channel]
+    ms = [m for m in load_mechanisms(CATALOG) if m.is_usable_channel]
     return [m.id for m in ms if not adapter_for(m).supports_transport("afpacket_ipv4")]
 
 
@@ -35,7 +42,7 @@ def run(mech: str) -> dict:
     # 1) s7 encodes payload into the real carrier (envelope holds the protocol PDU bytes)
     s = subprocess.run(
         [
-            f"{VENV}/celatim",
+            CELATIM_BIN,
             "send",
             "--mechanism",
             mech,
@@ -59,10 +66,10 @@ def run(mech: str) -> dict:
     # 2) ship the carrier to s6 over the network and decode it there with the real parser
     blob = Path(env).read_bytes()
     remote = (
-        f"cat > /tmp/rx_{mech}.json && {VENV}/celatim recv "
+        f"cat > /tmp/rx_{mech}.json && {shlex.quote(CELATIM_BIN)} recv "
         f"--input /tmp/rx_{mech}.json --output /tmp/rec_{mech}.json && cat /tmp/rec_{mech}.json"
     )
-    r = subprocess.run(["ssh", "s6", remote], input=blob, capture_output=True)
+    r = subprocess.run(["ssh", REMOTE_HOST, remote], input=blob, capture_output=True)
     if r.returncode != 0:
         return {
             "mechanism": mech,
@@ -91,7 +98,8 @@ def main() -> int:
         results.append(r)
         flag = {"pass": "PASS", "fail": "FAIL", "skip": "SKIP"}[r["result"]]
         print(f"[{i:2}/{len(mechs)}] {flag:4} {m:30} {r.get('reason', '')}", flush=True)
-    Path("/nas4/data/celatim/applayer_results.json").write_text(json.dumps(results, indent=2))
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    (OUTPUT_DIR / "applayer-results.json").write_text(json.dumps(results, indent=2) + "\n")
     npass = sum(1 for r in results if r["result"] == "pass")
     nskip = sum(1 for r in results if r["result"] == "skip")
     print(f"\nGREEN {npass}/{len(results)}  (fail {len(results) - npass - nskip}, skip {nskip})")

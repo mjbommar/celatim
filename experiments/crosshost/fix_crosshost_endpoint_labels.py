@@ -62,8 +62,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_ARTIFACTS_ROOT = REPO_ROOT / "artifacts" / "alice-bob"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+ARTIFACT_ROOT = PROJECT_ROOT.parent if (PROJECT_ROOT.parent / "paper").is_dir() else PROJECT_ROOT
+DEFAULT_ARTIFACTS_ROOT = ARTIFACT_ROOT / "artifacts" / "alice-bob"
 
 BAD_TOPOLOGY_KIND = "same_process"
 GOOD_TOPOLOGY_KIND = "cross_host"

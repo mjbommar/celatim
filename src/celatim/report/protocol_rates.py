@@ -154,7 +154,7 @@ def protocol_rates_markdown(
     rows = [
         "# Protocol Rate Assumptions",
         "",
-        "Generated from `measurement/data/protocol_rates.toml`. Values are carrier-unit",
+        "Generated from the packaged Celatim protocol-rate catalog. Values are carrier-unit",
         "rates used for structural throughput upper-bound figures; they are not measured",
         "production goodput and must not be cited as evidence-run measured rate output.",
         "",

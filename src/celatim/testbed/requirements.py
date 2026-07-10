@@ -101,7 +101,7 @@ TESTBED_REQUIREMENT_PROFILES: tuple[TestbedRequirementProfile, ...] = (
         required_privileges=("cap_net_admin",),
         required_tools=("dig", "dnsmasq", "ip", "tcpdump"),
         required_extras=("packet",),
-        legacy_experiments=("measurement/experiments/run_realistic_dns.py",),
+        legacy_experiments=("experiments/run_realistic_dns.py",),
         reviewer_commands=(
             (
                 "make",
@@ -120,7 +120,7 @@ TESTBED_REQUIREMENT_PROFILES: tuple[TestbedRequirementProfile, ...] = (
         evidence_tiers=("crafted_production_path",),
         required_privileges=("cap_net_admin", "cap_net_raw"),
         required_tools=("ip", "tcpdump"),
-        legacy_experiments=("measurement/experiments/run_taps.py",),
+        legacy_experiments=("experiments/run_taps.py",),
         notes=(
             "Documents where a field survives or is scrubbed across a controlled middlebox path.",
             "The runner still depends on experiment-script topology wrappers.",
@@ -134,7 +134,7 @@ TESTBED_REQUIREMENT_PROFILES: tuple[TestbedRequirementProfile, ...] = (
         required_privileges=("docker",),
         required_tools=("docker",),
         optional_tools=("tcpdump", "tshark"),
-        legacy_experiments=("measurement/experiments/Dockerfile",),
+        legacy_experiments=("experiments/Dockerfile",),
         notes=(
             "Docker packaging exists only as a base experiment artifact today.",
             "Future scenarios should record image digests in evidence metadata.",

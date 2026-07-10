@@ -22,9 +22,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-MEASUREMENT_SRC = Path(__file__).resolve().parents[2] / "src"
-if MEASUREMENT_SRC.exists():
-    sys.path.insert(0, str(MEASUREMENT_SRC))
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_SRC = PROJECT_ROOT / "src"
+if PROJECT_SRC.exists():
+    sys.path.insert(0, str(PROJECT_SRC))
 
 from celatim.analysis.crosshost_metrics import (  # noqa: E402
     METRICS_SCHEMA_VERSION,
@@ -35,9 +36,10 @@ from celatim.analysis.crosshost_metrics import (  # noqa: E402
     packet_method_wire_bytes,
 )
 
-RUNNER_IN_IMAGE = "/work/measurement/experiments/crosshost/alice_bob_runner.py"
-CATALOG_IN_IMAGE = "/work/measurement/data/mechanisms.jsonl"
-LOCAL_CATALOG = Path("measurement/data/mechanisms.jsonl")
+PROJECT_IN_IMAGE = "/work/celatim"
+RUNNER_IN_IMAGE = f"{PROJECT_IN_IMAGE}/experiments/crosshost/alice_bob_runner.py"
+CATALOG_IN_IMAGE = f"{PROJECT_IN_IMAGE}/data/mechanisms.jsonl"
+LOCAL_CATALOG = PROJECT_ROOT / "data" / "mechanisms.jsonl"
 VXLAN_UNDERLAY_OVERHEAD_NO_FCS_BYTES = 50
 MESSAGE_QNAME = "covert.example."
 MESSAGE_CARRIER_MECHS = {
@@ -298,6 +300,7 @@ class Controller:
         unit_rate_hz: float,
         packet_backend: str,
         message_backend: str,
+        project_subdir: str,
     ) -> None:
         self.alice = alice
         self.bob = bob
@@ -315,7 +318,20 @@ class Controller:
         self.unit_rate_hz = unit_rate_hz
         self.packet_backend = packet_backend
         self.message_backend = message_backend
+        normalized_subdir = project_subdir.strip("/")
+        if normalized_subdir == ".":
+            normalized_subdir = ""
+        if not normalized_subdir or all(
+            part not in {"", ".", ".."} for part in normalized_subdir.split("/")
+        ):
+            self.project_subdir = normalized_subdir
+        else:
+            raise ValueError(f"unsafe project subdirectory: {project_subdir!r}")
         self.mechanism_metadata = _catalog_metadata()
+
+    def remote_project_dir(self, remote: RemoteConfig) -> str:
+        suffix = f"/{self.project_subdir}" if self.project_subdir else ""
+        return f"{remote.remote_root}/repo{suffix}"
 
     def ssh_run(
         self,
@@ -415,15 +431,13 @@ class Controller:
                 "from celatim.cli import session_main; raise SystemExit(session_main())",
                 *mapped[1:],
             ]
-        pythonpath = (
-            f"{remote.remote_root}/repo/measurement/src:"
-            f"{remote.remote_root}/host-python/site-packages"
-        )
+        project_dir = self.remote_project_dir(remote)
+        pythonpath = f"{project_dir}/src:{remote.remote_root}/host-python/site-packages"
         parts = ["env", "PYTHONDONTWRITEBYTECODE=1", f"PYTHONPATH={pythonpath}", *mapped]
         if sudo:
             parts = ["sudo", "-n", *parts]
         command = " ".join(shlex.quote(p) for p in parts)
-        return f"cd {shlex.quote(remote.remote_root + '/repo')} && {command}"
+        return f"cd {shlex.quote(project_dir)} && {command}"
 
     def host_python_run(
         self,
@@ -507,9 +521,7 @@ class Controller:
 
     def helper_runner_path(self, backend: str) -> str:
         return (
-            RUNNER_IN_IMAGE
-            if backend == "docker"
-            else "measurement/experiments/crosshost/alice_bob_runner.py"
+            RUNNER_IN_IMAGE if backend == "docker" else "experiments/crosshost/alice_bob_runner.py"
         )
 
     def message_run(
@@ -886,8 +898,8 @@ class Controller:
             self.payload_path(self.alice, self.message_backend),
         ]
         if self.message_backend == "host-python":
-            server_argv.extend(["--catalog", "measurement/data/mechanisms.jsonl"])
-            client_argv.extend(["--catalog", "measurement/data/mechanisms.jsonl"])
+            server_argv.extend(["--catalog", "data/mechanisms.jsonl"])
+            client_argv.extend(["--catalog", "data/mechanisms.jsonl"])
 
         name = f"celatim-message-{int(time.time())}"
         stop_cmd = f"{self.bob.docker} rm -f {shlex.quote(name)} >/dev/null 2>&1 || true"
@@ -947,7 +959,7 @@ class Controller:
         for role, remote in (("alice", self.alice), ("bob", self.bob)):
             result = self.docker_run(
                 remote,
-                ["python", "/work/measurement/experiments/run_negatives.py"],
+                ["python", f"{PROJECT_IN_IMAGE}/experiments/run_negatives.py"],
                 timeout_s=120,
             )
             results.append(
@@ -1228,6 +1240,7 @@ def cmd_coordinate(args: argparse.Namespace) -> int:
         unit_rate_hz=args.unit_rate_hz,
         packet_backend=args.packet_backend,
         message_backend=args.message_backend,
+        project_subdir=args.project_subdir,
     )
     return controller.run(args)
 
@@ -1282,6 +1295,11 @@ def build_parser() -> argparse.ArgumentParser:
     coord_p.add_argument("--unit-rate-hz", type=float, default=800.0)
     coord_p.add_argument("--packet-backend", choices=["docker", "host-python"], default="docker")
     coord_p.add_argument("--message-backend", choices=["docker", "host-python"], default="docker")
+    coord_p.add_argument(
+        "--project-subdir",
+        default=".",
+        help="Package path below the staged remote repository root (for example, measurement).",
+    )
     coord_p.add_argument("--ssh", default="ssh")
     coord_p.add_argument("--docker", default="docker")
     coord_p.add_argument("--skip-packet", action="store_true")

@@ -108,7 +108,7 @@ def support_matrix_markdown(mechanisms: Iterable[Mechanism]) -> str:
     rows = [
         "# Evidence Support Matrix",
         "",
-        "Generated from `measurement/data/mechanisms.jsonl` and the conservative current",
+        "Generated from the packaged Celatim mechanism catalog and the conservative current",
         "evidence classifier in `celatim.evidence`. This matrix is deliberately stricter",
         "than the old wire-battery headline: zero-filled nominal-offset rows are separated",
         "from real-PDU and real-daemon evidence.",

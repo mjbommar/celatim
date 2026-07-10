@@ -59,7 +59,7 @@ def test_figure_artifacts_are_svg_and_public_safe():
     }
     for artifact in artifacts.values():
         assert artifact.content.startswith("<svg ")
-        assert "Generated from measurement/data/mechanisms.jsonl" in artifact.content
+        assert "Generated from the packaged Celatim mechanism catalog" in artifact.content
         assert "payload_rate_bps" not in artifact.content
         assert len(artifact.sha256) == 64
     assert "not measured production goodput" in artifacts[THROUGHPUT_UPPER_BOUNDS_FILENAME].content

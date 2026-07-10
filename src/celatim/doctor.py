@@ -700,7 +700,7 @@ def _package_version() -> str:
     try:
         return version("celatim")
     except PackageNotFoundError:
-        return "0.2.0"
+        return "0.2.1"
 
 
 __all__ = [

@@ -123,6 +123,24 @@ def main(argv: list[str] | None = None) -> int:
                 str(python),
                 "-c",
                 (
+                    "from celatim import MechanismProfile; "
+                    "from celatim.pdu import tls_fields; "
+                    "profile = MechanismProfile.from_catalog('tls-record-padding'); "
+                    "assert profile.mechanism.raw_capacity_bits == 14; "
+                    "assert profile.mechanism.locator is None; "
+                    "carrier = tls_fields.build_record('tls-record-padding', 37); "
+                    "assert carrier[5] == 23; assert carrier[6:] == bytes(37); "
+                    "assert tls_fields.parse_record('tls-record-padding', carrier) == 37"
+                ),
+            ],
+            cwd=smoke_dir,
+            commands=commands,
+        )
+        _run(
+            [
+                str(python),
+                "-c",
+                (
                     "import importlib.metadata as metadata, json; "
                     "from pathlib import Path; "
                     "import celatim; "

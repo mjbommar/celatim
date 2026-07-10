@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from celatim.catalog import load_mechanisms
 from celatim.channel.codec import VariableLengthCodec
 from celatim.channel.registry import codec_for
@@ -29,13 +31,12 @@ def test_supports_registered_rows():
     assert not t.supports("tcp-reserved-bits")
 
 
-def test_each_tls_field_roundtrips_in_real_wire_structure():
+def test_each_tls_field_roundtrips_in_serialized_structure():
     mechs = {m.id: m for m in load_mechanisms(DATA)}
     for mid in ROWS:
-        locator = mechs[mid].locator
-        assert locator is not None
-        width = locator.bit_width
-        assert t.is_bytes_symbol(mid) == isinstance(codec_for(mechs[mid]), VariableLengthCodec)
+        codec = codec_for(mechs[mid])
+        width = codec.capacity_bits
+        assert t.is_bytes_symbol(mid) == isinstance(codec, VariableLengthCodec)
         if t.is_bytes_symbol(mid):
             value: int | bytes = bytes((i * 5 + 1) % 256 for i in range(width // 8))
         else:
@@ -43,3 +44,22 @@ def test_each_tls_field_roundtrips_in_real_wire_structure():
         carrier = t.build_record(mid, value)
         assert carrier
         assert t.parse_record(mid, carrier) == value
+
+
+def test_tls13_record_padding_uses_only_an_all_zero_run_length():
+    mechs = {m.id: m for m in load_mechanisms(DATA)}
+    mechanism = mechs["tls-record-padding"]
+    assert mechanism.raw_capacity_bits == 14
+    assert mechanism.locator is None
+    assert not t.is_bytes_symbol(mechanism.id)
+
+    carrier = t.build_record(mechanism.id, 37)
+    assert carrier[5] == 23
+    assert carrier[6:] == b"\x00" * 37
+    assert t.parse_record(mechanism.id, carrier) == 37
+
+    invalid = carrier[:-1] + b"\x01"
+    with pytest.raises(ValueError, match="contain only zeros"):
+        t.parse_record(mechanism.id, invalid)
+    with pytest.raises(ValueError, match="fit in 14 bits"):
+        t.build_record(mechanism.id, 1 << 14)

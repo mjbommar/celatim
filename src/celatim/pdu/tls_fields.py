@@ -1,10 +1,11 @@
-"""TLS reserved-field carriers built as real TLS record/handshake wire structures.
+"""TLS carrier fixtures built from serialized record and handshake structures.
 
 Each carrier sets the covert value in the genuine TLS field -- the record version, the
-ClientHello ``gmt_unix_time`` and ``legacy_session_id``, a TLS 1.3 record's padding, a
+ClientHello ``gmt_unix_time`` and ``legacy_session_id``, a TLS 1.3 record's padding length, a
 padding extension (RFC 7685), a GREASE extension (RFC 8701), or a Heartbeat message's
-padding (RFC 6520) -- using the real wire layout, recovered from the same field. Pure
-stdlib (struct), no extras.
+padding (RFC 6520) -- using the corresponding serialized protocol element and recovering
+it from the same structure. These fixtures do not by themselves establish native-stack
+acceptance or encrypted on-wire transit. Pure stdlib (struct), no extras.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 _TLS12 = 0x0303
+_TLS13_PADDING_CAPACITY_BITS = 14
 
 
 def _build_record_version(value: int) -> bytes:
@@ -51,14 +53,23 @@ def _parse_session_id(carrier: bytes) -> bytes:
     return carrier[pos : pos + sid_len]
 
 
-def _build_record_padding(value: bytes) -> bytes:
-    inner = b"\x00" + bytes([22]) + value  # 1-byte content + real content type + TLS 1.3 padding
+def _build_record_padding(value: int) -> bytes:
+    if not 0 <= value < (1 << _TLS13_PADDING_CAPACITY_BITS):
+        raise ValueError("TLS 1.3 record padding length must fit in 14 bits")
+    # Zero-length Application Data is allowed. RFC 8446 requires every octet after
+    # the inner content type to be zero, so only the run length carries a symbol.
+    inner = bytes([23]) + b"\x00" * value
     return bytes([23]) + struct.pack(">H", _TLS12) + struct.pack(">H", len(inner)) + inner
 
 
-def _parse_record_padding(carrier: bytes) -> bytes:
+def _parse_record_padding(carrier: bytes) -> int:
+    if len(carrier) < 6 or carrier[:3] != bytes([23]) + struct.pack(">H", _TLS12):
+        raise ValueError("invalid TLS 1.3 record-padding fixture")
     length = struct.unpack(">H", carrier[3:5])[0]
-    return carrier[5 : 5 + length][2:]
+    inner = carrier[5:]
+    if len(inner) != length or inner[0] != 23 or any(inner[1:]):
+        raise ValueError("TLS 1.3 padding must follow the content type and contain only zeros")
+    return len(inner) - 1
 
 
 def _build_clienthello_padding(value: int) -> bytes:
@@ -106,7 +117,7 @@ _CARRIERS: dict[str, _TlsCarrier] = {
         _build_session_id, _parse_session_id, symbol_is_bytes=True
     ),
     "tls-record-padding": _TlsCarrier(
-        _build_record_padding, _parse_record_padding, symbol_is_bytes=True
+        _build_record_padding, _parse_record_padding, symbol_is_bytes=False
     ),
     "tls-clienthello-padding": _TlsCarrier(
         _build_clienthello_padding, _parse_clienthello_padding, symbol_is_bytes=False

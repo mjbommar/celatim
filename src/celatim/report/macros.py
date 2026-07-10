@@ -41,6 +41,7 @@ class SurveyScaleMacros:
     real_pdu_count: int
     real_daemon_or_crypto_count: int
     timing_scheme_count: int
+    codec_roundtrip_count: int
     structural_residual_count: int
     exact_recovery_executed_count: int = 0
     real_pdu_executed_count: int = 0
@@ -65,6 +66,7 @@ class SurveyScaleMacros:
             "real_pdu_count": self.real_pdu_count,
             "real_daemon_or_crypto_count": self.real_daemon_or_crypto_count,
             "timing_scheme_count": self.timing_scheme_count,
+            "codec_roundtrip_count": self.codec_roundtrip_count,
             "structural_residual_count": self.structural_residual_count,
             "exact_recovery_executed_count": self.exact_recovery_executed_count,
             "real_pdu_executed_count": self.real_pdu_executed_count,
@@ -113,6 +115,7 @@ def survey_scale_macros(
         real_pdu_count=buckets.count("real_pdu_packet_path"),
         real_daemon_or_crypto_count=buckets.count("real_daemon_or_crypto_path"),
         timing_scheme_count=buckets.count("timing_scheme"),
+        codec_roundtrip_count=buckets.count("codec_roundtrip"),
         structural_residual_count=buckets.count("offset_represented_zero_blob"),
         exact_recovery_executed_count=claim_count(ledger, ALL_USABLE_EXACT_RECOVERY_CLAIM),
         real_pdu_executed_count=claim_count(ledger, REAL_PDU_EXECUTED_CLAIM),
@@ -148,11 +151,13 @@ def survey_scale_macros_tex(macros: SurveyScaleMacros) -> str:
             f"\\newcommand{{\\nrealpducapable}}{{{_tex_int(macros.real_pdu_count)}\\xspace}}",
             f"\\newcommand{{\\nrealdaemoncapable}}{{{_tex_int(macros.real_daemon_or_crypto_count)}\\xspace}}",
             f"\\newcommand{{\\ntimingschemecapable}}{{{_tex_int(macros.timing_scheme_count)}\\xspace}}",
+            f"\\newcommand{{\\ncodeconlycapable}}{{{_tex_int(macros.codec_roundtrip_count)}\\xspace}}",
             "% Backward-compatible aliases: capability classifications, not standalone run counts.",
             f"\\newcommand{{\\nsubstantiated}}{{{_tex_int(macros.substantiated_count)}\\xspace}}",
             f"\\newcommand{{\\nrealpdu}}{{{_tex_int(macros.real_pdu_count)}\\xspace}}",
             f"\\newcommand{{\\nrealdaemon}}{{{_tex_int(macros.real_daemon_or_crypto_count)}\\xspace}}",
             f"\\newcommand{{\\ntimingscheme}}{{{_tex_int(macros.timing_scheme_count)}\\xspace}}",
+            f"\\newcommand{{\\ncodeconly}}{{{_tex_int(macros.codec_roundtrip_count)}\\xspace}}",
             f"\\newcommand{{\\nstructuralresidual}}{{{_tex_int(macros.structural_residual_count)}\\xspace}}",
             "% Run-backed counts from the claim ledger. Zero means no ledger was supplied.",
             f"\\newcommand{{\\nexactrecoveryexecuted}}{{{_tex_int(macros.exact_recovery_executed_count)}\\xspace}}",

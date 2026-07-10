@@ -54,7 +54,7 @@ Status values are `pending`, `in_progress`, `verified`, and `blocked`.
 - [x] `verified` Freeze v1 schemas and documented compatibility policy.
 - [ ] `pending` Resolve independent security-review findings.
 - [x] `verified` Update README hello worlds for users, developers, and academics.
-- [ ] `pending` Sync a manifest-verified snapshot into `rfc-tunnel-survey`.
+- [x] `verified` Sync a manifest-verified snapshot into `rfc-tunnel-survey`.
 - [x] `verified` Complete a requirement-by-requirement roadmap audit.
 
 ## Workstream Coverage

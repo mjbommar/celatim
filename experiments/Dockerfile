@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         iptables nftables \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir scapy ecdsa
+RUN pip install --no-cache-dir cryptography scapy
 
 # celatim is pure stdlib; import it straight from the mounted source tree.
 ENV PYTHONPATH=/work/src

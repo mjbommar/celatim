@@ -1049,17 +1049,22 @@ def main(argv: list[str] | None = None) -> int:
             commands=commands,
         )
         _run(
+            [args.uv, "pip", "check", "--python", str(python)],
+            cwd=smoke_dir,
+            commands=commands,
+        )
+        _run(
             [
                 str(python),
                 "-c",
                 (
                     "import importlib.metadata as metadata, json; "
-                    "import aiocoap, aioquic, cryptography, dns, ecdsa, h2, "
+                    "import aiocoap, aioquic, cryptography, dns, h2, "
                     "paho.mqtt, paramiko, scapy, websockets; "
                     "from pathlib import Path; "
                     f"extras = {extras!r}; "
                     "distributions = ('aiocoap', 'aioquic', 'cryptography', 'dnspython', "
-                    "'ecdsa', 'h2', 'paho-mqtt', 'paramiko', 'scapy', 'websockets'); "
+                    "'h2', 'paho-mqtt', 'paramiko', 'scapy', 'websockets'); "
                     "versions = {name: metadata.version(name) for name in distributions}; "
                     "Path('all-extras.json').write_text(json.dumps({"
                     "'extras': extras, 'versions': versions}, sort_keys=True) + '\\n')"
@@ -1109,8 +1114,16 @@ def _build_release(
 def _assert_release_members(sdist: Path, wheel: Path) -> None:
     with tarfile.open(sdist) as archive:
         sdist_members = archive.getnames()
+        sdist_content = b"\n".join(
+            extracted.read()
+            for member in archive.getmembers()
+            if member.isfile() and (extracted := archive.extractfile(member)) is not None
+        ).lower()
     with zipfile.ZipFile(wheel) as archive:
         wheel_members = archive.namelist()
+        wheel_content = b"\n".join(
+            archive.read(name) for name in wheel_members if not name.endswith("/")
+        ).lower()
 
     retired_core = "rfc" + "tunnel"
     retired_wrapper = "bu" + "bo"
@@ -1128,6 +1141,22 @@ def _assert_release_members(sdist: Path, wheel: Path) -> None:
         present = [fragment for fragment in forbidden if fragment in joined]
         if present:
             raise RuntimeError(f"{artifact}: forbidden release paths: {present}")
+    forbidden_content = tuple(
+        value.encode()
+        for value in (
+            retired_core,
+            retired_wrapper,
+            "packages/",
+            "/home/",
+            "/nas",
+            "/work/measurement",
+            "measurement/src/",
+        )
+    )
+    for artifact, content in ((sdist, sdist_content), (wheel, wheel_content)):
+        present = [fragment.decode() for fragment in forbidden_content if fragment in content]
+        if present:
+            raise RuntimeError(f"{artifact}: forbidden release content: {present}")
     if not any(name.endswith("/src/celatim/py.typed") for name in sdist_members):
         raise RuntimeError(f"{sdist}: missing typed-package marker")
     if "celatim/py.typed" not in wheel_members:

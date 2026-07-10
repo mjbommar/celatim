@@ -42,6 +42,16 @@ class EcdsaNonceTranscriptConfig:
 
 
 @dataclass(frozen=True)
+class _EcdsaCurveSpec:
+    curve: Any
+    order: int
+
+    @property
+    def baselen(self) -> int:
+        return (self.order.bit_length() + 7) // 8
+
+
+@dataclass(frozen=True)
 class RsaPssSaltTranscriptConfig:
     """Controls for the local RSA-PSS salt transcript path."""
 
@@ -75,7 +85,9 @@ class EcdsaNonceTranscriptTransport:
     every signature with the public key, and recovers the nonce from the transcript
     using the signing scalar. The transcript artifact records the verifiable public
     evidence and hash references; the reusable channel framing still decides the
-    payload bytes.
+    payload bytes. This is not a general-purpose signer: explicit nonce construction
+    is restricted to fresh per-transcript research keys and must never be used with a
+    production or long-lived signing key.
     """
 
     def __init__(
@@ -97,19 +109,20 @@ class EcdsaNonceTranscriptTransport:
         symbols: list[Symbol],
         pacing: PacingConfig | None = None,
     ) -> None:
-        ecdsa = _ecdsa_modules()
-        curve = _curve_by_name(ecdsa, self.config.curve)
+        crypto = _cryptography_modules()
+        curve = _ecdsa_curve_by_name(crypto["ec"], self.config.curve)
         hashfunc = _hash_constructor(self.config.hash_name)
-        order = int(curve.order)
+        hash_algorithm = _cryptography_hash_algorithm(crypto["hashes"], self.config.hash_name)
+        order = curve.order
         if (1 << self.config.nonce_payload_bits) >= order:
             raise TransportError(
                 f"{self.config.curve}: order is too small for "
                 f"{self.config.nonce_payload_bits}-bit embedded nonce payloads"
             )
 
-        signing_key = ecdsa.SigningKey.generate(curve=curve)
-        verifying_key = signing_key.verifying_key
-        private_scalar = int(signing_key.privkey.secret_multiplier)
+        signing_key = crypto["ec"].generate_private_key(curve.curve)
+        verifying_key = signing_key.public_key()
+        private_scalar = int(signing_key.private_numbers().private_value)
         symbol_bytes = self.config.nonce_payload_bits // 8
         recovered_symbols: list[Symbol] = []
         signature_entries: list[dict[str, Any]] = []
@@ -123,13 +136,20 @@ class EcdsaNonceTranscriptTransport:
             message = _message_bytes(self.config.message_prefix, session_id, index)
             digest = hashfunc(message).digest()
             nonce = int.from_bytes(symbol_value, "big") + 1
-            signature = signing_key.sign_digest(
-                digest,
-                sigencode=ecdsa.util.sigencode_string,
-                k=nonce,
+            signature, r, s = _sign_ecdsa_digest_with_nonce(
+                crypto=crypto,
+                curve=curve,
+                private_scalar=private_scalar,
+                digest=digest,
+                nonce=nonce,
             )
-            r, s = _decode_signature(signature, curve.baselen)
-            verified = _verify_digest(ecdsa, verifying_key, signature, digest)
+            verified = _verify_ecdsa_digest(
+                crypto,
+                verifying_key,
+                signature,
+                digest,
+                hash_algorithm,
+            )
             recovered_nonce = _recover_ecdsa_nonce(
                 digest=digest,
                 r=r,
@@ -163,13 +183,13 @@ class EcdsaNonceTranscriptTransport:
             )
 
         honest_control = _honest_random_control(
-            ecdsa=ecdsa,
+            crypto=crypto,
             signing_key=signing_key,
             verifying_key=verifying_key,
             private_scalar=private_scalar,
             order=order,
-            baselen=curve.baselen,
             hashfunc=hashfunc,
+            hash_algorithm=hash_algorithm,
             message_prefix=self.config.message_prefix,
             session_id=session_id,
             count=self.config.honest_random_control_signatures,
@@ -183,11 +203,13 @@ class EcdsaNonceTranscriptTransport:
             "hash_name": self.config.hash_name,
             "nonce_payload_bits": self.config.nonce_payload_bits,
             "embedded_nonce_mapping": "k = int(symbol_bytes) + 1",
+            "signing_backend": "cryptography_openssl_with_explicit_research_nonce",
+            "key_scope": "ephemeral_per_transcript",
             "signature_count": len(signature_entries),
             "verified_signature_count": sum(1 for entry in signature_entries if entry["verified"]),
             "recovered_symbol_count": len(recovered_symbols),
-            "public_key_sha256": _hash_bytes(verifying_key.to_string()),
-            "public_key_hex": verifying_key.to_string().hex(),
+            "public_key_sha256": _hash_bytes(_ecdsa_public_key_bytes(verifying_key, curve.baselen)),
+            "public_key_hex": _ecdsa_public_key_bytes(verifying_key, curve.baselen).hex(),
             "claim_status": ECDSA_NONCE_CLAIM_STATUS,
             "honest_random_control": honest_control,
             "signatures": signature_entries,
@@ -547,16 +569,6 @@ class RsaPssSaltTranscriptReplayTransport:
         return self.transcript_path
 
 
-def _ecdsa_modules() -> Any:
-    try:
-        import ecdsa
-    except ImportError as exc:  # pragma: no cover - depends on optional extra installation
-        raise TransportError(
-            "crypto_ecdsa_nonce transport requires optional extra 'crypto' (ecdsa>=0.19.1)"
-        ) from exc
-    return ecdsa
-
-
 def _load_transcript(path: Path) -> dict[str, Any]:
     try:
         raw = json.loads(path.read_text())
@@ -599,26 +611,48 @@ def _cryptography_modules() -> dict[str, Any]:
     try:
         from cryptography.exceptions import InvalidSignature
         from cryptography.hazmat.primitives import hashes, serialization
-        from cryptography.hazmat.primitives.asymmetric import padding, rsa
+        from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa, utils
     except ImportError as exc:  # pragma: no cover - depends on optional extra installation
         raise TransportError(
-            "crypto_rsa_pss_salt transport requires optional extra 'crypto' (cryptography>=46.0.3)"
+            "crypto transcript transports require optional extra 'crypto' (cryptography>=46.0.3)"
         ) from exc
     return {
         "InvalidSignature": InvalidSignature,
+        "ec": ec,
         "hashes": hashes,
         "padding": padding,
         "rsa": rsa,
         "serialization": serialization,
+        "utils": utils,
     }
 
 
-def _curve_by_name(ecdsa: Any, curve: str) -> Any:
+def _ecdsa_curve_by_name(ec: Any, curve: str) -> _EcdsaCurveSpec:
     curves = {
-        "NIST256p": ecdsa.NIST256p,
-        "NIST384p": ecdsa.NIST384p,
-        "NIST521p": ecdsa.NIST521p,
-        "SECP256k1": ecdsa.SECP256k1,
+        "NIST256p": _EcdsaCurveSpec(
+            ec.SECP256R1(),
+            int("FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551", 16),
+        ),
+        "NIST384p": _EcdsaCurveSpec(
+            ec.SECP384R1(),
+            int(
+                "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC7634D81F4372DDF"
+                "581A0DB248B0A77AECEC196ACCC52973",
+                16,
+            ),
+        ),
+        "NIST521p": _EcdsaCurveSpec(
+            ec.SECP521R1(),
+            int(
+                "01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+                "FA51868783BF2F966B7FCC0148F709A5D03BB5C9B8899C47AEBB6FB71E91386409",
+                16,
+            ),
+        ),
+        "SECP256k1": _EcdsaCurveSpec(
+            ec.SECP256K1(),
+            int("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16),
+        ),
     }
     try:
         return curves[curve]
@@ -667,26 +701,52 @@ def _message_bytes(prefix: str, session_id: str, index: int) -> bytes:
     return f"{prefix}/{session_id}/{index}".encode()
 
 
-def _decode_signature(signature: bytes, baselen: int) -> tuple[int, int]:
-    if len(signature) != baselen * 2:
-        raise TransportError("unexpected ECDSA signature length")
-    return (
-        int.from_bytes(signature[:baselen], "big"),
-        int.from_bytes(signature[baselen:], "big"),
-    )
-
-
-def _verify_digest(ecdsa: Any, verifying_key: Any, signature: bytes, digest: bytes) -> bool:
+def _verify_ecdsa_digest(
+    crypto: dict[str, Any],
+    verifying_key: Any,
+    signature: bytes,
+    digest: bytes,
+    hash_algorithm: Any,
+) -> bool:
     try:
-        return bool(
-            verifying_key.verify_digest(
-                signature,
-                digest,
-                sigdecode=ecdsa.util.sigdecode_string,
-            )
+        verifying_key.verify(
+            signature,
+            digest,
+            crypto["ec"].ECDSA(crypto["utils"].Prehashed(hash_algorithm)),
         )
-    except ecdsa.BadSignatureError:
+        return True
+    except crypto["InvalidSignature"]:
         return False
+
+
+def _digest_to_ecdsa_scalar(digest: bytes, order: int) -> int:
+    value = int.from_bytes(digest, "big")
+    excess_bits = len(digest) * 8 - order.bit_length()
+    return value >> max(0, excess_bits)
+
+
+def _sign_ecdsa_digest_with_nonce(
+    *,
+    crypto: dict[str, Any],
+    curve: _EcdsaCurveSpec,
+    private_scalar: int,
+    digest: bytes,
+    nonce: int,
+) -> tuple[bytes, int, int]:
+    if not 1 <= nonce < curve.order:
+        raise TransportError("ECDSA nonce must be in the curve scalar range")
+    nonce_point = crypto["ec"].derive_private_key(nonce, curve.curve).public_key()
+    r = int(nonce_point.public_numbers().x) % curve.order
+    z = _digest_to_ecdsa_scalar(digest, curve.order)
+    s = (pow(nonce, -1, curve.order) * (z + r * private_scalar)) % curve.order
+    if r == 0 or s == 0:
+        raise TransportError("explicit ECDSA nonce produced an invalid zero signature scalar")
+    return crypto["utils"].encode_dss_signature(r, s), r, s
+
+
+def _ecdsa_public_key_bytes(public_key: Any, baselen: int) -> bytes:
+    numbers = public_key.public_numbers()
+    return int(numbers.x).to_bytes(baselen, "big") + int(numbers.y).to_bytes(baselen, "big")
 
 
 def _recover_ecdsa_nonce(
@@ -697,7 +757,7 @@ def _recover_ecdsa_nonce(
     private_scalar: int,
     order: int,
 ) -> int:
-    z = int.from_bytes(digest, "big")
+    z = _digest_to_ecdsa_scalar(digest, order)
     return ((z + r * private_scalar) * pow(s, -1, order)) % order
 
 
@@ -975,13 +1035,13 @@ def _rsa_pss_honest_random_control(
 
 def _honest_random_control(
     *,
-    ecdsa: Any,
+    crypto: dict[str, Any],
     signing_key: Any,
     verifying_key: Any,
     private_scalar: int,
     order: int,
-    baselen: int,
     hashfunc: Any,
+    hash_algorithm: Any,
     message_prefix: str,
     session_id: str,
     count: int,
@@ -991,9 +1051,18 @@ def _honest_random_control(
     for index in range(count):
         message = _message_bytes(message_prefix, f"{session_id}:honest-random-control", index)
         digest = hashfunc(message).digest()
-        signature = signing_key.sign_digest(digest, sigencode=ecdsa.util.sigencode_string)
-        r, s = _decode_signature(signature, baselen)
-        verified = _verify_digest(ecdsa, verifying_key, signature, digest)
+        signature = signing_key.sign(
+            digest,
+            crypto["ec"].ECDSA(crypto["utils"].Prehashed(hash_algorithm)),
+        )
+        r, s = crypto["utils"].decode_dss_signature(signature)
+        verified = _verify_ecdsa_digest(
+            crypto,
+            verifying_key,
+            signature,
+            digest,
+            hash_algorithm,
+        )
         recovered_nonce = _recover_ecdsa_nonce(
             digest=digest,
             r=r,

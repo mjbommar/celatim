@@ -1062,7 +1062,7 @@ def test_run_evidence_records_quic_aioquic_transcript_artifacts(tmp_path, monkey
 
 
 def test_run_evidence_records_ecdsa_crypto_transcript_artifacts(tmp_path):
-    pytest.importorskip("ecdsa")
+    pytest.importorskip("cryptography")
     transcript_dir = tmp_path / "transcripts"
 
     result = run_evidence(

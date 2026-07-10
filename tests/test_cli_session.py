@@ -2092,7 +2092,7 @@ def test_session_cli_scenario_run_accepts_scenario_id(tmp_path):
 
 
 def test_session_cli_scenario_run_writes_crypto_transcripts_with_override(tmp_path):
-    pytest.importorskip("ecdsa")
+    pytest.importorskip("cryptography")
     run = tmp_path / "scenario-run.json"
     transcript_template = tmp_path / "transcripts" / "{scenario_id}-{case}.json"
 

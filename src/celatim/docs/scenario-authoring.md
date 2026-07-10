@@ -60,7 +60,9 @@ JSON. If `artifact_dir` is set and `log_dir` is not, logs are written under
   netns, and tcpdump capture.
 - `crypto_ecdsa_nonce`: non-privileged local ECDSA signing/verification transcript for
   the `ecdsa-nonce` Class G mechanism. It writes a sensitive JSON transcript artifact
-  when `transcript_json` is set.
+  when `transcript_json` is set. It creates an ephemeral key for each transcript;
+  explicit nonce construction is research-only and must not be used with production
+  or long-lived signing keys.
 - `crypto_rsa_pss_salt`: non-privileged local RSA-PSS signing/verification transcript
   for the `rsa-pss-salt` Class G mechanism. It writes a sensitive JSON transcript
   artifact when `transcript_json` is set.

@@ -25,7 +25,7 @@ from celatim.crypto_transcript import (
 from celatim.errors import TransportError
 from celatim.session import ChannelSession, MechanismProfile
 
-pytest.importorskip("ecdsa")
+pytest.importorskip("cryptography")
 
 DATA = Path(__file__).resolve().parents[1] / "data" / "mechanisms.jsonl"
 
@@ -52,6 +52,8 @@ def test_ecdsa_nonce_transcript_roundtrip_signs_verifies_and_recovers_symbols(tm
     assert transcript["schema_version"] == ECDSA_NONCE_TRANSCRIPT_SCHEMA_VERSION
     assert transcript["mechanism_id"] == "ecdsa-nonce"
     assert transcript["claim_status"] == ECDSA_NONCE_CLAIM_STATUS
+    assert transcript["signing_backend"] == "cryptography_openssl_with_explicit_research_nonce"
+    assert transcript["key_scope"] == "ephemeral_per_transcript"
     assert transcript["signature_count"] == 1
     assert transcript["verified_signature_count"] == 1
     assert transcript["recovered_symbol_count"] == 1
@@ -91,6 +93,32 @@ def test_ecdsa_nonce_transcript_replay_decodes_persisted_artifact(tmp_path):
     assert replay.path_for("ecdsa-replay-test") == transcript_path
     assert metadata["schema_version"] == ECDSA_NONCE_TRANSPORT_METADATA_SCHEMA_VERSION
     assert metadata["transcript_sha256"] == hashlib.sha256(transcript_path.read_bytes()).hexdigest()
+
+
+def test_ecdsa_nonce_transcript_truncates_wide_digest_to_curve_order(tmp_path):
+    profile = MechanismProfile.from_catalog("ecdsa-nonce", DATA)
+    transcript_path = tmp_path / "ecdsa-p384-sha512.json"
+    transport = EcdsaNonceTranscriptTransport(
+        profile,
+        EcdsaNonceTranscriptConfig(
+            transcript_path=transcript_path,
+            curve="NIST384p",
+            hash_name="sha512",
+            honest_random_control_signatures=1,
+        ),
+    )
+
+    result = ChannelSession(profile, transport).run_roundtrip(
+        b"digest truncation",
+        session_id="ecdsa-p384-sha512",
+    )
+
+    transcript = json.loads(transcript_path.read_text())
+    assert result.payload == b"digest truncation"
+    assert transcript["curve"] == "NIST384p"
+    assert transcript["hash_name"] == "sha512"
+    assert transcript["verified_signature_count"] == transcript["signature_count"]
+    assert transcript["honest_random_control"]["verified_signature_count"] == 1
 
 
 def test_ecdsa_nonce_transcript_rejects_non_ecdsa_mechanism():

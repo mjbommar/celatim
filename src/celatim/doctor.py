@@ -38,7 +38,7 @@ TOOL_VERSION_COMMANDS = {
 }
 PACKAGE_EXTRA_MODULES = {
     "packet": (("scapy", "scapy"),),
-    "crypto": (("cryptography", "cryptography"), ("ecdsa", "ecdsa")),
+    "crypto": (("cryptography", "cryptography"),),
     "daemon": (("aioquic", "aioquic"), ("h2", "h2")),
     "dns": (("dns", "dnspython"),),
     "ssh": (("paramiko", "paramiko"),),

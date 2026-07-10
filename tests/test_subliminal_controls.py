@@ -20,7 +20,6 @@ DATA = Path(__file__).resolve().parents[1] / "data" / "mechanisms.jsonl"
 
 
 def test_subliminal_control_report_requires_requested_control_power(tmp_path):
-    pytest.importorskip("ecdsa")
     pytest.importorskip("cryptography")
     ecdsa_path = tmp_path / "ecdsa.json"
     rsa_path = tmp_path / "rsa.json"

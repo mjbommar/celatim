@@ -280,7 +280,7 @@ Tier-2/3 build, not a single-environment task.
 
 ### Subliminal (Class G) — real crypto, no network ambiguity
 
-`run_subliminal.py`: real **ECDSA** signing (NIST P-256, `ecdsa` lib) with covert bits
+`run_subliminal.py`: real **ECDSA** signing (`cryptography`/OpenSSL) with covert bits
 placed in the per-signature nonce *k*; a cooperating receiver who shares the private key
 recovers *k* = s⁻¹(z + r·d) mod n and reads the bits. `b'covert via nonce'` round-trips.
 This is the Simmons broadband channel as **functional working code** — it passes or fails,

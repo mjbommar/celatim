@@ -220,9 +220,11 @@ def test_unified_celatim_project_owns_the_only_distribution_and_namespace():
     assert project["version"] == "0.1.0"
     assert project["requires-python"] == ">=3.14"
     assert project["dependencies"] == []
+    assert project["optional-dependencies"]["crypto"] == ["cryptography>=46.0.3"]
     assert project["scripts"]["celatim"] == "celatim.cli:main"
     assert pyproject["tool"]["uv"]["build-backend"]["module-name"] == ["celatim"]
     assert "src" not in pyproject["tool"]["ty"]
+    assert 'name = "ecdsa"' not in (PROJECT / "uv.lock").read_text()
     assert not (search_root / "packages" / "celatim").exists()
     retired_namespace = "rfc" + "tunnel"
     assert not (PROJECT / "src" / retired_namespace).exists()
@@ -339,8 +341,10 @@ def test_unified_installed_wheel_smoke_covers_public_package_surface():
     assert "all-extras.json" in script
     assert '"performance": performance' in script
     assert '"extras": extras_report' in script
+    assert "forbidden release content" in script
     assert '"pip",' in script
     assert '"install",' in script
+    assert '"check",' in script
     assert "--no-deps" in script
     assert "packages" + "/celatim" not in script
     assert "rfc" + "tunnel" not in script

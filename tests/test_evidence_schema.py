@@ -577,7 +577,7 @@ def test_generated_observed_timing_sweep_matches_schema():
 
 
 def test_generated_crypto_transcript_evidence_matches_schema(tmp_path):
-    pytest.importorskip("ecdsa")
+    pytest.importorskip("cryptography")
     schema = _read_json(SCHEMA)
     config = load_scenario(PROJECT / "scenarios" / "zz-ecdsa-nonce-local.toml")
     config = dataclasses.replace(

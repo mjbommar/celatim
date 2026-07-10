@@ -169,7 +169,7 @@ def test_package_docs_lock_install_profiles_and_release_workflow():
     assert pyproject["project"]["dependencies"] == []
     assert pyproject["project"]["optional-dependencies"] == {
         "packet": ["scapy>=2.6.1"],
-        "crypto": ["cryptography>=46.0.3", "ecdsa>=0.19.1"],
+        "crypto": ["cryptography>=46.0.3"],
         "daemon": ["aioquic>=1.3.0", "h2>=4.3.0"],
         "dns": ["dnspython>=2.8.0"],
         "ssh": ["paramiko>=3.5.0"],
@@ -1922,7 +1922,7 @@ def test_package_endpoint_cli_dns_daemon_scenario_recv_requires_expected_frames(
 
 
 def test_package_endpoint_cli_crypto_scenario_send_recv_replays_transcript(tmp_path):
-    pytest.importorskip("ecdsa")
+    pytest.importorskip("cryptography")
     transcript = tmp_path / "ecdsa-transcript.json"
     sent = tmp_path / "ecdsa-send.json"
     received = tmp_path / "ecdsa-recv.json"

@@ -25,7 +25,9 @@ import hashlib
 import hmac
 import sys
 
-from ecdsa import BadSignatureError, NIST256p, SigningKey
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
 
 
 def integrity_negative(key: bytes) -> tuple[bool, bool]:
@@ -41,16 +43,17 @@ def integrity_negative(key: bytes) -> tuple[bool, bool]:
 
 def signature_negative() -> tuple[bool, bool]:
     """A signed attribute (real ECDSA): control verifies; covert breaks the signature."""
-    sk = SigningKey.generate(curve=NIST256p)
-    vk = sk.get_verifying_key()
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    public_key = private_key.public_key()
     msg0 = bytes(16)
-    sig = sk.sign(msg0)
-    control_ok = vk.verify(sig, msg0)  # raises on failure
+    signature = private_key.sign(msg0, ec.ECDSA(hashes.SHA256()))
+    public_key.verify(signature, msg0, ec.ECDSA(hashes.SHA256()))
+    control_ok = True
     covert = b"\x00\xab" + bytes(14)
     try:
-        vk.verify(sig, covert)
+        public_key.verify(signature, covert, ec.ECDSA(hashes.SHA256()))
         covert_rejected = False
-    except BadSignatureError:
+    except InvalidSignature:
         covert_rejected = True
     return control_ok, covert_rejected
 

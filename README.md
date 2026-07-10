@@ -162,6 +162,10 @@ Celatim distinguishes structural capability from executed evidence:
 Privileged experiments live under `experiments/`. They require explicit operator action
 and do not run during normal installation, import, or non-privileged CI.
 
+The chosen-nonce ECDSA transcript path is likewise research-only. It creates a fresh
+ephemeral key for each local transcript, uses `cryptography`/OpenSSL for curve operations
+and verification, and must not be used with production or long-lived signing keys.
+
 The companion
 [`rfc-tunnel-survey`](https://github.com/mjbommar/rfc-tunnel-survey) repository vendors
 a manifest-verified snapshot of this project alongside the paper, RFC corpus, generated
@@ -185,6 +189,7 @@ That target runs:
 5. `uv run ty check`
 6. `uv run pytest`
 7. `scripts/installed_wheel_smoke.py`
+8. `pip-audit` against every locked development and optional dependency
 
 The type gate covers the package, tests, release scripts, and production experiment
 drivers. There are no directory-wide type-check exclusions; optional-stack boundaries

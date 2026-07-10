@@ -15,10 +15,13 @@ ECDSA_NONCE_TRANSPORT_KIND = "crypto_ecdsa_nonce"
 ECDSA_NONCE_TRANSCRIPT_SCHEMA_VERSION = "celatim.crypto_transcript.ecdsa_nonce.v1"
 ECDSA_NONCE_TRANSPORT_METADATA_SCHEMA_VERSION = "celatim.transport_metadata.crypto_ecdsa_nonce.v1"
 ECDSA_NONCE_CLAIM_STATUS = "real_ecdsa_sign_verify_local_transcript_nonce_recovery"
+ECDSA_NONCE_SIGNING_BACKEND = "cryptography_openssl_with_explicit_research_nonce"
 RSA_PSS_SALT_TRANSPORT_KIND = "crypto_rsa_pss_salt"
 RSA_PSS_SALT_TRANSCRIPT_SCHEMA_VERSION = "celatim.crypto_transcript.rsa_pss_salt.v1"
 RSA_PSS_SALT_TRANSPORT_METADATA_SCHEMA_VERSION = "celatim.transport_metadata.crypto_rsa_pss_salt.v1"
 RSA_PSS_SALT_CLAIM_STATUS = "real_rsa_pss_sign_verify_local_transcript_salt_recovery"
+RSA_PSS_SALT_SIGNING_BACKEND = "cryptography_openssl_with_explicit_rfc8017_pss_salt"
+CRYPTO_TRANSCRIPT_KEY_SCOPE = "ephemeral_per_transcript"
 
 
 @dataclass(frozen=True)
@@ -203,8 +206,8 @@ class EcdsaNonceTranscriptTransport:
             "hash_name": self.config.hash_name,
             "nonce_payload_bits": self.config.nonce_payload_bits,
             "embedded_nonce_mapping": "k = int(symbol_bytes) + 1",
-            "signing_backend": "cryptography_openssl_with_explicit_research_nonce",
-            "key_scope": "ephemeral_per_transcript",
+            "signing_backend": ECDSA_NONCE_SIGNING_BACKEND,
+            "key_scope": CRYPTO_TRANSCRIPT_KEY_SCOPE,
             "signature_count": len(signature_entries),
             "verified_signature_count": sum(1 for entry in signature_entries if entry["verified"]),
             "recovered_symbol_count": len(recovered_symbols),
@@ -457,6 +460,8 @@ class RsaPssSaltTranscriptTransport:
             "mgf_hash_name": self.config.mgf_hash_name,
             "salt_payload_bits": self.config.salt_payload_bits,
             "embedded_salt_mapping": "salt = symbol_bytes",
+            "signing_backend": RSA_PSS_SALT_SIGNING_BACKEND,
+            "key_scope": CRYPTO_TRANSCRIPT_KEY_SCOPE,
             "signature_count": len(signature_entries),
             "verified_signature_count": sum(1 for entry in signature_entries if entry["verified"]),
             "recovered_symbol_count": len(recovered_symbols),

@@ -11,7 +11,10 @@ from time import time
 from typing import Any
 
 from celatim.crypto_transcript import (
+    CRYPTO_TRANSCRIPT_KEY_SCOPE,
+    ECDSA_NONCE_SIGNING_BACKEND,
     ECDSA_NONCE_TRANSCRIPT_SCHEMA_VERSION,
+    RSA_PSS_SALT_SIGNING_BACKEND,
     RSA_PSS_SALT_TRANSCRIPT_SCHEMA_VERSION,
 )
 
@@ -75,6 +78,7 @@ def _case_report(
     schema_version = str(raw.get("schema_version"))
     if schema_version == ECDSA_NONCE_TRANSCRIPT_SCHEMA_VERSION:
         mechanism_id = "ecdsa-nonce"
+        expected_backend = ECDSA_NONCE_SIGNING_BACKEND
         special = {
             "embedded_symbol_like_count": _int_at(
                 raw,
@@ -83,6 +87,7 @@ def _case_report(
         }
     elif schema_version == RSA_PSS_SALT_TRANSCRIPT_SCHEMA_VERSION:
         mechanism_id = "rsa-pss-salt"
+        expected_backend = RSA_PSS_SALT_SIGNING_BACKEND
         special = {
             "recovered_salt_count": _int_at(raw, ("honest_random_control", "recovered_salt_count")),
             "distinct_recovered_salt_sha256_count": _int_at(
@@ -114,12 +119,18 @@ def _case_report(
     channel_verified = sum(1 for record in channel_records if record.get("verified") is True)
     control_verified = sum(1 for record in control_records if record.get("verified") is True)
     p_value = comparison["p_value"]
+    signing_backend = raw.get("signing_backend")
+    key_scope = raw.get("key_scope")
+    implementation_provenance_ok = (
+        signing_backend == expected_backend and key_scope == CRYPTO_TRANSCRIPT_KEY_SCOPE
+    )
     ok = (
         control_count >= min_control_signatures
         and channel_verified == len(channel_records)
         and control_verified == control_count
         and p_value is not None
         and p_value >= min_p_value
+        and implementation_provenance_ok
     )
     return {
         "path": str(path),
@@ -128,6 +139,9 @@ def _case_report(
         "schema_version": schema_version,
         "mechanism_id": mechanism_id,
         "session_id": raw.get("session_id"),
+        "signing_backend": signing_backend,
+        "key_scope": key_scope,
+        "implementation_provenance_ok": implementation_provenance_ok,
         "ok": ok,
         "claim_status": (
             "distributional_smoke_controls_passed" if ok else "underpowered_or_anomalous_controls"

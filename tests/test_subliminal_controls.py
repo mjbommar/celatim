@@ -41,6 +41,8 @@ def test_subliminal_control_report_requires_requested_control_power(tmp_path):
         "rsa-pss-salt",
     }
     assert all(case["honest_control_signature_count"] == 4 for case in report["cases"])
+    assert all(case["implementation_provenance_ok"] is True for case in report["cases"])
+    assert all(case["key_scope"] == "ephemeral_per_transcript" for case in report["cases"])
     assert all(
         case["signature_bit_balance_test"]["p_value"] is not None for case in report["cases"]
     )
@@ -79,6 +81,7 @@ def test_subliminal_control_report_rejects_old_transcripts_without_bit_stats(tmp
     )
 
     assert report["ok"] is False
+    assert report["cases"][0]["implementation_provenance_ok"] is False
     assert report["cases"][0]["signature_bit_balance_test"]["p_value"] is None
 
 

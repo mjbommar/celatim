@@ -151,6 +151,8 @@ def test_rsa_pss_salt_transcript_roundtrip_signs_verifies_and_recovers_symbols(t
     assert transcript["schema_version"] == RSA_PSS_SALT_TRANSCRIPT_SCHEMA_VERSION
     assert transcript["mechanism_id"] == "rsa-pss-salt"
     assert transcript["claim_status"] == RSA_PSS_SALT_CLAIM_STATUS
+    assert transcript["signing_backend"] == ("cryptography_openssl_with_explicit_rfc8017_pss_salt")
+    assert transcript["key_scope"] == "ephemeral_per_transcript"
     assert transcript["signature_count"] == 1
     assert transcript["verified_signature_count"] == 1
     assert transcript["recovered_symbol_count"] == 1

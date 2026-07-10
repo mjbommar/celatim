@@ -780,7 +780,7 @@ def test_generated_reviewer_bundle_manifest_matches_schema(tmp_path):
     detector_replay_path = tmp_path / "detector-replay.json"
     scrub_report_path = tmp_path / "scrub-report.json"
     paper_table_path = tmp_path / "field-catalog-longtable.tex"
-    package_wheel_path = tmp_path / "celatim-0.1.0-py3-none-any.whl"
+    package_wheel_path = tmp_path / "celatim-0.2.0-py3-none-any.whl"
     lockfile_path = tmp_path / "uv.lock"
     scenario_spec_path = tmp_path / "http2-ping-opaque.toml"
     testbed_package_path = tmp_path / "Dockerfile"
@@ -871,7 +871,7 @@ def test_generated_reviewer_bundle_verification_matches_schema(tmp_path):
     evidence_dir.mkdir()
     evidence_path = evidence_dir / "http2-ping-opaque.json"
     evidence_index_path = tmp_path / "evidence-index.json"
-    package_wheel_path = tmp_path / "celatim-0.1.0-py3-none-any.whl"
+    package_wheel_path = tmp_path / "celatim-0.2.0-py3-none-any.whl"
     detector_replay_path = tmp_path / "detector-replay.json"
     lockfile_path = tmp_path / "uv.lock"
     scenario_spec_path = tmp_path / "http2-ping-opaque.toml"

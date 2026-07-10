@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celatim.org/schemas/provider-conformance-v1.schema.json",
+  "title": "celatim transfer provider conformance",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "provider", "checks", "event_count", "ok"],
+  "properties": {
+    "schema_version": {"const": "celatim.provider_conformance.v1"},
+    "provider": {"type": "string", "minLength": 1, "maxLength": 64},
+    "checks": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "event_count": {"type": "integer", "minimum": 0},
+    "ok": {"type": "boolean"}
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celatim.org/schemas/transfer-receipt-v1.schema.json",
+  "title": "celatim transfer receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "transfer_id",
+    "role",
+    "status",
+    "provider",
+    "trust_mode",
+    "authenticated",
+    "verified",
+    "acknowledged",
+    "file_name",
+    "file_size",
+    "file_sha256",
+    "started_at",
+    "completed_at",
+    "path"
+  ],
+  "properties": {
+    "schema_version": {"const": "celatim.transfer_receipt.v1"},
+    "transfer_id": {"type": "string", "format": "uuid"},
+    "role": {"enum": ["sender", "receiver"]},
+    "status": {"const": "completed"},
+    "provider": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"},
+    "trust_mode": {"enum": ["offer_bound", "verified_contact"]},
+    "authenticated": {"type": "boolean"},
+    "verified": {"type": "boolean"},
+    "acknowledged": {"type": "boolean"},
+    "file_name": {"type": "string", "minLength": 1, "maxLength": 255},
+    "file_size": {"type": "integer", "minimum": 0},
+    "file_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "started_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "path": {"type": ["string", "null"], "maxLength": 4096}
+  }
+}

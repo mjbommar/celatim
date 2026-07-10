@@ -10,6 +10,7 @@ from pathlib import Path
 DEFAULT_CATALOG = "mechanisms.jsonl"
 DEFAULT_PROTOCOL_RATES = "protocol_rates.toml"
 DEFAULT_SCENARIO_DIR = "scenarios"
+CARRIER_ENDPOINT_SCHEMA = "carrier-endpoint-v1.schema.json"
 DETECTOR_REPLAY_SCHEMA = "detector-replay-v1.schema.json"
 DETECTOR_REPLAY_CORPUS_SCHEMA = "detector-replay-corpus-v1.schema.json"
 DETECTOR_TRACE_MANIFEST_SCHEMA = "detector-trace-manifest-v1.schema.json"
@@ -30,6 +31,57 @@ SCRUB_REPORT_SCHEMA = "scrub-report-v1.schema.json"
 SUPPORT_MATRIX_SCHEMA = "support-matrix-v1.schema.json"
 TESTBED_REQUIREMENTS_SCHEMA = "testbed-requirements-v1.schema.json"
 TIMING_SWEEP_SCHEMA = "timing-sweep-v1.schema.json"
+TRANSFER_OFFER_SCHEMA = "transfer-offer-v1.schema.json"
+TRANSFER_MANIFEST_SCHEMA = "transfer-manifest-v1.schema.json"
+TRANSFER_STATE_SCHEMA = "transfer-state-v1.schema.json"
+TRANSFER_RECEIPT_SCHEMA = "transfer-receipt-v1.schema.json"
+TRANSFER_EVENT_SCHEMA = "transfer-event-v1.schema.json"
+TRANSFER_ERROR_SCHEMA = "transfer-error-v1.schema.json"
+PROVIDER_MANIFEST_SCHEMA = "provider-manifest-v1.schema.json"
+PACKET_SERVICE_SCHEMA = "packet-service-v1.schema.json"
+PACKET_SERVICE_PREFLIGHT_SCHEMA = "packet-service-preflight-v1.schema.json"
+PROVIDER_CONFORMANCE_SCHEMA = "provider-conformance-v1.schema.json"
+PROVIDER_INVENTORY_SCHEMA = "provider-inventory-v1.schema.json"
+TRANSFER_LISTENER_STATUS_SCHEMA = "transfer-listener-status-v1.schema.json"
+TRANSFER_LISTENER_STOP_SCHEMA = "transfer-listener-stop-v1.schema.json"
+TRANSFER_STATUS_SCHEMA = "transfer-status-v1.schema.json"
+SCHEMA_FILES = {
+    "carrier-endpoint-v1": CARRIER_ENDPOINT_SCHEMA,
+    "detector-replay-v1": DETECTOR_REPLAY_SCHEMA,
+    "detector-replay-corpus-v1": DETECTOR_REPLAY_CORPUS_SCHEMA,
+    "detector-trace-manifest-v1": DETECTOR_TRACE_MANIFEST_SCHEMA,
+    "doctor-v1": DOCTOR_SCHEMA,
+    "evidence-run-v1": EVIDENCE_RUN_SCHEMA,
+    "evidence-index-v1": EVIDENCE_INDEX_SCHEMA,
+    "packet-service-v1": PACKET_SERVICE_SCHEMA,
+    "packet-service-preflight-v1": PACKET_SERVICE_PREFLIGHT_SCHEMA,
+    "pcap-decode-v1": PCAP_DECODE_SCHEMA,
+    "provider-manifest-v1": PROVIDER_MANIFEST_SCHEMA,
+    "provider-conformance-v1": PROVIDER_CONFORMANCE_SCHEMA,
+    "provider-inventory-v1": PROVIDER_INVENTORY_SCHEMA,
+    "public-evidence-index-v1": PUBLIC_EVIDENCE_INDEX_SCHEMA,
+    "public-bundle-v1": PUBLIC_BUNDLE_SCHEMA,
+    "public-bundle-verify-v1": PUBLIC_BUNDLE_VERIFY_SCHEMA,
+    "qemu-tap-preflight-v1": QEMU_TAP_PREFLIGHT_SCHEMA,
+    "reviewer-bundle-v1": REVIEWER_BUNDLE_SCHEMA,
+    "reviewer-bundle-verify-v1": REVIEWER_BUNDLE_VERIFY_SCHEMA,
+    "scenario-v1": SCENARIO_SCHEMA,
+    "scenario-execution-plan-v1": SCENARIO_EXECUTION_PLAN_SCHEMA,
+    "scenario-inventory-v1": SCENARIO_INVENTORY_SCHEMA,
+    "scrub-report-v1": SCRUB_REPORT_SCHEMA,
+    "support-matrix-v1": SUPPORT_MATRIX_SCHEMA,
+    "testbed-requirements-v1": TESTBED_REQUIREMENTS_SCHEMA,
+    "timing-sweep-v1": TIMING_SWEEP_SCHEMA,
+    "transfer-error-v1": TRANSFER_ERROR_SCHEMA,
+    "transfer-event-v1": TRANSFER_EVENT_SCHEMA,
+    "transfer-manifest-v1": TRANSFER_MANIFEST_SCHEMA,
+    "transfer-listener-status-v1": TRANSFER_LISTENER_STATUS_SCHEMA,
+    "transfer-listener-stop-v1": TRANSFER_LISTENER_STOP_SCHEMA,
+    "transfer-offer-v1": TRANSFER_OFFER_SCHEMA,
+    "transfer-receipt-v1": TRANSFER_RECEIPT_SCHEMA,
+    "transfer-state-v1": TRANSFER_STATE_SCHEMA,
+    "transfer-status-v1": TRANSFER_STATUS_SCHEMA,
+}
 DOC_FILES = {
     "api-guide": "api-guide.md",
     "scenario-authoring": "scenario-authoring.md",
@@ -66,48 +118,11 @@ def scenario_dir_path(path: Path | None = None) -> Iterator[Path]:
 
 
 def schema_text(name: str) -> str:
-    if name == "detector-replay-v1":
-        schema_file = DETECTOR_REPLAY_SCHEMA
-    elif name == "detector-replay-corpus-v1":
-        schema_file = DETECTOR_REPLAY_CORPUS_SCHEMA
-    elif name == "detector-trace-manifest-v1":
-        schema_file = DETECTOR_TRACE_MANIFEST_SCHEMA
-    elif name == "evidence-run-v1":
-        schema_file = EVIDENCE_RUN_SCHEMA
-    elif name == "evidence-index-v1":
-        schema_file = EVIDENCE_INDEX_SCHEMA
-    elif name == "public-evidence-index-v1":
-        schema_file = PUBLIC_EVIDENCE_INDEX_SCHEMA
-    elif name == "doctor-v1":
-        schema_file = DOCTOR_SCHEMA
-    elif name == "public-bundle-v1":
-        schema_file = PUBLIC_BUNDLE_SCHEMA
-    elif name == "public-bundle-verify-v1":
-        schema_file = PUBLIC_BUNDLE_VERIFY_SCHEMA
-    elif name == "pcap-decode-v1":
-        schema_file = PCAP_DECODE_SCHEMA
-    elif name == "qemu-tap-preflight-v1":
-        schema_file = QEMU_TAP_PREFLIGHT_SCHEMA
-    elif name == "reviewer-bundle-v1":
-        schema_file = REVIEWER_BUNDLE_SCHEMA
-    elif name == "reviewer-bundle-verify-v1":
-        schema_file = REVIEWER_BUNDLE_VERIFY_SCHEMA
-    elif name == "scenario-v1":
-        schema_file = SCENARIO_SCHEMA
-    elif name == "scenario-execution-plan-v1":
-        schema_file = SCENARIO_EXECUTION_PLAN_SCHEMA
-    elif name == "scenario-inventory-v1":
-        schema_file = SCENARIO_INVENTORY_SCHEMA
-    elif name == "scrub-report-v1":
-        schema_file = SCRUB_REPORT_SCHEMA
-    elif name == "support-matrix-v1":
-        schema_file = SUPPORT_MATRIX_SCHEMA
-    elif name == "testbed-requirements-v1":
-        schema_file = TESTBED_REQUIREMENTS_SCHEMA
-    elif name == "timing-sweep-v1":
-        schema_file = TIMING_SWEEP_SCHEMA
-    else:
-        raise ValueError(f"unknown schema: {name}")
+    try:
+        schema_file = SCHEMA_FILES[name]
+    except KeyError as exc:
+        raise ValueError(f"unknown schema: {name}") from exc
+
     return (files("celatim.schemas") / schema_file).read_text()
 
 
@@ -124,6 +139,7 @@ def doc_text(name: str) -> str:
 
 
 __all__ = [
+    "CARRIER_ENDPOINT_SCHEMA",
     "DEFAULT_CATALOG",
     "DEFAULT_PROTOCOL_RATES",
     "DEFAULT_SCENARIO_DIR",
@@ -134,7 +150,12 @@ __all__ = [
     "DOC_FILES",
     "EVIDENCE_INDEX_SCHEMA",
     "EVIDENCE_RUN_SCHEMA",
+    "PACKET_SERVICE_PREFLIGHT_SCHEMA",
+    "PACKET_SERVICE_SCHEMA",
     "PCAP_DECODE_SCHEMA",
+    "PROVIDER_CONFORMANCE_SCHEMA",
+    "PROVIDER_INVENTORY_SCHEMA",
+    "PROVIDER_MANIFEST_SCHEMA",
     "PUBLIC_BUNDLE_SCHEMA",
     "PUBLIC_BUNDLE_VERIFY_SCHEMA",
     "PUBLIC_EVIDENCE_INDEX_SCHEMA",
@@ -148,6 +169,15 @@ __all__ = [
     "SUPPORT_MATRIX_SCHEMA",
     "TESTBED_REQUIREMENTS_SCHEMA",
     "TIMING_SWEEP_SCHEMA",
+    "TRANSFER_ERROR_SCHEMA",
+    "TRANSFER_EVENT_SCHEMA",
+    "TRANSFER_LISTENER_STATUS_SCHEMA",
+    "TRANSFER_LISTENER_STOP_SCHEMA",
+    "TRANSFER_MANIFEST_SCHEMA",
+    "TRANSFER_OFFER_SCHEMA",
+    "TRANSFER_RECEIPT_SCHEMA",
+    "TRANSFER_STATE_SCHEMA",
+    "TRANSFER_STATUS_SCHEMA",
     "catalog_path",
     "doc_names",
     "doc_text",

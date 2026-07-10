@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celatim.org/schemas/packet-service-v1.schema.json",
+  "title": "celatim packet service message",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "message_type", "request_id", "payload"],
+  "properties": {
+    "schema_version": {"const": "celatim.packet_service.v1"},
+    "message_type": {"enum": ["request", "response"]},
+    "request_id": {"type": "string", "format": "uuid"},
+        "operation": {"enum": ["send", "send_batch", "receive", "preflight"]},
+    "provider": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"},
+    "interface": {"type": "string", "minLength": 1, "maxLength": 64},
+    "payload": {"type": "string", "contentEncoding": "base64", "maxLength": 5592408},
+    "ok": {"type": "boolean"},
+    "error_code": {"type": ["string", "null"], "maxLength": 64},
+    "detail": {"type": ["string", "null"], "maxLength": 512}
+  },
+  "oneOf": [
+    {
+      "properties": {"message_type": {"const": "request"}},
+      "required": ["operation", "provider", "interface"]
+    },
+    {
+      "properties": {"message_type": {"const": "response"}},
+      "required": ["ok", "error_code", "detail"]
+    }
+  ]
+}

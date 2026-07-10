@@ -1,0 +1,16 @@
+[project]
+name = "celatim-fixture-provider"
+version = "0.1.0"
+description = "External fixture for Celatim provider conformance tests."
+requires-python = ">=3.14"
+dependencies = ["celatim>=0.1.0"]
+
+[project.entry-points."celatim.providers"]
+fixture-entry = "celatim_fixture_provider:FixtureProvider"
+
+[build-system]
+requires = ["uv_build>=0.10.0,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = ["celatim_fixture_provider"]

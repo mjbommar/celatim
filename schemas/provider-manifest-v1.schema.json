@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celatim.org/schemas/provider-manifest-v1.schema.json",
+  "title": "celatim transfer provider manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "name",
+    "version",
+    "priority",
+    "directionality",
+    "feedback",
+    "resumable",
+    "max_record_size",
+    "evidence_level",
+    "extras",
+    "tools",
+    "privileges",
+    "platforms"
+  ],
+  "properties": {
+    "schema_version": {"const": "celatim.provider_manifest.v1"},
+    "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"},
+    "version": {"type": "string", "minLength": 1, "maxLength": 64},
+    "priority": {"type": "integer", "minimum": 0},
+    "directionality": {"enum": ["duplex", "send_only", "receive_only"]},
+    "feedback": {"type": "boolean"},
+    "resumable": {"type": "boolean"},
+    "max_record_size": {"type": "integer", "minimum": 4096},
+    "evidence_level": {
+      "enum": [
+        "direct_tls_control",
+        "synthetic_outer_frame",
+        "real_pdu",
+        "production_daemon",
+        "native_stack"
+      ]
+    },
+    "extras": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "tools": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "privileges": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "platforms": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+  }
+}

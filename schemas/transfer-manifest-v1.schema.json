@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celatim.org/schemas/transfer-manifest-v1.schema.json",
+  "title": "celatim transfer manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "transfer_id",
+    "offer_id",
+    "file_name",
+    "file_size",
+    "file_sha256",
+    "chunk_size",
+    "chunk_count",
+    "provider",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "celatim.transfer_manifest.v1"},
+    "transfer_id": {"type": "string", "format": "uuid"},
+    "offer_id": {"type": "string", "format": "uuid"},
+    "file_name": {"type": "string", "minLength": 1, "maxLength": 255},
+    "file_size": {"type": "integer", "minimum": 0, "maximum": 1099511627776},
+    "file_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "chunk_size": {"type": "integer", "minimum": 4096, "maximum": 4194304},
+    "chunk_count": {"type": "integer", "minimum": 0},
+    "provider": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

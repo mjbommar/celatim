@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celatim.org/schemas/provider-inventory-v1.schema.json",
+  "title": "celatim transfer provider inventory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "providers", "load_failures"],
+  "properties": {
+    "schema_version": {"const": "celatim.provider_inventory.v1"},
+    "providers": {"type": "array", "items": {"type": "object"}},
+    "load_failures": {
+      "type": "object",
+      "additionalProperties": {"type": "object"}
+    }
+  }
+}

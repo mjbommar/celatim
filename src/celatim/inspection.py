@@ -40,13 +40,19 @@ from celatim.testbed import (
 )
 
 SCHEMA_NAMES = (
+    "carrier-endpoint-v1",
     "detector-replay-v1",
     "detector-replay-corpus-v1",
     "detector-trace-manifest-v1",
     "doctor-v1",
     "evidence-index-v1",
     "evidence-run-v1",
+    "packet-service-v1",
+    "packet-service-preflight-v1",
     "pcap-decode-v1",
+    "provider-manifest-v1",
+    "provider-conformance-v1",
+    "provider-inventory-v1",
     "public-bundle-v1",
     "public-bundle-verify-v1",
     "public-evidence-index-v1",
@@ -60,6 +66,15 @@ SCHEMA_NAMES = (
     "support-matrix-v1",
     "testbed-requirements-v1",
     "timing-sweep-v1",
+    "transfer-error-v1",
+    "transfer-event-v1",
+    "transfer-manifest-v1",
+    "transfer-listener-status-v1",
+    "transfer-listener-stop-v1",
+    "transfer-offer-v1",
+    "transfer-receipt-v1",
+    "transfer-state-v1",
+    "transfer-status-v1",
 )
 
 

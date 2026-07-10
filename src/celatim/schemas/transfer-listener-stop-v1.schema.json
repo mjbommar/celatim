@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celatim.org/schemas/transfer-listener-stop-v1.schema.json",
+  "title": "celatim transfer listener stop result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "pid", "stopped"],
+  "properties": {
+    "schema_version": {"const": "celatim.transfer_listener_stop.v1"},
+    "pid": {"type": "integer", "minimum": 1},
+    "stopped": {"const": true}
+  }
+}

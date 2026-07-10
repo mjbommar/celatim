@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celatim.org/schemas/transfer-status-v1.schema.json",
+  "title": "celatim transfer status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "listener", "transfer_count", "transfers"],
+  "properties": {
+    "schema_version": {"const": "celatim.transfer_status.v1"},
+    "listener": {"type": ["object", "null"]},
+    "transfer_count": {"type": "integer", "minimum": 0},
+    "transfers": {"type": "array", "items": {"type": "object"}}
+  }
+}

@@ -15,17 +15,14 @@ from celatim.model import Mechanism
 
 from .subliminal_controls import SUBLIMINAL_CONTROL_REPORT_SCHEMA_VERSION
 
-CROSSHOST_PUBLIC_INDEX_SCHEMA_VERSION = "celatim.alice_bob_public_index.v1"
-CLAIM_LEDGER_SCHEMA_VERSION = "celatim.claim_ledger.v1"
+CROSSHOST_PUBLIC_INDEX_SCHEMA_VERSION = "celatim.alice_bob_public_index.v2"
+CLAIM_LEDGER_SCHEMA_VERSION = "celatim.claim_ledger.v2"
 
 ALL_USABLE_EXACT_RECOVERY_CLAIM = "all_usable_binary_exact_recovery"
 REAL_PDU_CAPABLE_CLAIM = "adapter_real_pdu_capable"
 REAL_DAEMON_OR_CRYPTO_CAPABLE_CLAIM = "adapter_real_daemon_or_crypto_capable"
 TIMING_SCHEME_CAPABLE_CLAIM = "timing_scheme_capable"
-REAL_PDU_EXECUTED_CLAIM = "run_backed_real_pdu_exact_recovery"
-REAL_DAEMON_OR_CRYPTO_EXECUTED_CLAIM = "run_backed_real_daemon_or_crypto_exact_recovery"
-TIMING_SCHEME_EXECUTED_CLAIM = "run_backed_timing_scheme_exact_recovery"
-PACKET_PATH_EXECUTED_CLAIM = "crosshost_packet_sender_timing"
+PACKET_PATH_EXECUTED_CLAIM = "crosshost_afpacket_exact_recovery"
 ENVELOPE_EXECUTED_CLAIM = "crosshost_envelope_artifact_roundtrip"
 MESSAGE_CARRIER_EXECUTED_CLAIM = "crosshost_message_control_exchange"
 SUBLIMINAL_CONTROLS_CLAIM = "subliminal_crypto_distributional_controls"
@@ -58,13 +55,9 @@ def build_crosshost_public_index(
         mechanism.id for mechanism in mechanism_map.values() if mechanism.is_usable_channel
     )
     runs = [_index_run(Path(run_dir), mechanism_map) for run_dir in run_dirs]
-    exact_sets = [
-        set(run["required_suite_pass_mechanisms"])
-        for run in runs
-        if run["summary"].get("required_pass") is True
-    ]
+    exact_sets = [set(run["required_suite_pass_mechanisms"]) for run in runs]
     exact_recovery_mechanisms = sorted(set.intersection(*exact_sets)) if exact_sets else []
-    exact_buckets = _bucket_counts(exact_recovery_mechanisms, mechanism_map)
+    exact_capability_buckets = _bucket_counts(exact_recovery_mechanisms, mechanism_map)
     suite_counts = Counter[str]()
     mechanism_pass_counts_by_suite = _mechanism_pass_counts_by_suite(runs)
     timing_claims = Counter[str]()
@@ -81,7 +74,19 @@ def build_crosshost_public_index(
         "usable_mechanism_count": len(usable_ids),
         "exact_recovery_count": len(exact_recovery_mechanisms),
         "exact_recovery_mechanisms": exact_recovery_mechanisms,
-        "exact_recovery_evidence_bucket_counts": dict(sorted(exact_buckets.items())),
+        "exact_recovery_capability_bucket_counts": dict(sorted(exact_capability_buckets.items())),
+        "execution_path_counts": {
+            "afpacket_generated_frames_over_vxlan": mechanism_pass_counts_by_suite["packet"],
+            "json_carrier_artifact_handoff_over_ssh": mechanism_pass_counts_by_suite["envelope"],
+            "json_hex_pdu_control_exchange_over_tcp": mechanism_pass_counts_by_suite[
+                "message_carrier"
+            ],
+        },
+        "execution_path_count_semantics": (
+            "The AF_PACKET and JSON artifact paths partition required exact recovery; "
+            "the JSON-wrapped message-control path is additional evidence for an overlapping "
+            "subset. Capability buckets describe adapters, not the transport used in a run."
+        ),
         "pass_counts_by_suite": dict(sorted(suite_counts.items())),
         "mechanism_pass_counts_by_suite": mechanism_pass_counts_by_suite,
         "timing_claim_status_counts": dict(sorted(timing_claims.items())),
@@ -102,10 +107,13 @@ def build_claim_ledger(
     usable = tuple(mechanism for mechanism in mechs if mechanism.is_usable_channel)
     capability_buckets = Counter(classify_evidence(mechanism).bucket.value for mechanism in usable)
     exact_recovery_ids = _intersection_from_indexes(crosshost_indexes, "exact_recovery_mechanisms")
-    exact_bucket_counts = _bucket_counts(
+    exact_capability_bucket_counts = _bucket_counts(
         exact_recovery_ids, {mechanism.id: mechanism for mechanism in mechs}
     )
-    suite_counts = Counter[str]()
+    suite_mechanism_ids = {
+        suite: _suite_intersection_from_indexes(crosshost_indexes, suite)
+        for suite in ("packet", "envelope", "message_carrier")
+    }
     timing_claims = Counter[str]()
     evidence_refs: list[dict[str, Any]] = []
     run_count = 0
@@ -114,10 +122,6 @@ def build_claim_ledger(
         run_count += int(index.get("run_count", 0))
         all_required_pass = all_required_pass and bool(index.get("all_runs_required_pass", False))
         evidence_refs.append(_index_ref(index))
-        suite_counts.update(
-            _count_map(index.get("mechanism_pass_counts_by_suite"))
-            or _count_map(index.get("pass_counts_by_suite"))
-        )
         timing_claims.update(_count_map(index.get("timing_claim_status_counts")))
     subliminal_refs = [_subliminal_ref(report) for report in subliminal_control_reports]
     subliminal_passed_count = sum(
@@ -134,9 +138,11 @@ def build_claim_ledger(
         _claim(
             ALL_USABLE_EXACT_RECOVERY_CLAIM,
             len(exact_recovery_ids),
-            "run_backed_crosshost_exact_recovery",
+            "mixed_execution_path_exact_recovery",
             evidence_refs,
-            "Every usable mechanism recovered the exact binary payload in each indexed Alice/Bob run.",
+            "Every usable mechanism recovered the exact binary payload through either the "
+            "AF_PACKET path or the JSON artifact handoff in each indexed Alice/Bob run; use "
+            "the path-specific claims for transport conclusions.",
             exact_recovery_ids,
         ),
         _claim(
@@ -164,49 +170,34 @@ def build_claim_ledger(
             _ids_for_bucket(usable, "timing_scheme"),
         ),
         _claim(
-            REAL_PDU_EXECUTED_CLAIM,
-            exact_bucket_counts["real_pdu_packet_path"],
-            "run_backed_crosshost_exact_recovery",
-            evidence_refs,
-            "Real-PDU/packet-template mechanisms with exact recovery in each indexed run.",
-            _ids_matching_bucket(exact_recovery_ids, mechs, "real_pdu_packet_path"),
-        ),
-        _claim(
-            REAL_DAEMON_OR_CRYPTO_EXECUTED_CLAIM,
-            exact_bucket_counts["real_daemon_or_crypto_path"],
-            "run_backed_crosshost_exact_recovery",
-            evidence_refs,
-            "Daemon or cryptographic transcript mechanisms with exact recovery in each indexed run.",
-            _ids_matching_bucket(exact_recovery_ids, mechs, "real_daemon_or_crypto_path"),
-        ),
-        _claim(
-            TIMING_SCHEME_EXECUTED_CLAIM,
-            exact_bucket_counts["timing_scheme"],
-            "run_backed_crosshost_exact_recovery",
-            evidence_refs,
-            "Timing/count schemes with exact recovery in each indexed run.",
-            _ids_matching_bucket(exact_recovery_ids, mechs, "timing_scheme"),
-        ),
-        _claim(
             PACKET_PATH_EXECUTED_CLAIM,
-            suite_counts["packet"],
-            "sender_process_afpacket_send_symbols_exact_recovery",
+            len(suite_mechanism_ids["packet"]),
+            "afpacket_generated_frame_crosshost_exact_recovery",
             evidence_refs,
-            "Packet-path methods with sender-side timing. This is not full native protocol goodput.",
+            "Parser-visible carrier PDUs crossed two hosts inside generated Ethernet/IPv4 "
+            "TCP or UDP frames over VXLAN. This is not native-daemon execution, and the "
+            "sender-process timing is not native-protocol goodput.",
+            suite_mechanism_ids["packet"],
         ),
         _claim(
             ENVELOPE_EXECUTED_CLAIM,
-            suite_counts["envelope"],
-            "artifact_elapsed_not_native_network_goodput",
+            len(suite_mechanism_ids["envelope"]),
+            "json_artifact_handoff_over_ssh_exact_recovery",
             evidence_refs,
-            "Envelope methods with exact recovery through staged artifacts, not native network goodput.",
+            "Alice serialized carrier units in a JSON envelope and the harness handed that "
+            "envelope to Bob over SSH. This is a cross-host codec/serialization check, not "
+            "transit through the nominal protocol.",
+            suite_mechanism_ids["envelope"],
         ),
         _claim(
             MESSAGE_CARRIER_EXECUTED_CLAIM,
-            suite_counts["message_carrier"],
-            "crosshost_control_exchange_not_native_protocol_goodput",
+            len(suite_mechanism_ids["message_carrier"]),
+            "json_hex_pdu_control_exchange_over_tcp_exact_recovery",
             evidence_refs,
-            "Message-carrier methods measured through the Alice/Bob control exchange.",
+            "Protocol-library PDU bytes were hex-encoded inside length-prefixed JSON over a "
+            "TCP control connection and independently parsed on Bob. This overlapping subset "
+            "does not establish native-protocol delivery or goodput.",
+            suite_mechanism_ids["message_carrier"],
         ),
         _claim(
             SUBLIMINAL_CONTROLS_CLAIM,
@@ -225,7 +216,14 @@ def build_claim_ledger(
         "crosshost_all_required_pass": all_required_pass if crosshost_indexes else False,
         "subliminal_control_report_count": len(subliminal_control_reports),
         "capability_evidence_bucket_counts": dict(sorted(capability_buckets.items())),
-        "run_backed_evidence_bucket_counts": dict(sorted(exact_bucket_counts.items())),
+        "exact_recovery_capability_bucket_counts": dict(
+            sorted(exact_capability_bucket_counts.items())
+        ),
+        "execution_path_counts": {
+            "afpacket_generated_frames_over_vxlan": len(suite_mechanism_ids["packet"]),
+            "json_carrier_artifact_handoff_over_ssh": len(suite_mechanism_ids["envelope"]),
+            "json_hex_pdu_control_exchange_over_tcp": len(suite_mechanism_ids["message_carrier"]),
+        },
         "timing_claim_status_counts": dict(sorted(timing_claims.items())),
         "claims": claims,
     }
@@ -380,7 +378,27 @@ def _index_ref(index: Mapping[str, Any]) -> dict[str, Any]:
         "run_count": index.get("run_count"),
         "all_runs_required_pass": index.get("all_runs_required_pass"),
         "exact_recovery_count": index.get("exact_recovery_count"),
+        "execution_path_counts": index.get("execution_path_counts"),
     }
+
+
+def _suite_intersection_from_indexes(
+    indexes: Sequence[Mapping[str, Any]], suite: str
+) -> tuple[str, ...]:
+    sets: list[set[str]] = []
+    for index in indexes:
+        runs = index.get("runs")
+        if not isinstance(runs, Sequence) or isinstance(runs, str | bytes):
+            continue
+        for run in runs:
+            if not isinstance(run, Mapping):
+                continue
+            by_suite = run.get("pass_mechanisms_by_suite")
+            if isinstance(by_suite, Mapping):
+                sets.append(set(_str_sequence(by_suite.get(suite))))
+    if not sets:
+        return ()
+    return tuple(sorted(set.intersection(*sets)))
 
 
 def _mechanism_pass_counts_by_suite(runs: Sequence[Mapping[str, Any]]) -> dict[str, int]:
@@ -420,22 +438,6 @@ def _ids_for_bucket(mechanisms: Iterable[Mechanism], bucket: str) -> tuple[str, 
             mechanism.id
             for mechanism in mechanisms
             if classify_evidence(mechanism).bucket.value == bucket
-        )
-    )
-
-
-def _ids_matching_bucket(
-    mechanism_ids: Sequence[str],
-    mechanisms: Iterable[Mechanism],
-    bucket: str,
-) -> tuple[str, ...]:
-    mechs = {mechanism.id: mechanism for mechanism in mechanisms}
-    return tuple(
-        sorted(
-            mechanism_id
-            for mechanism_id in mechanism_ids
-            if mechanism_id in mechs
-            and classify_evidence(mechs[mechanism_id]).bucket.value == bucket
         )
     )
 
@@ -509,12 +511,9 @@ __all__ = [
     "MESSAGE_CARRIER_EXECUTED_CLAIM",
     "PACKET_PATH_EXECUTED_CLAIM",
     "REAL_DAEMON_OR_CRYPTO_CAPABLE_CLAIM",
-    "REAL_DAEMON_OR_CRYPTO_EXECUTED_CLAIM",
     "REAL_PDU_CAPABLE_CLAIM",
-    "REAL_PDU_EXECUTED_CLAIM",
     "SUBLIMINAL_CONTROLS_CLAIM",
     "TIMING_SCHEME_CAPABLE_CLAIM",
-    "TIMING_SCHEME_EXECUTED_CLAIM",
     "build_claim_ledger",
     "build_crosshost_public_index",
     "claim_count",

@@ -36,7 +36,7 @@ def test_loads_capacity_model_rows():
 
 
 def test_survivability_loaded_from_catalog():
-    from celatim.model import Survivability
+    from celatim.model import OnPathVisibility, Survivability
 
     mechs = {m.id: m for m in load_mechanisms(DATA)}
     # The canonical "easy" header channels are exactly the ones the path mangles:
@@ -45,6 +45,9 @@ def test_survivability_loaded_from_catalog():
     assert mechs["tcp-reserved-bits"].survivability is Survivability.NORMALIZED
     # QUIC frames ride inside AEAD -> intact but endpoint-only.
     assert mechs["http3-reserved-frame-types"].survivability is Survivability.INTEGRITY_BOUND
+    assert mechs["http3-reserved-frame-types"].on_path_visibility is OnPathVisibility.ENCRYPTED
+    assert mechs["ah-reserved"].on_path_visibility is OnPathVisibility.CLEARTEXT
+    assert mechs["http2-ping-opaque"].on_path_visibility is OnPathVisibility.DEPLOYMENT_DEPENDENT
     # The canonical "easy" header channels fail the high-threat bar (scrubbed / NAT'd /
     # endpoint-only) -- but the catalog does contain robust-unwitting channels, e.g. the
     # ICMP unused error-message fields, which survive a path against an unmodified receiver.

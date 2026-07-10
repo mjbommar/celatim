@@ -1316,7 +1316,7 @@ def test_session_cli_detector_rules_writes_manifest_and_rule_files(tmp_path):
     manifest = json.loads(manifest_out.read_text())
     assert manifest["schema_version"] == "celatim.detector_rules.v1"
     assert manifest["rule_mechanism_count"] == 68
-    assert manifest["stateful_plan_mechanism_count"] == 47
+    assert manifest["stateful_plan_mechanism_count"] == 52
     assert manifest["claim_status"] == "generated_not_executed_no_false_positive_estimate"
     assert manifest["stateful_claim_status"] == "generated_not_executed_requires_trace_baseline"
     assert (output_dir / "detector-rules.md").is_file()

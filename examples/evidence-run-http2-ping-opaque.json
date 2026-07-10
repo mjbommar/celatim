@@ -20,7 +20,7 @@
         "benign_basis": "scenario_control_fixture_not_fp_estimate",
         "checked_units": 0,
         "command": [],
-        "detectability": "endpoint_only",
+        "detectability": "visibility_dependent",
         "detected": null,
         "detector_family": "catalog_detectability",
         "disposition": "log",
@@ -216,7 +216,7 @@
         "benign_basis": "scenario_control_fixture_not_fp_estimate",
         "checked_units": 0,
         "command": [],
-        "detectability": "endpoint_only",
+        "detectability": "visibility_dependent",
         "detected": null,
         "detector_family": "catalog_detectability",
         "disposition": "log",
@@ -400,7 +400,7 @@
   "ok": true,
   "reproducibility": {
     "catalog_path": "data/mechanisms.jsonl",
-    "catalog_sha256": "95a406266f95081c1b29257511acaa449b99849de61daf4a470e33350bacdff1",
+    "catalog_sha256": "1fe1eb535e873943fc7181439cca0dff4e9784780627b0397df8dd8abbe23b0e",
     "command": [
       "celatim",
       "--catalog",

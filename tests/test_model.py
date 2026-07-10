@@ -13,6 +13,7 @@ from celatim.model import (
     FieldLocator,
     FieldValueMatch,
     Mechanism,
+    OnPathVisibility,
     Provenance,
     Reach,
     ScrubStrategy,
@@ -215,6 +216,23 @@ def test_integrity_bound_moves_scrub_to_endpoint():
     # A storage field under a crypto integrity check can't be rewritten in-path.
     m = make(carrier_class=CarrierClass.C, survivability=Survivability.INTEGRITY_BOUND)
     assert m.scrub_strategy is ScrubStrategy.ENDPOINT_ONLY
+
+
+def test_integrity_and_confidentiality_are_independent_detection_axes():
+    clear = make(
+        carrier_class=CarrierClass.A,
+        survivability=Survivability.INTEGRITY_BOUND,
+        on_path_visibility=OnPathVisibility.CLEARTEXT,
+    )
+    encrypted = dataclasses.replace(clear, on_path_visibility=OnPathVisibility.ENCRYPTED)
+    conditional = dataclasses.replace(
+        clear, on_path_visibility=OnPathVisibility.DEPLOYMENT_DEPENDENT
+    )
+
+    assert clear.detectability.value == "stateful_dpi"
+    assert encrypted.detectability.value == "endpoint_only"
+    assert conditional.detectability.value == "visibility_dependent"
+    assert clear.scrub_strategy is encrypted.scrub_strategy is ScrubStrategy.ENDPOINT_ONLY
 
 
 def test_timing_and_subliminal_scrub_ignore_survivability():

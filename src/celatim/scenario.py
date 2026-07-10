@@ -2124,7 +2124,7 @@ def _package_version() -> str:
     try:
         return version("celatim")
     except PackageNotFoundError:
-        return "0.2.1"
+        return "0.2.2"
 
 
 def _case_to_json(case: EvidenceCaseResult) -> dict[str, Any]:

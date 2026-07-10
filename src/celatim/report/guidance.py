@@ -64,8 +64,8 @@ def detector_scrub_guidance_markdown(mechanisms: Iterable[Mechanism]) -> str:
             "",
             "## Mechanism Guidance",
             "",
-            "| Mechanism | Protocol | Class | Detectability | Predicate | False-positive posture | Annotation source | Scrub strategy | Evidence bucket | Guidance |",
-            "|---|---|---:|---|---|---|---|---|---|---|",
+            "| Mechanism | Protocol | Class | On-path visibility | Detectability | Predicate | False-positive posture | Annotation source | Scrub strategy | Evidence bucket | Guidance |",
+            "|---|---|---:|---|---|---|---|---|---|---|---|",
         ]
     )
     rows.extend(_mechanism_row(mechanism) for mechanism in mechs)
@@ -77,6 +77,7 @@ def _mechanism_row(mechanism: Mechanism) -> str:
     profile = classify_evidence(mechanism)
     return (
         f"| `{mechanism.id}` | {_md(mechanism.protocol)} | {mechanism.carrier_class.value} | "
+        f"`{mechanism.on_path_visibility.value}` | "
         f"`{mechanism.detectability.value}` | `{mechanism.effective_detect_predicate.value}` | "
         f"`{mechanism.effective_false_positive.value}` | "
         f"`{mechanism.detection_annotation_source.value}` | `{mechanism.scrub_strategy.value}` | "
@@ -93,7 +94,9 @@ def _mechanism_guidance(mechanism: Mechanism) -> str:
     if mechanism.detectability is Detectability.STATISTICAL:
         return "Treat as baseline or timing analysis; avoid per-packet alert claims without benign-trace replay."
     if mechanism.detectability is Detectability.ENDPOINT_ONLY:
-        return "In-path scrubbing is not protocol-safe; enforce at the endpoint or negotiated implementation boundary."
+        return "Protocol encryption hides the field in path; inspect or enforce at an endpoint, and treat flow blocking separately."
+    if mechanism.detectability is Detectability.VISIBILITY_DEPENDENT:
+        return "Resolve whether the deployed mode encrypts the field before selecting an endpoint or in-path detector."
     return "No reliable on-wire detector; mitigation is design-time or endpoint-controlled."
 
 
@@ -102,7 +105,8 @@ def _detectability_note(detectability: Detectability) -> str:
         Detectability.STATELESS_FILTER: "Fixed offset, mask, or value checks can be expressed as packet-filter rules.",
         Detectability.STATEFUL_DPI: "Needs protocol parsing, flow state, entropy, or presence checks.",
         Detectability.STATISTICAL: "Needs timing, count, or baseline analysis over traffic populations.",
-        Detectability.ENDPOINT_ONLY: "Visible only at endpoints because the carrier is protected or normalized by protocol state.",
+        Detectability.ENDPOINT_ONLY: "Protocol encryption hides the field from an ordinary in-path observer; endpoint keys are required.",
+        Detectability.VISIBILITY_DEPENDENT: "Visibility depends on deployment mode, direction, or negotiated encryption; no unconditional detector tier is assigned.",
         Detectability.UNDETECTABLE_ONWIRE: "Not distinguishable on the wire under the catalog threat model.",
     }[detectability]
 

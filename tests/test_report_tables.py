@@ -102,9 +102,6 @@ def test_survey_scale_macros_are_derived_from_self_contained_sources():
     assert macros.substantiated_count + macros.structural_residual_count == 142
     assert macros.structural_residual_count == 1
     assert macros.exact_recovery_executed_count == 142
-    assert macros.real_pdu_executed_count == 130
-    assert macros.real_daemon_or_crypto_executed_count == 8
-    assert macros.timing_scheme_executed_count == 3
     assert macros.packet_path_executed_count == 56
     assert macros.envelope_executed_count == 86
     assert macros.message_carrier_executed_count == 6

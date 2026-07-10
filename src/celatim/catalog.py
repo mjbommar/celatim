@@ -12,6 +12,7 @@ from .model import (
     FieldLocator,
     FieldValueMatch,
     Mechanism,
+    OnPathVisibility,
     Provenance,
     Reach,
     Status,
@@ -44,20 +45,29 @@ def _value_match_from_dict(d: dict) -> FieldValueMatch:
 
 
 def _from_dict(d: dict) -> Mechanism:
+    carrier_class = CarrierClass(d["carrier_class"])
+    survivability = Survivability(d["survivability"])
+    if (
+        carrier_class
+        in {CarrierClass.A, CarrierClass.B, CarrierClass.C, CarrierClass.D, CarrierClass.E}
+        and survivability is Survivability.INTEGRITY_BOUND
+        and "on_path_visibility" not in d
+    ):
+        raise ValueError(f"{d['id']}: integrity-bound storage row requires on_path_visibility")
     return Mechanism(
         id=d["id"],
         name=d["name"],
         rfcs=tuple(d["rfcs"]),
         protocol=d["protocol"],
         layer=d["layer"],
-        carrier_class=CarrierClass(d["carrier_class"]),
+        carrier_class=carrier_class,
         status=Status(d["status"]),
         carrier_unit=d["carrier_unit"],
         raw_capacity_bits=int(d["raw_capacity_bits"]),
         header_bits=int(d["header_bits"]),
         wire_bits_typical=int(d["wire_bits_typical"]),
         reach=Reach(d["reach"]),
-        survivability=Survivability(d["survivability"]),
+        survivability=survivability,
         provenance=Provenance(d["provenance"]),
         spec_quote=d["spec_quote"],
         c_capacity_key=d.get("c_capacity_key"),
@@ -70,6 +80,7 @@ def _from_dict(d: dict) -> Mechanism:
             DetectPredicate(d["detect_predicate"]) if d.get("detect_predicate") else None
         ),
         false_positive=(FalsePositive(d["false_positive"]) if d.get("false_positive") else None),
+        on_path_visibility=OnPathVisibility(d.get("on_path_visibility", "cleartext")),
         reserved_value_matches=tuple(
             _value_match_from_dict(item) for item in d.get("reserved_value_matches", ())
         ),

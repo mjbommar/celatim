@@ -21,7 +21,7 @@ def mechs():
 def test_stateful_detector_plans_cover_observable_non_stateless_rows():
     plans = stateful_detector_plans(load_mechanisms(DATA))
 
-    assert len(plans) == 47
+    assert len(plans) == 52
     assert {plan.claim_status for plan in plans} == {STATEFUL_DETECTOR_CLAIM_STATUS}
     assert "tcp-reserved-bits" not in {plan.mechanism_id for plan in plans}
     assert "http3-reserved-frame-types" not in {plan.mechanism_id for plan in plans}

@@ -68,6 +68,8 @@ def test_detectability_spread_across_catalog():
     assert m["tcp-reserved-bits"].detectability is Detectability.STATELESS_FILTER
     assert m["ipv4-id-atomic"].detectability is Detectability.STATISTICAL  # arbitrary value
     assert m["http3-reserved-frame-types"].detectability is Detectability.ENDPOINT_ONLY  # AEAD
+    assert m["ah-reserved"].detectability is Detectability.STATEFUL_DPI  # visible, authenticated
+    assert m["http2-ping-opaque"].detectability is Detectability.VISIBILITY_DEPENDENT  # h2c vs TLS
     assert m["quic-padding-frame-count"].detectability is Detectability.STATISTICAL  # timing
     assert m["rsa-pss-salt"].detectability is Detectability.UNDETECTABLE_ONWIRE  # subliminal
 

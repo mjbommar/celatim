@@ -13,6 +13,7 @@ plumbing uses scapy; the bit placement and the codec/framer come from celatim.
 from __future__ import annotations
 
 import itertools
+import json
 import os
 import subprocess
 import sys
@@ -706,7 +707,13 @@ def _capture_l2(m, loc, codec, iface: str, n: int, out_file: str) -> None:
     print(f"captured {len(symbols)} L2 frames -> {len(payload)} bytes", file=sys.stderr)
 
 
-def capture(mech_id: str, iface: str, n: int, out_file: str) -> None:
+def capture(
+    mech_id: str,
+    iface: str,
+    n: int,
+    out_file: str,
+    status_file: str | None = None,
+) -> None:
     from scapy.layers.inet import IP
     from scapy.layers.inet6 import IPv6
     from scapy.sendrecv import sniff
@@ -737,9 +744,29 @@ def capture(mech_id: str, iface: str, n: int, out_file: str) -> None:
         symbols.append(val.to_bytes(loc.bit_width // 8, "big") if bytes_field else val)
 
     sniff(iface=iface, count=n, timeout=10, prn=on_pkt, lfilter=is_ours)
-    payload = Framer(codec).decode(symbols)
+    decode_error = None
+    try:
+        payload = Framer(codec).decode(symbols)
+    except Exception as exc:
+        if status_file is None:
+            raise
+        payload = b""
+        decode_error = f"{type(exc).__name__}: {exc}"
     with open(out_file, "wb") as fh:
         fh.write(payload)
+    if status_file is not None:
+        Path(status_file).write_text(
+            json.dumps(
+                {
+                    "captured_units": len(symbols),
+                    "expected_units": n,
+                    "recovered_bytes": len(payload),
+                    "decode_error": decode_error,
+                },
+                sort_keys=True,
+            )
+            + "\n"
+        )
     print(f"captured {len(symbols)} packets -> {len(payload)} bytes", file=sys.stderr)
 
 
@@ -803,7 +830,13 @@ def main() -> None:
     elif mode == "calibrate":
         raise SystemExit(0 if calibrate(sys.argv[2]) else 1)
     elif mode == "capture":
-        capture(sys.argv[2], sys.argv[3], int(sys.argv[4]), sys.argv[5])
+        capture(
+            sys.argv[2],
+            sys.argv[3],
+            int(sys.argv[4]),
+            sys.argv[5],
+            sys.argv[6] if len(sys.argv) > 6 else None,
+        )
     elif mode == "timing-send":
         rest = sys.argv[4:]
         constant = "--constant" in rest

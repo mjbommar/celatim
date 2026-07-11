@@ -745,7 +745,9 @@ def run_receiver(
     with listener:
         _write_ready(ready_file, listener, mechanism.id)
         started = time.monotonic()
+        cpu_started = time.process_time()
         result = RECEIVERS[mechanism.id](listener, expected_symbols)
+        process_cpu_s = time.process_time() - cpu_started
         elapsed = time.monotonic() - started
     recovered = decode_payload(mechanism, result.symbols)
     recovered_sha256 = _sha256(recovered)
@@ -776,6 +778,7 @@ def run_receiver(
         "carrier_wire_bytes": result.carrier_wire_bytes,
         "response_wire_bytes": result.response_wire_bytes,
         "elapsed_s": elapsed,
+        "process_cpu_s": process_cpu_s,
         "library_versions": _versions(mechanism.id),
         "ok": exact,
     }
@@ -794,7 +797,9 @@ def run_sender(
 ) -> dict[str, Any]:
     symbols = encode_payload(mechanism, payload)
     started = time.monotonic()
+    cpu_started = time.process_time()
     result = SENDERS[mechanism.id](host, port, symbols)
+    process_cpu_s = time.process_time() - cpu_started
     elapsed = time.monotonic() - started
     validated = result.responses_validated == len(symbols)
     return {
@@ -818,6 +823,7 @@ def run_sender(
         "responses_validated": result.responses_validated,
         "response_validation_complete": validated,
         "elapsed_s": elapsed,
+        "process_cpu_s": process_cpu_s,
         "library_versions": _versions(mechanism.id),
         "ok": validated,
     }

@@ -1,9 +1,9 @@
 """Paired paramiko client/server SSH KEXINIT carrier.
 
 A client builds a real SSH_MSG_KEXINIT with paramiko's ``Message`` wire codec, carrying
-covert bytes across the 16-byte cookie and the trailing reserved ``uint32`` (RFC 4253
-§7.1); a server re-parses the wire with paramiko as the independent validator. paramiko
-is the optional ``ssh`` extra, imported lazily inside the carrier primitives.
+bytes in the 16-byte random cookie while preserving the trailing reserved ``uint32`` as
+zero (RFC 4253 §7.1). A server role re-parses the wire with paramiko as the independent
+validator. paramiko is imported lazily inside the carrier primitives.
 """
 
 from __future__ import annotations

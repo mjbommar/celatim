@@ -313,6 +313,9 @@ from .testbed import (
     ManagedDaemonConfig,
     NetnsPair,
     NetnsPairConfig,
+    OpenSshKexinitPathConfig,
+    OpenSshKexinitRoundtripResult,
+    OpenSshKexinitTransport,
     PacketProtocol,
     QemuGuestConfig,
     QemuTapPreflightCheck,
@@ -330,6 +333,7 @@ from .testbed import (
     run_aioquic_h3_settings_roundtrip,
     run_dns_edns0_padding_roundtrip,
     run_hyper_h2_ping_roundtrip,
+    run_openssh_kexinit_roundtrip,
     send_dns_edns0_padding,
     testbed_profile_ids,
     testbed_profiles_by_id,
@@ -361,7 +365,7 @@ from .transports import (
     extract_pcap_carriers,
 )
 
-__version__ = "0.2.7"
+__version__ = "0.2.8"
 
 __all__ = [
     "BUNDLE_SCHEMA_VERSION",
@@ -521,6 +525,9 @@ __all__ = [
     "ObservedTimingCaseInput",
     "ObserverMutationControlRecord",
     "ObserverValidationRecord",
+    "OpenSshKexinitPathConfig",
+    "OpenSshKexinitRoundtripResult",
+    "OpenSshKexinitTransport",
     "PacingConfig",
     "PacketProtocol",
     "ParserProvenanceRecord",
@@ -672,6 +679,7 @@ __all__ = [
     "run_hyper_h2_ping_roundtrip",
     "run_observed_timing_sweep",
     "run_observed_timing_sweep_payload",
+    "run_openssh_kexinit_roundtrip",
     "run_timing_sweep",
     "run_timing_sweep_payload",
     "scenario_execution_ids",

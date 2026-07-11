@@ -845,7 +845,7 @@ def test_generated_reviewer_bundle_manifest_matches_schema(tmp_path):
     _assert_valid(schema, manifest)
     assert manifest["bundle_name"] == "schema-test"
     assert manifest["doctor_ok"] is True
-    assert manifest["scenario_count"] == 17
+    assert manifest["scenario_count"] == 18
     assert manifest["evidence_count"] == 1
     assert manifest["artifact_count"] == 11
     assert [artifact["kind"] for artifact in manifest["artifacts"]] == [

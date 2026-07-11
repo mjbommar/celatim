@@ -48,20 +48,26 @@ def test_doctor_uses_explicit_catalog_and_scenario_dir(tmp_path):
     assert checks["catalog"].details["path"] == str(DATA)
     assert checks["scenarios"].details is not None
     assert checks["scenarios"].details["schema_version"] == "celatim.scenario_inventory.v1"
-    assert checks["scenarios"].details["scenario_count"] == 17
+    assert checks["scenarios"].details["scenario_count"] == 18
     assert checks["scenarios"].details["schema"] == "celatim.scenario.v1"
     assert checks["scenarios"].details["evidence_tier_counts"] == {
         "real_daemon_path": 9,
         "real_crypto_path": 2,
-        "real_pdu_packet_path": 6,
+        "real_pdu_packet_path": 7,
     }
     assert checks["scenarios"].details["privilege_counts"] == {
         "cap_net_admin": 1,
-        "none": 15,
+        "none": 16,
         "root": 1,
     }
-    assert checks["scenarios"].details["expected_runtime_s_total"] == 115.0
-    assert checks["scenarios"].details["required_tools"] == ["dig", "dnsmasq", "ip", "tcpdump"]
+    assert checks["scenarios"].details["expected_runtime_s_total"] == 130.0
+    assert checks["scenarios"].details["required_tools"] == [
+        "dig",
+        "dnsmasq",
+        "ip",
+        "sshd",
+        "tcpdump",
+    ]
     assert checks["scenarios"].details["required_extras"] == [
         "crypto",
         "daemon",

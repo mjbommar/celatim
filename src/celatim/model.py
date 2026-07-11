@@ -71,6 +71,7 @@ class Survivability(str, Enum):
 
     END_TO_END = "end_to_end"  # typically forwarded unchanged (opaque/optional/payload)
     NAT_REWRITTEN = "nat_rewritten"  # commonly altered by NAPT (addresses, ports, ISN, IP ID)
+    PATH_DEPENDENT = "path_dependent"  # observed treatment differs across implementations/paths
     NORMALIZED = "normalized"  # commonly zeroed by scrubbers/firewalls (reserved/MBZ bits, DSCP)
     INTEGRITY_BOUND = (
         "integrity_bound"  # under a crypto integrity check: intact end-to-end but only

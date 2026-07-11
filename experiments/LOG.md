@@ -4,11 +4,16 @@ Working log for the first 10 end-to-end experiments (see `../docs/testbed.md` §
 plan in the conversation). Append-only narrative: what we tried, what worked, what didn't,
 and what we learned. Honesty over tidiness — the failures are the point.
 
-**Superseding note (2026-07-10):** E7 below records the original historical run, but a
-fresh rerun observed no packets at the receiver and is inconclusive. The current runner
-refuses to classify preservation or rewriting without receiver packets. Do not cite the
-historical E7 result as current evidence; use the paper repository's
-`docs/path-conditioned-survivability.md` report.
+**Superseding note (2026-07-11):** The 2026-07-10 receiver-less rerun was traced to a
+stale Scapy IPv4-header checksum: direct field-dictionary mutation left its raw-packet
+cache intact, so the routed kernel correctly dropped the packets before Netfilter. The
+fixed runner invalidates checksums through Scapy's field API and requires complete taps
+at pre-NAT ingress, post-NAT egress, and receiver. Across six Linux hosts and three fresh
+setups each, MASQUERADE preserved the IPv4-ID payload in 18/18 data runs; 18/18 separate
+field-zero controls delivered all packets with zero symbols. A parallel nftables
+default-drop campaign passed 18/18 data and 18/18 zero-control runs while proving the
+allow and drop rules were active. Use the paper repository's generated
+`docs/path-conditioned-survivability.md` report rather than the historical diary text.
 
 **TCP semantic correction (2026-07-11):** RFC 9768 assigns the former fourth reserved
 flag to Accurate ECN. The TCP carrier now uses only the three Reserved bits (`0x0e`,
@@ -73,7 +78,8 @@ NOT restore caps here.
 | 4 | fidelity + goodput vs structural bound | 1 | **PASS** | 200 B → 404 frames, 4 b/unit (== structural), ~2.6 kbps (send-loop bound) |
 | 5 | survivability: normalizer scrub | 1 | **PASS** | scrub middlebox → `recovered=b''` DESTROYED (tcp-reserved + ip-id) |
 | 6 | survivability: pass-through control | 1 | **PASS** | same middlebox, `pass` → DELIVERED |
-| 7 | NAT-rewrite prediction (ipv4-id) | 1 | **historical; superseded** | original run reported survival; fresh rerun is inconclusive (see top note) |
+| 7 | NAT-rewrite prediction (ipv4-id) | 1 | **PASS; path-scoped** | three-tap six-host rerun preserved data in 18/18; 18/18 delivered zero controls; not a NAT-product population |
+| 7b | nftables default-drop firewall | 1 | **PASS; path-scoped** | 18/18 data + 18/18 zero controls; allow/drop counters and denied probes prove hook activity |
 | 8 | detector TP/FP on benign | 1 | **PASS** | generated `tcp[12]&0x0f!=0`: TP=0.92, FP=0.00 over 300 benign |
 | 9 | non-FixedWidth shape / 2nd locator (ipv4-id) | 1 | **PASS** | 16-bit NH-base field, 3 frames → `b'kick'` |
 | 10 | cross-OS + true-negative (integrity-bound) | 3 | **env-limited** | no VM images here (see note) |
@@ -138,8 +144,10 @@ keyword collision in iproute2.
 
 ### E7 — does a real NAT rewrite the IP ID?
 
-**Historical result, superseded by the 2026-07-10 inconclusive rerun.** The paragraphs
-below preserve the original diary entry and are not current reviewer-facing evidence.
+**Historical result, superseded by the strict 2026-07-11 three-tap campaign.** The
+paragraphs below preserve the original diary entry. The current reviewer-facing result
+is 18/18 exact preservation through this Linux MASQUERADE implementation, paired with
+18/18 complete field-zero controls; it does not generalize to other NAT products.
 
 Routed topology with a real Linux `MASQUERADE` router between two subnets; the IP-ID
 channel sent through it. **Result: the IP ID SURVIVED.** Linux netfilter rewrites

@@ -12,6 +12,7 @@ from ..model import AnalysisPopulation, CapacityModel, Mechanism
 _SURV_LABEL = {
     "end_to_end": "e2e",
     "nat_rewritten": "NAT",
+    "path_dependent": "path",
     "normalized": "norm",
     "integrity_bound": "int-bd",
 }
@@ -39,8 +40,8 @@ _NOTE = (
     "repeated carrier units; \\textit{Wire den.}\\ divides by a full on-wire PDU. "
     "Density is defined only for storage classes (A--E); timing/subliminal rows show "
     "``--''. \\textit{St.}: \\textsc{new}/\\textsc{ext}/\\textsc{doc} prior-art status; "
-    "\\textit{Surv.}: end-to-end (e2e), NAT-rewritten (NAT), normalized (norm), or "
-    "integrity-bound (int-bd).} \\\\\n"
+    "\\textit{Surv.}: end-to-end (e2e), NAT-rewritten (NAT), path-dependent (path), "
+    "normalized (norm), or integrity-bound (int-bd).} \\\\\n"
 )
 _FOOTER = "\\bottomrule\n\\end{longtable}\n\\endgroup\n"
 

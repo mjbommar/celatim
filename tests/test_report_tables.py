@@ -105,13 +105,13 @@ def test_survey_scale_macros_are_derived_from_self_contained_sources():
     )
     assert macros.substantiated_count + macros.structural_residual_count == 133
     assert macros.structural_residual_count == 1
-    assert macros.exact_recovery_executed_count == 142
+    assert macros.exact_recovery_executed_count == 133
     assert macros.packet_path_executed_count == 56
-    assert macros.envelope_executed_count == 86
-    assert macros.message_carrier_executed_count == 6
+    assert macros.envelope_executed_count == 77
+    assert macros.message_carrier_executed_count == 3
     assert "\\newcommand{\\nrealpducapable}{123\\xspace}" in tex
     assert "\\newcommand{\\ncodeconlycapable}{1\\xspace}" in tex
-    assert "\\newcommand{\\nexactrecoveryexecuted}{142\\xspace}" in tex
+    assert "\\newcommand{\\nexactrecoveryexecuted}{133\\xspace}" in tex
     assert "\\newcommand{\\npacketpathexecuted}{56\\xspace}" in tex
     assert f"\\newcommand{{\\nsubstantiated}}{{{macros.substantiated_count}\\xspace}}" in tex
     assert "\\newcommand{\\nstructuralresidual}{1\\xspace}" in tex

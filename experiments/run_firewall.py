@@ -1,10 +1,10 @@
-"""Three-tap IPv4-ID channel run through a real Linux MASQUERADE router.
+"""Three-tap IPv4-ID channel run through a real nftables default-drop firewall.
 
-Usage: python run_nat.py <payload> [--zero]
+Usage: python run_firewall.py <payload> [--zero]
 
-The data run requires exact recovery before NAT, after NAT, and at the receiver. The
-``--zero`` run is a delivered field-zero control: every tap must capture the full frame
-count while observing no nonzero carrier symbols.
+The forwarding policy admits only the experiment's TCP destination and drops all other
+forwarded traffic. A denied ICMP probe and nftables counters prove the firewall hook was
+active during each data or field-zero-control run.
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 import lab
 
@@ -25,9 +26,9 @@ MECH = "ipv4-id-atomic"
 LAB_SCRIPT = Path(__file__).with_name("lab.py")
 PRIVATE_SENDER_IP = "192.168.9.2"
 TAPS = {
-    "A_nat_ingress": ("rtr", "r0", PRIVATE_SENDER_IP),
-    "B_nat_egress": ("rtr", "r1", lab.SND_IP),
-    "C_receiver": ("rcv", "vr", lab.SND_IP),
+    "A_firewall_ingress": ("rtr", "r0", PRIVATE_SENDER_IP),
+    "B_firewall_egress": ("rtr", "r1", PRIVATE_SENDER_IP),
+    "C_receiver": ("rcv", "vr", PRIVATE_SENDER_IP),
 }
 
 
@@ -37,16 +38,53 @@ def mac(ns: str, dev: str) -> str:
 
 
 def _paths(tap: str) -> tuple[Path, Path]:
-    return Path(f"/tmp/nat_{tap}"), Path(f"/tmp/nat_{tap}_status.json")
+    return Path(f"/tmp/firewall_{tap}"), Path(f"/tmp/firewall_{tap}_status.json")
 
 
-def _complete(status: dict[str, object], expected: int) -> bool:
-    return status["captured_units"] == expected and status["expected_units"] == expected
+def _parse_nft_counters(document: dict[str, Any]) -> dict[str, int]:
+    counters: dict[str, int] = {}
+    for entry in document["nftables"]:
+        rule = entry.get("rule")
+        if not rule or not rule.get("comment"):
+            continue
+        counter = next(
+            (
+                expression["counter"]
+                for expression in rule.get("expr", [])
+                if "counter" in expression
+            ),
+            None,
+        )
+        if counter is not None:
+            counters[str(rule["comment"])] = int(counter["packets"])
+    return counters
+
+
+def _nft_counters() -> dict[str, int]:
+    return _parse_nft_counters(
+        json.loads(
+            subprocess.check_output(
+                [
+                    "ip",
+                    "netns",
+                    "exec",
+                    "rtr",
+                    "nft",
+                    "-j",
+                    "list",
+                    "chain",
+                    "inet",
+                    "celatim_filter",
+                    "forward",
+                ]
+            )
+        )
+    )
 
 
 def main() -> None:
     if len(sys.argv) not in {2, 3} or (len(sys.argv) == 3 and sys.argv[2] != "--zero"):
-        raise SystemExit("usage: python run_nat.py <payload> [--zero]")
+        raise SystemExit("usage: python run_firewall.py <payload> [--zero]")
     payload = sys.argv[1].encode()
     force_zero = len(sys.argv) == 3
     mechanism = next(item for item in load_mechanisms(lab.CATALOG) if item.id == MECH)
@@ -56,11 +94,11 @@ def main() -> None:
         for path in paths:
             path.unlink(missing_ok=True)
 
-    lab.topo_nat_up()
+    lab.topo_firewall_up()
     processes: dict[str, subprocess.Popen[bytes]] = {}
     try:
         implementation = subprocess.check_output(
-            ["ip", "netns", "exec", "rtr", "iptables", "--version"], text=True
+            ["ip", "netns", "exec", "rtr", "nft", "--version"], text=True
         ).strip()
         for tap, (namespace, device, source_ip) in TAPS.items():
             output_path, status_path = output_paths[tap]
@@ -109,16 +147,36 @@ def main() -> None:
             tap: json.loads(status_path.read_text())
             for tap, (_, status_path) in output_paths.items()
         }
+        denied_probe = subprocess.run(
+            [
+                "ip",
+                "netns",
+                "exec",
+                "snd",
+                "ping",
+                "-c",
+                "1",
+                "-W",
+                "1",
+                lab.RCV_IP,
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        counters = _nft_counters()
     finally:
         lab.topo_down()
 
     mode = "field_zero_control" if force_zero else "channel_data"
     print(f"MIDDLEBOX implementation={implementation}")
-    print(f"THREE-TAP middlebox=linux_masquerade mechanism={MECH} mode={mode}")
+    print(f"THREE-TAP middlebox=linux_nftables mechanism={MECH} mode={mode}")
     valid = True
     for tap in TAPS:
         status = statuses[tap]
-        complete = _complete(status, expected_units)
+        complete = (
+            status["captured_units"] == expected_units
+            and status["expected_units"] == expected_units
+        )
         if force_zero:
             matched = complete and status["nonzero_units"] == 0 and recovered[tap] == b""
             state = "ZERO" if matched else "BROKEN"
@@ -131,7 +189,20 @@ def main() -> None:
             f"{status['expected_units']} nonzero={status['nonzero_units']}/"
             f"{status['captured_units']} recovered={recovered[tap]!r}"
         )
-    if not valid:
+    allowed_packets = counters.get("celatim-allowed", 0)
+    denied_packets = counters.get("celatim-denied", 0)
+    denied_probe_blocked = denied_probe.returncode != 0
+    print(
+        f"FIREWALL-CONTROL allowed_packets={allowed_packets} "
+        f"denied_packets={denied_packets} "
+        f"denied_probe_blocked={str(denied_probe_blocked).lower()}"
+    )
+    if (
+        not valid
+        or allowed_packets < expected_units
+        or denied_packets < 1
+        or not denied_probe_blocked
+    ):
         raise SystemExit(2)
 
 

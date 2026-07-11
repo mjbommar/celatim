@@ -71,7 +71,7 @@ def topo_up() -> None:
 
 
 def topo_down() -> None:
-    for ns in ("snd", "mbox", "rcv"):
+    for ns in ("snd", "mbox", "rtr", "rcv"):
         _sh(f"ip netns del {ns} 2>/dev/null || true")
 
 
@@ -96,10 +96,8 @@ def topo3_up() -> None:
         _sh(f"ip -n {ns} link set dev lo up")
 
 
-def topo_nat_up() -> None:
-    """snd(192.168.9.2) -- router(192.168.9.1 / 10.10.0.1, ip_forward + MASQUERADE) --
-    rcv(10.10.0.2). After NAT the source becomes 10.10.0.1 (== SND_IP), so the receiver
-    capture's existing src filter still matches. The question: does the IP ID survive?"""
+def _topo_router_up() -> None:
+    """Build a routed snd(192.168.9.2) -> rtr -> rcv(10.10.0.2) topology."""
     _sh(
         "ip netns del snd 2>/dev/null||true; ip netns del rtr 2>/dev/null||true; ip netns del rcv 2>/dev/null||true"
     )
@@ -117,7 +115,31 @@ def topo_nat_up() -> None:
     _sh("ip -n snd route add default via 192.168.9.1")
     _sh("ip -n rcv route add default via 10.10.0.1")
     _sh("ip netns exec rtr sysctl -wq net.ipv4.ip_forward=1")
+
+
+def topo_nat_up() -> None:
+    """Build the routed topology with Linux MASQUERADE on receiver-side egress."""
+    _topo_router_up()
     _sh("ip netns exec rtr iptables -t nat -A POSTROUTING -o r1 -j MASQUERADE")
+
+
+def topo_firewall_up() -> None:
+    """Build the routed topology with an nftables default-drop forwarding policy."""
+    _topo_router_up()
+    _sh("ip netns exec rtr nft add table inet celatim_filter")
+    _sh(
+        "ip netns exec rtr nft 'add chain inet celatim_filter forward "
+        "{ type filter hook forward priority 0; policy drop; }'"
+    )
+    _sh(
+        'ip netns exec rtr nft add rule inet celatim_filter forward iifname "r0" '
+        'oifname "r1" ip saddr 192.168.9.2 ip daddr 10.10.0.2 tcp dport 9999 '
+        'counter accept comment "celatim-allowed"'
+    )
+    _sh(
+        "ip netns exec rtr nft add rule inet celatim_filter forward "
+        'counter drop comment "celatim-denied"'
+    )
 
 
 def _mech(mech_id: str):
@@ -453,8 +475,12 @@ def _clear_checksums(pkt) -> None:
 
     cur = pkt
     while not isinstance(cur, NoPayload):
-        cur.fields.pop("chksum", None)
-        cur.fields.pop("cksum", None)
+        # Use Scapy's field API so a parsed packet's raw_packet_cache is invalidated.
+        # Mutating ``fields`` directly leaves stale serialized bytes, which receivers on
+        # one L2 segment will capture but a routed Linux path correctly drops.
+        for field_name in ("chksum", "cksum"):
+            if field_name in cur.fields:
+                cur.setfieldval(field_name, None)
         cur = cur.payload
 
 
@@ -718,6 +744,7 @@ def capture(
     n: int,
     out_file: str,
     status_file: str | None = None,
+    expected_source_ip: str | None = None,
 ) -> None:
     from scapy.layers.inet import IP
     from scapy.layers.inet6 import IPv6
@@ -730,10 +757,11 @@ def capture(
         _capture_l2(m, loc, codec, iface, n, out_file)
         return
     symbols: list[int | bytes] = []
+    source_ip = expected_source_ip or SND_IP
 
     def is_ours(p) -> bool:
         if IP in p:
-            return p[IP].src == SND_IP
+            return p[IP].src == source_ip
         if IPv6 in p:
             return p[IPv6].src == SND_IP6
         return False
@@ -772,6 +800,7 @@ def capture(
                     "nonzero_units": nonzero_units,
                     "recovered_bytes": len(payload),
                     "decode_error": decode_error,
+                    "expected_source_ip": source_ip,
                 },
                 sort_keys=True,
             )
@@ -845,6 +874,7 @@ def main() -> None:
             int(sys.argv[4]),
             sys.argv[5],
             sys.argv[6] if len(sys.argv) > 6 else None,
+            sys.argv[7] if len(sys.argv) > 7 else None,
         )
     elif mode == "timing-send":
         rest = sys.argv[4:]

@@ -102,9 +102,11 @@ def main() -> None:
         marker = "  <-- field dies here" if died else ""
         captured = status[tap]["captured_units"]
         expected = status[tap]["expected_units"]
+        nonzero = status[tap]["nonzero_units"]
         print(
             f"  {tap:18} {'INTACT' if intact else 'BROKEN'} "
-            f"captured={captured}/{expected} recovered={recovered[tap]!r}{marker}"
+            f"captured={captured}/{expected} nonzero={nonzero}/{captured} "
+            f"recovered={recovered[tap]!r}{marker}"
         )
         prev = recovered[tap]
 

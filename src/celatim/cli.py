@@ -543,6 +543,7 @@ def _session_main(argv: list[str] | None = None, *, program_name: str) -> int:
         type=Path,
         help="Directory of *.toml scenario specs for --scenario-id. Defaults to packaged smoke scenarios.",
     )
+    _add_payload_args(scenario_run, required=False)
     _add_artifact_arg(scenario_run)
     _add_log_args(scenario_run)
     _add_reliability_args(scenario_run)
@@ -1525,6 +1526,8 @@ def _scenario_run_main(args: argparse.Namespace) -> int:
     else:
         with scenario_dir_path(args.scenario_dir) as scenario_dir:
             config = load_scenario_by_id(scenario_dir, args.scenario_id)
+    if any(value is not None for value in (args.message, args.hex_payload, args.file)):
+        config = replace(config, payload=_payload_from_args(args))
     if args.artifact_dir is not None:
         config = replace(config, artifact_dir=str(args.artifact_dir))
     if args.log_dir is not None or args.run_id is not None:

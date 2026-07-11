@@ -2091,6 +2091,38 @@ def test_session_cli_scenario_run_accepts_scenario_id(tmp_path):
     assert run_doc["covert"]["parser_validated"] is True
 
 
+def test_session_cli_scenario_run_overrides_payload(tmp_path):
+    run = tmp_path / "scenario-run.json"
+    payload = bytes(range(64))
+    payload_path = tmp_path / "payload.bin"
+    payload_path.write_bytes(payload)
+
+    assert (
+        session_main(
+            [
+                "--catalog",
+                str(DATA),
+                "scenario",
+                "run",
+                "--scenario-id",
+                "http2-ping-opaque-real-pdu-smoke",
+                "--scenario-dir",
+                str(SCENARIOS),
+                "--file",
+                str(payload_path),
+                "--output",
+                str(run),
+            ]
+        )
+        == 0
+    )
+
+    run_doc = json.loads(run.read_text())
+    assert run_doc["ok"] is True
+    assert run_doc["covert"]["evidence"]["payload_len"] == len(payload)
+    assert bytes.fromhex(run_doc["covert"]["recovered_hex"]) == payload
+
+
 def test_session_cli_scenario_run_writes_crypto_transcripts_with_override(tmp_path):
     pytest.importorskip("cryptography")
     run = tmp_path / "scenario-run.json"

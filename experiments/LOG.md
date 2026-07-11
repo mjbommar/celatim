@@ -234,6 +234,17 @@ multi-hour offset hunt into one red line at startup.
 
 ### Iter 2 — three-tap survivability localization
 
+**Superseding rerun (2026-07-11):** review found that the original forwarder passed the
+IPv4 IHL nibble (`5`) to `_abs_bit_offset` where the helper expected the header length in
+bits (`160`). The scrubber therefore modified the wrong header position, and the earlier
+BROKEN result could be a malformed-packet drop rather than canonicalization. The
+forwarder now calls `_ip_hdr_bits`, and each tap records captured, expected, and nonzero
+carrier-unit counts. Across six Linux hosts, four kernel releases, and three repetitions
+per condition, pass-through preserved all expected frames and nonzero carrier symbols in
+18/18 runs per mechanism. The corrected scrubber retained every expected frame while
+changing all TCP-reserved-bit or IPv4-ID carrier symbols to zero at egress and receiver
+in 18/18 runs per mechanism. The earlier ambiguous result is not used as rewrite evidence.
+
 E5 proved the channel died but not *where*. `run_taps.py` captures the field at three
 points around the middlebox — ingress (`ma`), egress (`mb`), receiver (`vr`) — and reports
 the first hop where it breaks:

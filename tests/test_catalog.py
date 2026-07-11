@@ -89,6 +89,26 @@ def test_wiki_tunneling_techniques_present():
         assert i in ids, i
 
 
+def test_analysis_populations_separate_primary_and_comparison_rows():
+    from collections import Counter
+
+    from celatim.model import AnalysisPopulation
+
+    usable = [mechanism for mechanism in load_mechanisms(DATA) if mechanism.is_usable_channel]
+    counts = Counter(mechanism.analysis_population for mechanism in usable)
+
+    assert counts == {
+        AnalysisPopulation.PRIMARY_RFC_CARRIER: 133,
+        AnalysisPopulation.COMPARISON_ORDINARY_PAYLOAD: 7,
+        AnalysisPopulation.COMPARISON_NON_IETF: 2,
+    }
+    by_id = {mechanism.id: mechanism for mechanism in usable}
+    assert by_id["dns-txt-tunnel"].analysis_population is (
+        AnalysisPopulation.COMPARISON_ORDINARY_PAYLOAD
+    )
+    assert by_id["mqtt-tunnel"].analysis_population is AnalysisPopulation.COMPARISON_NON_IETF
+
+
 def test_ipv6_flow_label_spec_acknowledged():
     m = next(x for x in load_mechanisms(DATA) if x.id == "ipv6-flow-label")
     assert "RFC 6437" in m.rfcs  # the fifth spec-acknowledged covert channel

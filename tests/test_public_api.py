@@ -213,6 +213,7 @@ def test_package_mechanism_discovery_api_exposes_adapter_metadata():
     summary = summaries[0]
     assert isinstance(summary, MechanismSummary)
     assert summary.id == "http2-ping-opaque"
+    assert summary.analysis_population == "primary_rfc_carrier"
     assert summary.adapter_status == "real_pdu_fixture"
     assert "http2_hyper_h2" in summary.transport_kinds
     assert "http2-ping-opaque-hyper-h2" in summary.scenario_ids
@@ -224,6 +225,7 @@ def test_package_mechanism_discovery_api_exposes_adapter_metadata():
     assert detail.mechanism_id == "http2-ping-opaque"
     assert detail_json["command"] == "mechanism show"
     assert detail_json["mechanism"]["id"] == "http2-ping-opaque"
+    assert detail_json["mechanism"]["analysis_population"] == "primary_rfc_carrier"
     assert detail_json["mechanism"]["on_path_visibility"] == "deployment_dependent"
     assert detail_json["adapter"]["evidence"]["bucket"] == "real_pdu_packet_path"
 

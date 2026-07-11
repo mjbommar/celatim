@@ -5,6 +5,7 @@ import dataclasses
 import pytest
 
 from celatim.model import (
+    AnalysisPopulation,
     CapacityModel,
     CarrierClass,
     DetectionAnnotationSource,
@@ -49,6 +50,7 @@ def make(**over) -> Mechanism:
 def test_constructs_and_is_frozen():
     m = make()
     assert m.carrier_class is CarrierClass.A
+    assert m.analysis_population is AnalysisPopulation.PRIMARY_RFC_CARRIER
     with pytest.raises(dataclasses.FrozenInstanceError):
         setattr(m, RAW_CAPACITY_FIELD, 9)  # frozen dataclass
 

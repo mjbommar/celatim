@@ -18,7 +18,7 @@ from statistics import median
 from typing import Any
 from xml.sax.saxutils import escape
 
-from ..model import CarrierClass, Mechanism
+from ..model import AnalysisPopulation, CarrierClass, Mechanism
 from .protocol_rates import ProtocolRate, throughput_estimates
 
 CAPACITY_BY_CLASS_FILENAME = "capacity-by-class.svg"
@@ -81,12 +81,15 @@ class ClassCapacitySummary:
 
 
 def capacity_by_class_data(mechanisms: Iterable[Mechanism]) -> tuple[ClassCapacitySummary, ...]:
-    """Summarize representative raw capacity by carrier class for usable rows."""
+    """Summarize representative capacity for usable primary-population rows."""
     by_class: dict[CarrierClass, list[Mechanism]] = {
         carrier_class: [] for carrier_class in CarrierClass
     }
     for mechanism in mechanisms:
-        if mechanism.is_usable_channel:
+        if (
+            mechanism.is_usable_channel
+            and mechanism.analysis_population is AnalysisPopulation.PRIMARY_RFC_CARRIER
+        ):
             by_class[mechanism.carrier_class].append(mechanism)
     rows: list[ClassCapacitySummary] = []
     for carrier_class in CarrierClass:
@@ -112,7 +115,10 @@ def class_layer_count_data(
     counts: Counter[tuple[CarrierClass, str]] = Counter()
     observed_layers: set[str] = set()
     for mechanism in mechanisms:
-        if not mechanism.is_usable_channel:
+        if (
+            not mechanism.is_usable_channel
+            or mechanism.analysis_population is not AnalysisPopulation.PRIMARY_RFC_CARRIER
+        ):
             continue
         counts[(mechanism.carrier_class, mechanism.layer)] += 1
         observed_layers.add(mechanism.layer)
@@ -145,7 +151,7 @@ def capacity_by_class_svg(mechanisms: Iterable[Mechanism]) -> str:
         _text(
             28,
             58,
-            "Median representative bits per carrier unit, log10-scaled; counts include usable catalog rows only.",
+            "Median representative bits per carrier unit, log10-scaled; primary RFC-carrier population only.",
             size=12,
             fill="#4a5568",
         ),
@@ -199,7 +205,7 @@ def class_layer_heatmap_svg(mechanisms: Iterable[Mechanism]) -> str:
         _text(
             28,
             58,
-            "Counts include usable catalog rows; darker cells indicate more mechanisms.",
+            "Primary RFC-carrier population; darker cells indicate more mechanisms.",
             size=12,
             fill="#4a5568",
         ),
@@ -244,7 +250,14 @@ def throughput_upper_bounds_svg(
     mechanisms: Iterable[Mechanism],
     protocol_rates: Iterable[ProtocolRate],
 ) -> str:
-    estimates = throughput_estimates(mechanisms, protocol_rates)
+    primary = tuple(
+        mechanism
+        for mechanism in mechanisms
+        if mechanism.analysis_population is AnalysisPopulation.PRIMARY_RFC_CARRIER
+    )
+    primary_ids = {mechanism.id for mechanism in primary}
+    primary_rates = tuple(rate for rate in protocol_rates if rate.mechanism_id in primary_ids)
+    estimates = throughput_estimates(primary, primary_rates)
     width = 940
     row_height = 42
     top = 84

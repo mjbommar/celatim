@@ -871,7 +871,7 @@ def _build_tcp_reserved_bits(symbol: Symbol) -> bytes:
     if not isinstance(symbol, int):
         raise TypeError("tcp-reserved-bits: expected int-valued carrier symbol")
     if not 0 <= symbol < (1 << TCP_RESERVED_BITS_WIDTH):
-        raise ValueError("tcp-reserved-bits: symbol does not fit in 4 reserved bits")
+        raise ValueError("tcp-reserved-bits: symbol does not fit in 3 reserved bits")
     return build_tcp_reserved_bits_segment(symbol)
 
 

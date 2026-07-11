@@ -24,6 +24,7 @@ from .detector_metrics import (
     LabeledDetectionScore,
     ThresholdMetrics,
     detector_metric_report,
+    detector_threshold_metrics,
 )
 from .subliminal_controls import (
     SUBLIMINAL_CONTROL_REPORT_SCHEMA_VERSION,
@@ -47,6 +48,7 @@ __all__ = [
     "build_subliminal_control_report",
     "claim_count",
     "detector_metric_report",
+    "detector_threshold_metrics",
     "load_claim_ledger",
     "load_crosshost_public_index",
     "write_dataset",

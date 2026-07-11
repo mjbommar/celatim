@@ -1233,6 +1233,9 @@ def test_session_cli_detector_replay_corpus_writes_aggregate_report(tmp_path):
     assert doc["false_positive_claim_status"] == "not_false_positive_estimate"
     assert doc["false_positive_claim_blockers"] == ["detector_execution_incomplete"]
     assert doc["trace_source_kind_counts"] == {"public_benign_trace": 1}
+    assert len(doc["mechanisms"]) == 1
+    assert doc["mechanisms"][0]["mechanism_id"] == "tcp-reserved-bits"
+    assert doc["mechanisms"][0]["false_positive_estimate"] is False
     trace = doc["traces"][0]
     assert trace["trace"]["trace_name"] == "cli-public-clean"
     assert trace["trace"]["packet_count"] > 0
@@ -1321,10 +1324,10 @@ def test_session_cli_detector_rules_writes_manifest_and_rule_files(tmp_path):
     assert manifest["stateful_claim_status"] == "generated_not_executed_requires_trace_baseline"
     assert (output_dir / "detector-rules.md").is_file()
     assert (
-        "0>>22&0x3C@12>>24&0x0F=0x1:0x0F"
+        "0>>22&0x3C@12>>24&0x0E=0x1:0x0E"
         in (output_dir / "detector-rules.iptables-u32").read_text()
     )
-    assert "tcp[12] & 0x0f != 0" in (output_dir / "detector-rules.bpf").read_text()
+    assert "tcp[12] & 0x0e != 0" in (output_dir / "detector-rules.bpf").read_text()
     assert "padding_entropy" in (output_dir / "detector-stateful-plan.md").read_text()
     assert "const detector_plan" in (output_dir / "detector-stateful.zeek").read_text()
     assert (

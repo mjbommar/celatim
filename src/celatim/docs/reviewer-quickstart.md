@@ -294,4 +294,4 @@ daemon preflight and lab lifecycle for the EDNS(0) scenario.
 The repository-level `make reviewer-afpacket-tcp` target performs the AF_PACKET
 preflight and lab lifecycle for the TCP reserved-bit scenario.
 The `tcp-reserved-bits` AF_PACKET path is covered by the `netns-afpacket` profile; it
-places the carrier in the TCP header reserved nibble, not in the L4 payload.
+places the carrier in the TCP header's three Reserved bits, not in the L4 payload.

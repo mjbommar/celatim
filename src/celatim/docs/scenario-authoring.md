@@ -55,7 +55,7 @@ JSON. If `artifact_dir` is set and `log_dir` is not, logs are written under
 - `afpacket_ipv4`: privileged Ethernet/IPv4 packet path for live netns or interface
   runs. Parser-visible payload carriers are wrapped as TCP or UDP payload bytes; the
   `tcp-reserved-bits` adapter uses a header-field path that writes and recovers the
-  TCP reserved nibble instead of payload bytes.
+  TCP header's three Reserved bits instead of payload bytes.
 - `dns_edns0_padding`: privileged EDNS(0) Padding path using real `dig`, `dnsmasq`,
   netns, and tcpdump capture.
 - `crypto_ecdsa_nonce`: non-privileged local ECDSA signing/verification transcript for

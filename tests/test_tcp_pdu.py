@@ -12,12 +12,12 @@ from celatim.pdu import (
 
 
 def test_tcp_reserved_bits_segment_parses_nonzero_surrounding_header_fields():
-    segment = build_tcp_reserved_bits_segment(0xA)
+    segment = build_tcp_reserved_bits_segment(0x5)
     header = parse_tcp_header(segment)
 
     assert len(segment) == TCP_HEADER_BYTES
     assert tcp_reserved_bits_offset() == 12
-    assert parse_tcp_reserved_bits(segment) == 0xA
+    assert parse_tcp_reserved_bits(segment) == 0x5
     assert header.src_port == 40000
     assert header.dst_port == 443
     assert header.seq == 0x11223344
@@ -29,8 +29,8 @@ def test_tcp_reserved_bits_segment_parses_nonzero_surrounding_header_fields():
 
 
 def test_tcp_reserved_bits_segment_rejects_invalid_symbol():
-    with pytest.raises(ValueError, match="4 bits"):
-        build_tcp_reserved_bits_segment(0x10)
+    with pytest.raises(ValueError, match="3 bits"):
+        build_tcp_reserved_bits_segment(0x8)
 
 
 def test_tcp_header_parser_rejects_truncated_segment():

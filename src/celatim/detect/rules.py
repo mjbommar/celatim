@@ -457,6 +457,7 @@ def tcpdump_bpf_provenance_record(
     implementation: str,
     notes: str,
     name: str | None = None,
+    scope_filter: str | None = None,
 ) -> DetectorProvenanceRecord:
     """Run a generated libpcap BPF filter with tcpdump and return provenance.
 
@@ -465,7 +466,8 @@ def tcpdump_bpf_provenance_record(
     basis explicitly so scenario controls cannot be mistaken for FP estimates.
     """
 
-    rule = bpf_filter(mechanism)
+    detector_rule = bpf_filter(mechanism)
+    rule = detector_rule if scope_filter is None else f"({scope_filter}) and ({detector_rule})"
     pcap = Path(pcap_path)
     command = (tcpdump_path, "-tt", "-n", "-r", str(pcap), rule)
     resolved = shutil.which(tcpdump_path)
@@ -497,6 +499,16 @@ def tcpdump_bpf_provenance_record(
             stderr_excerpt=f"{tcpdump_path}: not found",
             notes=f"tcpdump was unavailable; {notes}",
         )
+    scope_completed = None
+    if scope_filter is not None:
+        scope_completed = subprocess.run(
+            (tcpdump_path, "-tt", "-n", "-r", str(pcap), scope_filter),
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        checked_units = _tcpdump_packet_line_count(scope_completed.stdout)
     completed = subprocess.run(
         command,
         check=False,
@@ -507,14 +519,25 @@ def tcpdump_bpf_provenance_record(
     stdout = completed.stdout
     stderr = completed.stderr
     matched_units = _tcpdump_packet_line_count(stdout)
-    command_failed = completed.returncode != 0
+    command_failed = completed.returncode != 0 or (
+        scope_completed is not None and scope_completed.returncode != 0
+    )
+    effective_returncode = completed.returncode
+    if effective_returncode == 0 and scope_completed is not None:
+        effective_returncode = scope_completed.returncode
+    scope_note = ""
+    if scope_completed is not None:
+        scope_note = (
+            f"; eligible filter {scope_filter!r} checked {checked_units} packets "
+            "with tcpdump/libpcap"
+        )
     return DetectorProvenanceRecord(
         name=record_name,
         detector_family="stateless_filter",
         implementation=implementation,
         implementation_kind=DetectorImplementationKind.INDEPENDENT_TOOL_OUTPUT,
         executed=not command_failed,
-        result=_tcpdump_result(completed.returncode, matched_units),
+        result=_tcpdump_result(effective_returncode, matched_units),
         detectability=mechanism.detectability,
         predicate=mechanism.detect_predicate,
         disposition=disposition(mechanism),
@@ -527,11 +550,11 @@ def tcpdump_bpf_provenance_record(
         benign_basis=benign_basis,
         false_positive_estimate=false_positive_estimate and not command_failed,
         command=command,
-        returncode=completed.returncode,
+        returncode=effective_returncode,
         stdout_sha256=hashlib.sha256(stdout.encode()).hexdigest(),
         stderr_sha256=hashlib.sha256(stderr.encode()).hexdigest(),
         stderr_excerpt=_excerpt(stderr),
-        notes=notes,
+        notes=notes + scope_note,
     )
 
 

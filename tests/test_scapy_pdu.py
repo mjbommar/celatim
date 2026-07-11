@@ -106,7 +106,7 @@ def test_checksum_is_recomputed_for_tcp():
     # placing covert bits then rebuilding must leave a self-consistent checksum:
     # re-dissecting and re-serializing the carrier is stable.
     mech = mechs_by_id()["tcp-reserved-bits"]
-    carrier = scapy_pdu.build_real_pdu(mech, 0xD)
+    carrier = scapy_pdu.build_real_pdu(mech, 0x5)
     assert scapy_pdu.checksum_valid(mech, carrier)
 
 

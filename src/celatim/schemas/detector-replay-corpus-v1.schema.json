@@ -25,6 +25,7 @@
     "false_positive_claim_blockers",
     "aggregate_false_positive_rate",
     "trace_source_kind_counts",
+    "mechanisms",
     "traces"
   ],
   "properties": {
@@ -56,6 +57,10 @@
     },
     "aggregate_false_positive_rate": { "type": ["number", "null"] },
     "trace_source_kind_counts": { "type": "object" },
+    "mechanisms": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/mechanism_summary" }
+    },
     "traces": {
       "type": "array",
       "items": { "$ref": "#/$defs/trace_summary" }
@@ -148,6 +153,49 @@
           "items": { "$ref": "#/$defs/false_positive_claim_blocker" }
         },
         "aggregate_false_positive_rate": { "type": ["number", "null"] }
+      }
+    },
+    "mechanism_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mechanism_id",
+        "mechanism_name",
+        "trace_count",
+        "executed_trace_count",
+        "failed_trace_count",
+        "checked_unit_count",
+        "matched_unit_count",
+        "false_positive_estimate",
+        "false_positive_rate",
+        "false_positive_wilson95",
+        "trace_false_positive_rates"
+      ],
+      "properties": {
+        "mechanism_id": { "type": "string" },
+        "mechanism_name": { "type": "string" },
+        "trace_count": { "type": "integer" },
+        "executed_trace_count": { "type": "integer" },
+        "failed_trace_count": { "type": "integer" },
+        "checked_unit_count": { "type": "integer" },
+        "matched_unit_count": { "type": "integer" },
+        "false_positive_estimate": { "type": "boolean" },
+        "false_positive_rate": { "type": ["number", "null"] },
+        "false_positive_wilson95": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "trace_false_positive_rates": {
+          "type": "array",
+          "items": { "type": ["number", "null"] }
+        }
       }
     }
   }

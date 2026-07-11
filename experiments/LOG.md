@@ -10,6 +10,12 @@ refuses to classify preservation or rewriting without receiver packets. Do not c
 historical E7 result as current evidence; use the paper repository's
 `docs/path-conditioned-survivability.md` report.
 
+**TCP semantic correction (2026-07-11):** RFC 9768 assigns the former fourth reserved
+flag to Accurate ECN. The TCP carrier now uses only the three Reserved bits (`0x0e`,
+three bits per segment) and preserves the AE bit. Historical E1--E8 TCP results below
+used the earlier four-bit model and remain a development diary, not current evidence.
+Use regenerated reports from the corrected implementation for paper claims.
+
 ---
 
 ## 2026-06-12 — production-path framing for reviewer evidence

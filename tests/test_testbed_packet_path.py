@@ -156,12 +156,12 @@ def test_ipv4_tcp_reserved_bits_frame_roundtrips_header_symbol():
     config = Ipv4PacketPathConfig(protocol=PacketProtocol.TCP, src_port=40000, dst_port=443)
     wrong_port = Ipv4PacketPathConfig(protocol=PacketProtocol.TCP, src_port=40000, dst_port=8443)
 
-    frame = build_tcp_reserved_bits_frame(config, 0xB, index=3)
+    frame = build_tcp_reserved_bits_frame(config, 0x5, index=3)
 
     assert frame[23] == 6
-    assert frame[14 + 20 + 12] & 0x0F == 0xB
+    assert (frame[14 + 20 + 12] & 0x0E) >> 1 == 0x5
     assert int.from_bytes(frame[18:20], "big") == 0x4003
-    assert tcp_reserved_bits_from_frame(config, frame) == 0xB
+    assert tcp_reserved_bits_from_frame(config, frame) == 0x5
     assert tcp_reserved_bits_from_frame(wrong_port, frame) is None
     assert carrier_payload_from_frame(config, frame) == b""
 
@@ -214,7 +214,7 @@ def test_afpacket_carrier_transport_roundtrips_tcp_reserved_header_bits():
 
     assert result.payload == b"\x00\xfftcp"
     assert receipt.carrier_units == len(send_socket.sent)
-    assert {frame[14 + 20 + 12] & 0x0F for frame in send_socket.sent}.issubset(set(range(16)))
+    assert {(frame[14 + 20 + 12] & 0x0E) >> 1 for frame in send_socket.sent}.issubset(set(range(8)))
     assert factory.protocols == [0, ETH_P_ALL]
 
 

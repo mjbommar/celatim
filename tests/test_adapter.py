@@ -66,7 +66,7 @@ def test_minimal_packet_template_adapters_build_parser_validated_carrier_bytes()
     assert units
     assert all(unit.has_carrier_bytes for unit in units)
     assert all(adapter.parse_carrier(unit.carrier) == unit.symbol for unit in units)
-    assert {unit.symbol for unit in units}.issubset(set(range(16)))
+    assert {unit.symbol for unit in units}.issubset(set(range(8)))
     assert adapter.decode_units(units) == payload
 
 

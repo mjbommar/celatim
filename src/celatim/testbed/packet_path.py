@@ -410,7 +410,7 @@ def build_tcp_reserved_bits_frame(
     if config.protocol is not PacketProtocol.TCP:
         raise ValueError("TCP reserved-bit frames require TCP protocol")
     if not 0 <= reserved_bits < (1 << TCP_RESERVED_BITS_WIDTH):
-        raise ValueError("reserved_bits must fit in 4 bits")
+        raise ValueError("reserved_bits must fit in 3 bits")
     src_ip = ipaddress.IPv4Address(config.src_ip).packed
     dst_ip = ipaddress.IPv4Address(config.dst_ip).packed
     ip_id = (config.ip_id_base + index) & 0xFFFF
@@ -465,7 +465,7 @@ def tcp_reserved_bits_from_frame(config: Ipv4PacketPathConfig, frame: bytes) -> 
         return None
     if len(segment) < TCP_HEADER_BYTES or _tcp_payload(config, segment) is None:
         return None
-    return segment[12] & 0x0F
+    return (segment[12] & 0x0E) >> 1
 
 
 def carrier_payload_from_frame(config: Ipv4PacketPathConfig, frame: bytes) -> bytes | None:
@@ -524,13 +524,13 @@ def _tcp_segment(
     reserved_bits: int = 0,
 ) -> bytes:
     if not 0 <= reserved_bits < (1 << TCP_RESERVED_BITS_WIDTH):
-        raise ValueError("reserved_bits must fit in 4 bits")
+        raise ValueError("reserved_bits must fit in 3 bits")
     header = _TCP_HEADER.pack(
         config.src_port,
         config.dst_port,
         seq,
         0,
-        (5 << 4) | reserved_bits,
+        (5 << 4) | (reserved_bits << 1),
         config.tcp_flags,
         config.tcp_window,
         0,
@@ -543,7 +543,7 @@ def _tcp_segment(
             config.dst_port,
             seq,
             0,
-            (5 << 4) | reserved_bits,
+            (5 << 4) | (reserved_bits << 1),
             config.tcp_flags,
             config.tcp_window,
             checksum,
@@ -621,7 +621,7 @@ def _reserved_bits_symbol(symbol: Symbol) -> int:
     if not isinstance(symbol, int):
         raise TransportError("tcp-reserved-bits packet path requires int symbols")
     if not 0 <= symbol < (1 << TCP_RESERVED_BITS_WIDTH):
-        raise TransportError("tcp-reserved-bits symbol does not fit in 4 reserved bits")
+        raise TransportError("tcp-reserved-bits symbol does not fit in 3 reserved bits")
     return symbol
 
 

@@ -33,10 +33,10 @@ def test_detector_rule_artifacts_include_all_generated_formats():
         STATEFUL_ZEEK_FILENAME,
         STATEFUL_SURICATA_FILENAME,
     }
-    assert "@th,100,4 != 0" in artifacts[NFTABLES_RULES_FILENAME].content
+    assert "@th,100,3 != 0" in artifacts[NFTABLES_RULES_FILENAME].content
     assert "(@nh,224,32 & 0x0f0f0f0f == 0x0a0a0a0a)" in artifacts[NFTABLES_RULES_FILENAME].content
-    assert "0>>22&0x3C@12>>24&0x0F=0x1:0x0F" in artifacts[IPTABLES_U32_RULES_FILENAME].content
-    assert "tcp[12] & 0x0f != 0" in artifacts[BPF_FILTERS_FILENAME].content
+    assert "0>>22&0x3C@12>>24&0x0E=0x1:0x0E" in artifacts[IPTABLES_U32_RULES_FILENAME].content
+    assert "tcp[12] & 0x0e != 0" in artifacts[BPF_FILTERS_FILENAME].content
     assert (
         "generated_not_executed_no_false_positive_estimate"
         in artifacts[DETECTOR_RULES_MARKDOWN_FILENAME].content

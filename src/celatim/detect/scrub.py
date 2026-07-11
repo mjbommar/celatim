@@ -213,7 +213,7 @@ def _scrub_tcp_reserved_bits_frame(frame: bytes) -> _ScrubbedFrame:
             scrubbed=False,
         )
     reserved_index = tcp_start + _TCP_RESERVED_BYTE_OFFSET
-    before_matched = (frame[reserved_index] & 0x0F) != 0
+    before_matched = (frame[reserved_index] & 0x0E) != 0
     if not before_matched:
         return _ScrubbedFrame(
             frame=frame,
@@ -223,9 +223,9 @@ def _scrub_tcp_reserved_bits_frame(frame: bytes) -> _ScrubbedFrame:
             scrubbed=False,
         )
     mutable = bytearray(frame)
-    mutable[reserved_index] &= 0xF0
+    mutable[reserved_index] &= 0xF1
     _rewrite_tcp_checksum(mutable, tcp_start, tcp_end, src_ip, dst_ip)
-    after_matched = (mutable[reserved_index] & 0x0F) != 0
+    after_matched = (mutable[reserved_index] & 0x0E) != 0
     return _ScrubbedFrame(
         frame=bytes(mutable),
         checked=True,

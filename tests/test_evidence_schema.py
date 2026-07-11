@@ -485,7 +485,7 @@ def test_generated_scrub_report_matches_schema(tmp_path):
         [
             build_tcp_reserved_bits_frame(
                 default_ipv4_packet_path_config_for("tcp-reserved-bits"),
-                0x0A,
+                0x05,
                 index=0,
             )
         ],

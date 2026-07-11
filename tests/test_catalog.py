@@ -183,6 +183,7 @@ def test_rejects_duplicate_ids(tmp_path):
 def test_tcp_row_fields():
     mechs = {m.id: m for m in load_mechanisms(DATA)}
     tcp = mechs["tcp-reserved-bits"]
-    assert tcp.raw_capacity_bits == 4
+    assert tcp.raw_capacity_bits == 3
     assert tcp.carrier_class.value == "A"
+    assert "RFC 9768" in tcp.rfcs
     assert "RFC 9293" in tcp.rfcs

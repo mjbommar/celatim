@@ -6,7 +6,7 @@ import struct
 from dataclasses import dataclass
 
 TCP_HEADER_BYTES = 20
-TCP_RESERVED_BITS_WIDTH = 4
+TCP_RESERVED_BITS_WIDTH = 3
 TCP_RESERVED_BITS_OFFSET = 12
 _TCP_HEADER = struct.Struct("!HHIIBBHHH")
 
@@ -40,8 +40,8 @@ def build_tcp_reserved_bits_segment(
     """Build a parser-visible TCP header carrying the reserved-bit symbol."""
 
     if not 0 <= reserved_bits < (1 << TCP_RESERVED_BITS_WIDTH):
-        raise ValueError("reserved_bits must fit in 4 bits")
-    offset_reserved = (5 << 4) | reserved_bits
+        raise ValueError("reserved_bits must fit in 3 bits")
+    offset_reserved = (5 << 4) | (reserved_bits << 1)
     return _TCP_HEADER.pack(
         src_port,
         dst_port,
@@ -73,7 +73,7 @@ def parse_tcp_header(segment: bytes) -> TCPHeader:
         seq=seq,
         ack=ack,
         data_offset_words=data_offset_words,
-        reserved_bits=offset_reserved & 0x0F,
+        reserved_bits=(offset_reserved & 0x0E) >> 1,
         flags=flags,
         window=window,
         checksum=checksum,

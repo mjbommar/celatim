@@ -226,8 +226,8 @@ def test_run_evidence_executes_tcpdump_detector_for_tcp_reserved_pcap(tmp_path):
     ]
     tcpdump = detectors[-1]
     assert tcpdump["name"] == "tcp-reserved-bits-tcpdump-bpf"
-    assert tcpdump["rule"] == "tcp[12] & 0x0f != 0"
-    assert tcpdump["command"][-1] == "tcp[12] & 0x0f != 0"
+    assert tcpdump["rule"] == "tcp[12] & 0x0e != 0"
+    assert tcpdump["command"][-1] == "tcp[12] & 0x0e != 0"
     assert tcpdump["false_positive_estimate"] is False
     assert tcpdump["benign_basis"] == "scenario_control_fixture_not_fp_estimate"
     if shutil.which("tcpdump") is None:

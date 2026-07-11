@@ -157,7 +157,7 @@ def test_pcap_transport_tcp_reserved_bits_is_tcpdump_filterable(tmp_path):
             "-n",
             "-r",
             str(transport.path_for("tcpdump")),
-            "tcp[12] & 0x0f != 0",
+            "tcp[12] & 0x0e != 0",
         ],
         check=False,
         capture_output=True,

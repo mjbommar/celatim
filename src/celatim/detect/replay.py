@@ -14,6 +14,7 @@ import subprocess
 import tempfile
 from dataclasses import dataclass
 from enum import Enum
+from math import sqrt
 from pathlib import Path
 from time import time
 from typing import Any, cast
@@ -63,13 +64,26 @@ _TSHARK_DISPLAY_FILTERS = {
     "tcp-reserved-bits": "tcp.flags.res != 0",
 }
 
+_BPF_SCOPE_FILTERS = {
+    "tcp-reserved-bits": "tcp",
+    "ipv4-reserved-flag": "ip",
+}
+
+_TSHARK_SCOPE_FILTERS = {
+    "tcp-reserved-bits": "tcp",
+}
+
+_SURICATA_SCOPE_FILTERS = {
+    "tcp-reserved-bits": "tcp",
+}
+
 _SURICATA_RULES = {
     "tcp-reserved-bits": (
         9_301_001,
         (
             'alert tcp any any -> any any (msg:"CELATIM tcp-reserved-bits TCP '
             'reserved bits nonzero"; flow:stateless; tcp.hdr; '
-            "byte_test:1,&,0x0f,12; classtype:policy-violation; "
+            "byte_test:1,&,0x0e,12; classtype:policy-violation; "
             "sid:9301001; rev:1;)"
         ),
     ),
@@ -224,6 +238,38 @@ class DetectorReplayTraceSummary:
 
 
 @dataclass(frozen=True)
+class DetectorReplayCorpusMechanismSummary:
+    mechanism_id: str
+    mechanism_name: str
+    trace_count: int
+    executed_trace_count: int
+    failed_trace_count: int
+    checked_unit_count: int
+    matched_unit_count: int
+    false_positive_estimate: bool
+    false_positive_rate: float | None
+    false_positive_wilson95: tuple[float, float] | None
+    trace_false_positive_rates: tuple[float | None, ...]
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "mechanism_id": self.mechanism_id,
+            "mechanism_name": self.mechanism_name,
+            "trace_count": self.trace_count,
+            "executed_trace_count": self.executed_trace_count,
+            "failed_trace_count": self.failed_trace_count,
+            "checked_unit_count": self.checked_unit_count,
+            "matched_unit_count": self.matched_unit_count,
+            "false_positive_estimate": self.false_positive_estimate,
+            "false_positive_rate": self.false_positive_rate,
+            "false_positive_wilson95": (
+                None if self.false_positive_wilson95 is None else list(self.false_positive_wilson95)
+            ),
+            "trace_false_positive_rates": list(self.trace_false_positive_rates),
+        }
+
+
+@dataclass(frozen=True)
 class DetectorReplayReport:
     schema_version: str
     generated_at_unix_s: float
@@ -287,6 +333,7 @@ class DetectorReplayCorpusReport:
     false_positive_claim_blockers: tuple[str, ...]
     aggregate_false_positive_rate: float | None
     trace_source_kind_counts: dict[str, int]
+    mechanisms: tuple[DetectorReplayCorpusMechanismSummary, ...]
     traces: tuple[DetectorReplayTraceSummary, ...]
 
     def to_json(self) -> dict[str, Any]:
@@ -311,6 +358,7 @@ class DetectorReplayCorpusReport:
             "false_positive_claim_blockers": list(self.false_positive_claim_blockers),
             "aggregate_false_positive_rate": self.aggregate_false_positive_rate,
             "trace_source_kind_counts": dict(sorted(self.trace_source_kind_counts.items())),
+            "mechanisms": [mechanism.to_json() for mechanism in self.mechanisms],
             "traces": [trace.to_json() for trace in self.traces],
         }
 
@@ -434,6 +482,7 @@ def replay_detector_corpus(
     aggregate_matched_rate = _rate(matched_unit_count, checked_unit_count)
     fp_blockers = _corpus_false_positive_claim_blockers(reports)
     fp_estimate = not fp_blockers
+    mechanism_summaries = _corpus_mechanism_summaries(mechanisms, reports)
     return DetectorReplayCorpusReport(
         schema_version=DETECTOR_REPLAY_CORPUS_SCHEMA_VERSION,
         generated_at_unix_s=time(),
@@ -455,6 +504,7 @@ def replay_detector_corpus(
         false_positive_claim_blockers=fp_blockers,
         aggregate_false_positive_rate=aggregate_matched_rate if fp_estimate else None,
         trace_source_kind_counts=_trace_source_kind_counts(reports),
+        mechanisms=mechanism_summaries,
         traces=summaries,
     )
 
@@ -610,6 +660,7 @@ def _tcpdump_replay_record(
             f"trace source kind is {source_kind.value}"
         ),
         name=f"{mechanism.id}-trace-replay-tcpdump-bpf",
+        scope_filter=_BPF_SCOPE_FILTERS[mechanism.id],
     )
     return record
 
@@ -626,8 +677,9 @@ def _tshark_replay_record(
 ) -> DetectorProvenanceRecord:
     del tcpdump_path, suricata_path
     rule = _TSHARK_DISPLAY_FILTERS[mechanism.id]
+    scope_rule = _TSHARK_SCOPE_FILTERS[mechanism.id]
     command = (tshark_path, "-r", str(pcap_path), "-Y", rule, "-T", "fields", "-e", "frame.number")
-    checked_units = classic_pcap_record_count(pcap_path)
+    checked_units = 0
     if shutil.which(tshark_path) is None:
         return DetectorProvenanceRecord(
             name=f"{mechanism.id}-trace-replay-tshark-display-filter",
@@ -657,6 +709,24 @@ def _tshark_replay_record(
                 f"not executed; trace source kind is {source_kind.value}"
             ),
         )
+    scope_completed = subprocess.run(
+        (
+            tshark_path,
+            "-r",
+            str(pcap_path),
+            "-Y",
+            scope_rule,
+            "-T",
+            "fields",
+            "-e",
+            "frame.number",
+        ),
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    checked_units = _line_count(scope_completed.stdout)
     completed = subprocess.run(
         command,
         check=False,
@@ -667,14 +737,15 @@ def _tshark_replay_record(
     stdout = completed.stdout
     stderr = completed.stderr
     matched_units = _line_count(stdout)
-    command_failed = completed.returncode != 0
+    command_failed = completed.returncode != 0 or scope_completed.returncode != 0
+    effective_returncode = completed.returncode or scope_completed.returncode
     return DetectorProvenanceRecord(
         name=f"{mechanism.id}-trace-replay-tshark-display-filter",
         detector_family="display_filter",
         implementation="tshark/Wireshark display-filter execution over detector replay pcap",
         implementation_kind=DetectorImplementationKind.INDEPENDENT_TOOL_OUTPUT,
         executed=not command_failed,
-        result=_tool_result(completed.returncode, matched_units),
+        result=_tool_result(effective_returncode, matched_units),
         detectability=mechanism.detectability,
         predicate=mechanism.detect_predicate,
         disposition=disposition(mechanism),
@@ -687,13 +758,14 @@ def _tshark_replay_record(
         benign_basis=source_kind.value,
         false_positive_estimate=false_positive_estimate and not command_failed,
         command=command,
-        returncode=completed.returncode,
+        returncode=effective_returncode,
         stdout_sha256=hashlib.sha256(stdout.encode()).hexdigest(),
         stderr_sha256=hashlib.sha256(stderr.encode()).hexdigest(),
         stderr_excerpt=_excerpt(stderr),
         notes=(
             "independent tshark/Wireshark display-filter execution over a detector "
-            f"replay pcap; trace source kind is {source_kind.value}"
+            f"replay pcap; trace source kind is {source_kind.value}; eligible display "
+            f"filter {scope_rule!r} checked {checked_units} packets"
         ),
     )
 
@@ -708,10 +780,11 @@ def _suricata_replay_record(
     tshark_path: str,
     suricata_path: str,
 ) -> DetectorProvenanceRecord:
-    del tcpdump_path, tshark_path
+    del tshark_path
     sid, rule = _SURICATA_RULES[mechanism.id]
-    checked_units = classic_pcap_record_count(pcap_path)
-    if shutil.which(suricata_path) is None:
+    checked_units = 0
+    if shutil.which(suricata_path) is None or shutil.which(tcpdump_path) is None:
+        missing_tool = suricata_path if shutil.which(suricata_path) is None else tcpdump_path
         return DetectorProvenanceRecord(
             name=f"{mechanism.id}-trace-replay-suricata-rule",
             detector_family="ids_rule",
@@ -744,12 +817,21 @@ def _suricata_replay_record(
             returncode=None,
             stdout_sha256=None,
             stderr_sha256=None,
-            stderr_excerpt=f"{suricata_path}: not found",
+            stderr_excerpt=f"{missing_tool}: not found",
             notes=(
                 "Suricata was unavailable; IDS rule detector replay was not executed; "
                 f"trace source kind is {source_kind.value}"
             ),
         )
+    scope_rule = _SURICATA_SCOPE_FILTERS[mechanism.id]
+    scope_completed = subprocess.run(
+        (tcpdump_path, "-tt", "-n", "-r", str(pcap_path), scope_rule),
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    checked_units = _line_count(scope_completed.stdout)
     with tempfile.TemporaryDirectory(prefix="celatim-suricata-replay-") as tmp:
         tmpdir = Path(tmp)
         rule_path = tmpdir / "celatim.rules"
@@ -777,14 +859,15 @@ def _suricata_replay_record(
         stdout = completed.stdout
         stderr = completed.stderr
         matched_units = _suricata_alert_count(log_dir / "eve.json", sid)
-    command_failed = completed.returncode != 0
+    command_failed = completed.returncode != 0 or scope_completed.returncode != 0
+    effective_returncode = completed.returncode or scope_completed.returncode
     return DetectorProvenanceRecord(
         name=f"{mechanism.id}-trace-replay-suricata-rule",
         detector_family="ids_rule",
         implementation="Suricata rule execution over detector replay pcap",
         implementation_kind=DetectorImplementationKind.INDEPENDENT_TOOL_OUTPUT,
         executed=not command_failed,
-        result=_tool_result(completed.returncode, matched_units),
+        result=_tool_result(effective_returncode, matched_units),
         detectability=mechanism.detectability,
         predicate=mechanism.detect_predicate,
         disposition=disposition(mechanism),
@@ -797,18 +880,21 @@ def _suricata_replay_record(
         benign_basis=source_kind.value,
         false_positive_estimate=false_positive_estimate and not command_failed,
         command=command,
-        returncode=completed.returncode,
+        returncode=effective_returncode,
         stdout_sha256=hashlib.sha256(stdout.encode()).hexdigest(),
         stderr_sha256=hashlib.sha256(stderr.encode()).hexdigest(),
         stderr_excerpt=_excerpt(stderr),
         notes=(
             "independent Suricata IDS rule execution over a detector replay pcap; "
-            f"trace source kind is {source_kind.value}"
+            f"trace source kind is {source_kind.value}; eligible BPF filter "
+            f"{scope_rule!r} checked {checked_units} packets"
         ),
     )
 
 
 def _bpf_supported(mechanism: Mechanism) -> bool:
+    if mechanism.id not in _BPF_SCOPE_FILTERS:
+        return False
     if mechanism.detectability is not Detectability.STATELESS_FILTER:
         return False
     try:
@@ -867,6 +953,62 @@ def _corpus_false_positive_claim_blockers(
         return ("empty_trace_corpus",)
     blockers = {blocker for report in reports for blocker in report.false_positive_claim_blockers}
     return tuple(sorted(blockers))
+
+
+def _corpus_mechanism_summaries(
+    mechanisms: list[Mechanism],
+    reports: tuple[DetectorReplayReport, ...],
+) -> tuple[DetectorReplayCorpusMechanismSummary, ...]:
+    summaries: list[DetectorReplayCorpusMechanismSummary] = []
+    for mechanism in mechanisms:
+        results = tuple(
+            result
+            for report in reports
+            for result in report.mechanisms
+            if result.mechanism_id == mechanism.id
+        )
+        executed_count = sum(1 for result in results if _executed(result))
+        checked_count = sum(_checked_units(result) for result in results)
+        matched_count = sum(_matched_units(result) for result in results)
+        fp_estimate = bool(results) and all(result.false_positive_estimate for result in results)
+        rate = _rate(matched_count, checked_count) if fp_estimate else None
+        summaries.append(
+            DetectorReplayCorpusMechanismSummary(
+                mechanism_id=mechanism.id,
+                mechanism_name=mechanism.name,
+                trace_count=len(reports),
+                executed_trace_count=executed_count,
+                failed_trace_count=len(reports) - executed_count,
+                checked_unit_count=checked_count,
+                matched_unit_count=matched_count,
+                false_positive_estimate=fp_estimate,
+                false_positive_rate=rate,
+                false_positive_wilson95=(
+                    _wilson95(matched_count, checked_count)
+                    if rate is not None and checked_count
+                    else None
+                ),
+                trace_false_positive_rates=tuple(result.false_positive_rate for result in results),
+            )
+        )
+    return tuple(summaries)
+
+
+def _wilson95(successes: int, trials: int) -> tuple[float, float]:
+    if trials <= 0:
+        raise ValueError("Wilson interval requires at least one trial")
+    z = 1.959963984540054
+    proportion = successes / trials
+    denominator = 1 + z * z / trials
+    center = (proportion + z * z / (2 * trials)) / denominator
+    radius = (
+        z
+        * sqrt(proportion * (1 - proportion) / trials + z * z / (4 * trials * trials))
+        / denominator
+    )
+    lower = 0.0 if successes == 0 else max(0.0, center - radius)
+    upper = 1.0 if successes == trials else min(1.0, center + radius)
+    return lower, upper
 
 
 def _suricata_alert_count(eve_path: Path, sid: int) -> int:

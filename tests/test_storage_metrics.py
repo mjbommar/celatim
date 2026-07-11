@@ -26,7 +26,7 @@ def test_ipv4_id_metrics():
 
 def test_tcp_reserved_density():
     m = mechs()["tcp-reserved-bits"]
-    assert math.isclose(density_header(m), 4 / 160)
+    assert math.isclose(density_header(m), 3 / 160)
 
 
 def test_quic_spin_density():

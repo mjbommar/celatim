@@ -112,6 +112,30 @@ def detector_metric_report(
     )
 
 
+def detector_threshold_metrics(
+    scores: Iterable[LabeledDetectionScore],
+    threshold: float,
+    *,
+    prevalence_assumptions: tuple[float, ...] = (0.0001, 0.001, 0.01),
+) -> ThresholdMetrics:
+    """Evaluate one externally selected threshold without recalibrating it."""
+
+    observations = tuple(scores)
+    positives = sum(observation.label for observation in observations)
+    negatives = len(observations) - positives
+    if positives == 0 or negatives == 0:
+        raise ValueError("detector evaluation requires positive and negative observations")
+    if not math.isfinite(threshold):
+        raise ValueError("detector threshold must be finite")
+    if any(not 0 < prevalence < 1 for prevalence in prevalence_assumptions):
+        raise ValueError("prevalence assumptions must be between zero and one")
+    return _threshold_metrics(
+        observations,
+        threshold,
+        prevalence_assumptions=prevalence_assumptions,
+    )
+
+
 def _threshold_metrics(
     scores: tuple[LabeledDetectionScore, ...],
     threshold: float,
@@ -189,4 +213,5 @@ __all__ = [
     "LabeledDetectionScore",
     "ThresholdMetrics",
     "detector_metric_report",
+    "detector_threshold_metrics",
 ]

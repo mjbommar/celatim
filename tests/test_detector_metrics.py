@@ -2,7 +2,11 @@
 
 import pytest
 
-from celatim.analysis.detector_metrics import LabeledDetectionScore, detector_metric_report
+from celatim.analysis.detector_metrics import (
+    LabeledDetectionScore,
+    detector_metric_report,
+    detector_threshold_metrics,
+)
 
 
 def test_perfect_detector_has_unit_roc_and_average_precision():
@@ -52,3 +56,20 @@ def test_requires_both_classes_and_valid_prevalence():
             [LabeledDetectionScore(True, 1.0), LabeledDetectionScore(False, 0.0)],
             prevalence_assumptions=(0.0,),
         )
+
+
+def test_external_threshold_is_evaluated_without_recalibration():
+    scores = [
+        LabeledDetectionScore(True, 0.9),
+        LabeledDetectionScore(True, 0.4),
+        LabeledDetectionScore(False, 0.6),
+        LabeledDetectionScore(False, 0.1),
+    ]
+
+    row = detector_threshold_metrics(scores, 0.5, prevalence_assumptions=(0.001,))
+
+    assert row.threshold == 0.5
+    assert row.true_positive == 1
+    assert row.false_positive == 1
+    assert row.true_negative == 1
+    assert row.false_negative == 1

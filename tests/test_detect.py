@@ -47,11 +47,11 @@ def mechs():
 
 
 def test_locator_byte_math():
-    # TCP reserved nibble: TH bit offset 100, width 4 -> byte 12, mask 0x0f.
-    loc = FieldLocator(base=WireBase.TH, bit_offset=100, bit_width=4)
+    # RFC 9768 leaves three Reserved bits at TH bit offset 100.
+    loc = FieldLocator(base=WireBase.TH, bit_offset=100, bit_width=3)
     assert loc.byte_offset == 12
     assert loc.spans_single_byte
-    assert loc.byte_mask == 0x0F
+    assert loc.byte_mask == 0x0E
 
 
 def test_locator_high_nibble_mask():
@@ -79,14 +79,15 @@ def test_detectability_spread_across_catalog():
 
 def test_bpf_for_tcp_reserved():
     m = mechs()["tcp-reserved-bits"]
-    assert bpf_filter(m) == "tcp[12] & 0x0f != 0"
+    assert bpf_filter(m) == "tcp[12] & 0x0e != 0"
 
 
 def test_nftables_for_tcp_reserved():
     m = mechs()["tcp-reserved-bits"]
     rule = nftables_rule(m)
-    assert "@th,100,4 != 0" in rule
+    assert "@th,100,3 != 0" in rule
     assert "meta l4proto tcp" in rule
+    assert "RFC 9768" in rule
     assert "RFC 9293" in rule  # provenance carried into the comment
 
 
@@ -115,7 +116,7 @@ def test_iptables_u32_for_tcp_reserved():
     m = mechs()["tcp-reserved-bits"]
     assert (
         iptables_u32_rule(m)
-        == '-m u32 --u32 "6&0xFF=6 && 4&0x3FFF=0 && 0>>22&0x3C@12>>24&0x0F=0x1:0x0F"'
+        == '-m u32 --u32 "6&0xFF=6 && 4&0x3FFF=0 && 0>>22&0x3C@12>>24&0x0E=0x1:0x0E"'
     )
 
 
@@ -139,10 +140,10 @@ def test_coverage_buckets_and_emittable_set():
     assert {"tcp-reserved-bits", "ipv4-reserved-flag", "sctp-chunk-flags"} <= {
         m.id for m in emittable(ms)
     }
-    assert len(default_replay_mechanisms(ms)) == 30
-    assert {"tcp-reserved-bits", "ipv4-reserved-flag", "dns-caa-flags"} <= {
-        m.id for m in default_replay_mechanisms(ms)
-    }
+    assert [m.id for m in default_replay_mechanisms(ms)] == [
+        "tcp-reserved-bits",
+        "ipv4-reserved-flag",
+    ]
     assert [
         m.id
         for m in default_replay_mechanisms(
@@ -191,13 +192,13 @@ def test_detector_provenance_names_same_code_and_generated_rule_paths():
     }
     assert {record.executed for record in (nft, iptables, bpf)} == {False}
     assert nft.rule_format == "nftables"
-    assert "@th,100,4 != 0" in str(nft.rule)
+    assert "@th,100,3 != 0" in str(nft.rule)
     assert iptables.rule_format == "iptables-u32"
     assert iptables.rule == (
-        '-m u32 --u32 "6&0xFF=6 && 4&0x3FFF=0 && 0>>22&0x3C@12>>24&0x0F=0x1:0x0F"'
+        '-m u32 --u32 "6&0xFF=6 && 4&0x3FFF=0 && 0>>22&0x3C@12>>24&0x0E=0x1:0x0E"'
     )
     assert bpf.rule_format == "bpf"
-    assert bpf.rule == "tcp[12] & 0x0f != 0"
+    assert bpf.rule == "tcp[12] & 0x0e != 0"
     assert all(record.command == () for record in (nft, iptables, bpf))
 
 
@@ -349,7 +350,7 @@ def test_detector_replay_suricata_backend_missing_tool_does_not_claim_fp(tmp_pat
     assert provenance["detector_family"] == "ids_rule"
     assert provenance["rule_format"] == "suricata"
     assert "tcp.hdr" in provenance["rule"]
-    assert "byte_test:1,&,0x0f,12" in provenance["rule"]
+    assert "byte_test:1,&,0x0e,12" in provenance["rule"]
     assert provenance["result"] == "tool_missing"
     assert provenance["false_positive_estimate"] is False
     assert provenance["command"][:3] == [
@@ -366,7 +367,7 @@ def test_detector_replay_suricata_backend_parses_eve_alerts(tmp_path):
     _write_test_ethernet_pcap(
         pcap,
         [
-            build_tcp_reserved_bits_frame(default_ipv4_packet_path_config_for(m.id), 0x0A, index=0),
+            build_tcp_reserved_bits_frame(default_ipv4_packet_path_config_for(m.id), 0x05, index=0),
             build_tcp_reserved_bits_frame(default_ipv4_packet_path_config_for(m.id), 0, index=1),
         ],
     )
@@ -452,14 +453,14 @@ def test_detector_replay_executed_public_source_requires_trace_provenance_for_fp
     assert result["detector_provenance"]["false_positive_estimate"] is False
 
 
-def test_tcp_reserved_bits_pcap_scrubber_zeroes_reserved_nibble(tmp_path):
+def test_tcp_reserved_bits_pcap_scrubber_zeroes_reserved_bits(tmp_path):
     config = default_ipv4_packet_path_config_for("tcp-reserved-bits")
     pcap = tmp_path / "dirty.pcap"
     scrubbed = tmp_path / "scrubbed.pcap"
     _write_test_ethernet_pcap(
         pcap,
         [
-            build_tcp_reserved_bits_frame(config, 0x0A, index=0),
+            build_tcp_reserved_bits_frame(config, 0x05, index=0),
             build_tcp_reserved_bits_frame(config, 0, index=1),
         ],
     )
@@ -526,6 +527,38 @@ def test_detector_replay_public_benign_trace_can_record_zero_fp_when_tcpdump_ava
     assert provenance["returncode"] == 0
     assert provenance["benign_basis"] == "public_benign_trace"
     assert provenance["false_positive_estimate"] is True
+
+
+def test_detector_replay_uses_protocol_eligible_denominator(tmp_path):
+    if shutil.which("tcpdump") is None:
+        pytest.skip("tcpdump is not installed")
+    m = mechs()["tcp-reserved-bits"]
+    config = default_ipv4_packet_path_config_for(m.id)
+    tcp_clean = build_tcp_reserved_bits_frame(config, 0, index=0)
+    tcp_match = build_tcp_reserved_bits_frame(config, 0x05, index=1)
+    not_tcp = bytearray(build_tcp_reserved_bits_frame(config, 0, index=2))
+    not_tcp[14 + 9] = 17
+    pcap = tmp_path / "mixed-public-trace.pcap"
+    _write_test_ethernet_pcap(pcap, [tcp_clean, tcp_match, bytes(not_tcp)])
+
+    report = replay_detectors_on_pcap(
+        [m],
+        pcap,
+        source_kind=TraceSourceKind.PUBLIC_BENIGN_TRACE,
+        trace_name="unit-test-mixed-public-trace",
+        origin_url="https://example.invalid/public-trace",
+        license="unit-test fixture",
+        filtering_assumptions=("two TCP packets and one non-TCP packet",),
+    ).to_json()
+
+    assert report["trace"]["packet_count"] == 3
+    assert report["checked_unit_count"] == 2
+    assert report["matched_unit_count"] == 1
+    assert report["aggregate_false_positive_rate"] == 0.5
+    provenance = report["mechanisms"][0]["detector_provenance"]
+    assert provenance["checked_units"] == 2
+    assert provenance["matched_units"] == 1
+    assert "eligible filter 'tcp'" in provenance["notes"]
 
 
 def test_detector_trace_manifest_and_corpus_replay_do_not_claim_fp_without_execution(
@@ -638,6 +671,19 @@ def test_detector_replay_corpus_public_benign_aggregate_when_tcpdump_available(
     assert doc["false_positive_claim_status"] == "false_positive_estimate_ready"
     assert doc["false_positive_claim_blockers"] == []
     assert doc["aggregate_false_positive_rate"] == 0.0
+    assert len(doc["mechanisms"]) == 1
+    mechanism = doc["mechanisms"][0]
+    assert mechanism["mechanism_id"] == "tcp-reserved-bits"
+    assert mechanism["trace_count"] == 2
+    assert mechanism["executed_trace_count"] == 2
+    assert mechanism["failed_trace_count"] == 0
+    assert mechanism["checked_unit_count"] == 3
+    assert mechanism["matched_unit_count"] == 0
+    assert mechanism["false_positive_estimate"] is True
+    assert mechanism["false_positive_rate"] == 0.0
+    assert mechanism["false_positive_wilson95"][0] == 0.0
+    assert mechanism["false_positive_wilson95"][1] > 0.0
+    assert mechanism["trace_false_positive_rates"] == [0.0, 0.0]
 
 
 def _write_trace_manifest(tmp_path: Path, name: str, pcap: Path, trace_name: str) -> Path:
@@ -666,17 +712,17 @@ def _write_trace_manifest(tmp_path: Path, name: str, pcap: Path, trace_name: str
     return manifest
 
 
-# --- Scapy cross-check (dev-only; surfaces the 4-vs-3 reserved-bit nuance) ----
+# --- Scapy cross-check (dev-only) -------------------------------------------
 
 
 def test_scapy_crosschecks_tcp_reserved_byte():
     scapy_all = pytest.importorskip("scapy.all")
-    # Our locator places the reserved nibble in TCP header byte 12. Confirm byte
-    # 12 is the data-offset/reserved byte: dataofs=15 sets its high nibble to 0xF.
-    raw = bytes(scapy_all.TCP(dataofs=15))
+    # RFC 9768 leaves three Reserved bits in byte 12 and assigns the low-order
+    # former NS bit to AE. Scapy's independent layout puts reserved=7 at 0x0e.
+    raw = bytes(scapy_all.TCP(dataofs=15, reserved=7))
     assert raw[12] & 0xF0 == 0xF0
-    # NOTE: Scapy models 3 reserved bits (NS kept as a flag, RFC 3540 view); we
-    # author 4 per RFC 9293. The mask 0x0f covers both, but the row cites 9293.
+    assert raw[12] & 0x0E == 0x0E
+    assert raw[12] & 0x01 == 0
 
 
 def _write_test_ethernet_pcap(path: Path, frames: list[bytes]) -> None:

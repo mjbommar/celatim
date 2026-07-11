@@ -345,7 +345,7 @@ def _observe_tcp_reserved_bits(carrier: bytes) -> _ObservedField:
         raise ValueError("TCP control flags must be non-zero")
     observed = _field_at(carrier, offset, 1)
     return _ObservedField(
-        field=bytes([observed.field[0] & 0x0F]),
+        field=bytes([(observed.field[0] & 0x0E) >> 1]),
         offset=offset,
         field_len=1,
         nonzero_surrounding_bytes=observed.nonzero_surrounding_bytes,

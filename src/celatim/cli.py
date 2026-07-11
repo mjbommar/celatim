@@ -934,6 +934,11 @@ def _session_main(argv: list[str] | None = None, *, program_name: str) -> int:
         default="markdown",
         help="markdown summary, full per-mechanism matrix, or json. Defaults to markdown.",
     )
+    scorecard_generate.add_argument(
+        "--claim-ledger",
+        type=Path,
+        help="Claim-ledger v2 JSON used as the scorecard's execution evidence source.",
+    )
     _add_output_arg(scorecard_generate)
 
     guidance = subparsers.add_parser("guidance", help="Generate public guidance artifacts.")
@@ -1934,7 +1939,8 @@ def _scorecard_generate_main(args: argparse.Namespace) -> int:
         scorecard_matrix_markdown,
     )
 
-    report = build_scorecard(load_mechanisms(args.catalog))
+    claim_ledger = json.loads(args.claim_ledger.read_text()) if args.claim_ledger else None
+    report = build_scorecard(load_mechanisms(args.catalog), claim_ledger=claim_ledger)
     if args.format == "json":
         return _write_json(report.to_json(), args.output)
     if args.format == "matrix":

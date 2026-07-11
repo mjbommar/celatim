@@ -1,22 +1,21 @@
-"""Score each mechanism against the deployment-readiness requirements.
+"""Evidence-led deployment-readiness scorecard.
 
-This is deliberately conservative: a requirement is only credited above ``NOT_ASSESSED``
-when an artifact in the repository actually demonstrates it. Carrier round-trips (the
-"substantiated" tiers) earn ``PARTIAL`` on the framing/parser requirements they touch and
-nothing more. Middlebox survival, indistinguishability, deniability, and multi-host
-integration have no artifacts yet, so they sit at ``NOT_ASSESSED`` for every mechanism --
-which is the honest state, and the reason the deployable count is zero. As real
-cross-host/middlebox tests land (see the s0-s7 testbed), their results raise these cells.
+Only run-backed mechanism ids from a claim-ledger v2 document earn execution credit.
+Adapter capability classifications are deliberately excluded from scoring.
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from ..adapter import AdapterCapability, adapter_for
-from ..model import CarrierClass, Mechanism
+from ..analysis.crosshost_evidence import (
+    ALL_USABLE_EXACT_RECOVERY_CLAIM,
+    CLAIM_LEDGER_SCHEMA_VERSION,
+    PACKET_PATH_EXECUTED_CLAIM,
+)
+from ..model import AnalysisPopulation, CarrierClass, Mechanism
 from .requirements import (
     HARD_REQUIREMENTS,
     REQUIREMENTS,
@@ -64,13 +63,13 @@ class MechanismScorecard:
         }
 
 
-def _assess(mechanism: Mechanism) -> dict[str, RequirementAssessment]:
-    adapter = adapter_for(mechanism)
-    caps = adapter.capabilities
+def _assess(
+    mechanism: Mechanism,
+    claim_ledger: Mapping[str, Any] | None,
+) -> dict[str, RequirementAssessment]:
     cls = mechanism.carrier_class
-
-    def has(cap: AdapterCapability) -> bool:
-        return cap in caps
+    exact_recovery = _claim_mechanism_ids(claim_ledger, ALL_USABLE_EXACT_RECOVERY_CLAIM)
+    packet_path = _claim_mechanism_ids(claim_ledger, PACKET_PATH_EXECUTED_CLAIM)
 
     out: dict[str, RequirementAssessment] = {}
 
@@ -79,31 +78,24 @@ def _assess(mechanism: Mechanism) -> dict[str, RequirementAssessment]:
 
     put("H1", _S.PASSED, "Runs only in the authorized, isolated testbed per project posture.")
 
-    if has(AdapterCapability.PACKET_PATH_TEMPLATE):
+    if mechanism.id in packet_path:
         put(
             "H2",
-            _S.PARTIAL,
-            "Raw frames can cross a wire (AF_PACKET), but not yet to a stock peer.",
+            _S.PASSED,
+            "Claim-ledger v2 records exact recovery across two hosts over AF_PACKET/VXLAN.",
         )
     else:
         put(
             "H2",
             _S.NOT_ASSESSED,
-            "Only an in-process round-trip exists; no cross-host transmission.",
+            "No claim-ledger v2 native packet-path execution exists for this mechanism.",
         )
 
-    if has(AdapterCapability.DAEMON_PATH) or has(AdapterCapability.CRYPTO_TRANSCRIPT):
-        put(
-            "H3",
-            _S.PARTIAL,
-            "A real daemon/crypto verifier is in the loop; stock-peer survival unconfirmed.",
-        )
-    else:
-        put(
-            "H3",
-            _S.NOT_ASSESSED,
-            "The receiver is our own decoder, not a stock protocol implementation.",
-        )
+    put(
+        "H3",
+        _S.NOT_ASSESSED,
+        "The current cross-host ledger does not establish acceptance by a stock peer.",
+    )
 
     if cls is CarrierClass.G:
         put(
@@ -116,11 +108,11 @@ def _assess(mechanism: Mechanism) -> dict[str, RequirementAssessment]:
             "H4", _S.NOT_ASSESSED, "No middlebox matrix (NAT/firewall/proxy/resolver) has been run."
         )
 
-    if has(AdapterCapability.PARSER_VALIDATED):
+    if mechanism.id in exact_recovery:
         put(
             "H5",
             _S.PARTIAL,
-            "A second parser recovers the field, but framing still needs an out-of-band length.",
+            "Repeated exact recovery exercises framing, but blind resynchronization is unmeasured.",
         )
     else:
         put(
@@ -129,25 +121,24 @@ def _assess(mechanism: Mechanism) -> dict[str, RequirementAssessment]:
             "No self-synchronizing framing; receiver cannot find message boundaries blind.",
         )
 
-    if cls is CarrierClass.F:
+    if mechanism.id not in exact_recovery:
         put(
             "H6",
             _S.NOT_ASSESSED,
-            "Timing fidelity is probabilistic; no SNR/loss measurement exists.",
+            "No claim-ledger v2 repeated exact-recovery evidence exists.",
         )
-    elif has(AdapterCapability.CODEC_SESSION):
+    else:
         put(
             "H6",
             _S.PARTIAL,
-            "Sequencing/ARQ plumbing exists but is unvalidated under injected loss/reorder.",
+            "Exact recovery repeated across indexed runs; loss, reorder, and corruption remain untested.",
         )
-    else:
-        put("H6", _S.NOT_ASSESSED, "No reliability layer demonstrated.")
 
     put(
         "H7",
-        _S.FAILED,
-        "Envelope carries an integrity hash only; no AEAD or forward secrecy on the payload.",
+        _S.PARTIAL,
+        "The package now provides offer-bound TLS 1.3 transfer and encrypted carrier records; "
+        "the cross-host ledger predates per-mechanism authenticated-transfer runs.",
     )
     put(
         "H8",
@@ -155,7 +146,14 @@ def _assess(mechanism: Mechanism) -> dict[str, RequirementAssessment]:
         "Indistinguishability under an active channel is not measured per technique.",
     )
     put("H9", _S.NOT_ASSESSED, "Fail-safe behaviour and deniability are not addressed.")
-    put("H10", _S.NOT_ASSESSED, "No multi-host integration test exercising H2-H8 exists yet.")
+    if mechanism.id in packet_path:
+        put(
+            "H10",
+            _S.PARTIAL,
+            "Two-host packet execution exists, but it does not jointly exercise all H2-H8 gates.",
+        )
+    else:
+        put("H10", _S.NOT_ASSESSED, "No native packet-path multi-host integration evidence exists.")
 
     for soft in ("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9"):
         out.setdefault(soft, RequirementAssessment(soft, _S.NOT_ASSESSED, "Not yet evaluated."))
@@ -174,8 +172,13 @@ def _assess(mechanism: Mechanism) -> dict[str, RequirementAssessment]:
     return out
 
 
-def score_mechanism(mechanism: Mechanism) -> MechanismScorecard:
-    assessed = _assess(mechanism)
+def score_mechanism(
+    mechanism: Mechanism,
+    *,
+    claim_ledger: Mapping[str, Any] | None = None,
+) -> MechanismScorecard:
+    _validate_claim_ledger(claim_ledger)
+    assessed = _assess(mechanism, claim_ledger)
     ordered = tuple(assessed[req.id] for req in REQUIREMENTS)
 
     blocking: list[str] = []
@@ -209,6 +212,8 @@ class ScorecardReport:
     deployable_count: int
     hard_pass_counts: dict[str, int]
     status_counts: dict[str, dict[str, int]]
+    ranked_requirement_ids: tuple[str, ...]
+    evidence_source: str
     closest: tuple[MechanismScorecard, ...]
     cards: tuple[MechanismScorecard, ...]
 
@@ -219,14 +224,27 @@ class ScorecardReport:
             "deployable_count": self.deployable_count,
             "hard_pass_counts": self.hard_pass_counts,
             "status_counts": self.status_counts,
+            "ranked_requirement_ids": list(self.ranked_requirement_ids),
+            "evidence_source": self.evidence_source,
             "closest_to_deployable": [c.mechanism_id for c in self.closest],
             "mechanisms": [c.to_json() for c in self.cards],
         }
 
 
-def build_scorecard(mechanisms: Sequence[Mechanism], *, shortlist: int = 10) -> ScorecardReport:
-    usable = [m for m in mechanisms if m.is_usable_channel]
-    cards = [score_mechanism(m) for m in usable]
+def build_scorecard(
+    mechanisms: Sequence[Mechanism],
+    *,
+    shortlist: int = 10,
+    claim_ledger: Mapping[str, Any] | None = None,
+) -> ScorecardReport:
+    _validate_claim_ledger(claim_ledger)
+    usable = [
+        mechanism
+        for mechanism in mechanisms
+        if mechanism.is_usable_channel
+        and mechanism.analysis_population is AnalysisPopulation.PRIMARY_RFC_CARRIER
+    ]
+    cards = [score_mechanism(mechanism, claim_ledger=claim_ledger) for mechanism in usable]
 
     hard_pass_counts = {req.id: 0 for req in HARD_REQUIREMENTS}
     status_counts: dict[str, dict[str, int]] = {
@@ -238,8 +256,15 @@ def build_scorecard(mechanisms: Sequence[Mechanism], *, shortlist: int = 10) -> 
     for req in HARD_REQUIREMENTS:
         hard_pass_counts[req.id] = status_counts[req.id][RequirementStatus.PASSED.value]
 
+    ranked_requirement_ids = tuple(
+        requirement.id
+        for requirement in HARD_REQUIREMENTS
+        if _is_discriminating_requirement(cards, requirement.id)
+    )
     ranked = sorted(
-        cards, key=lambda c: (c.hard_passed, c.hard_partial, -len(c.blocking_hard)), reverse=True
+        cards,
+        key=lambda card: _ranking_key(card, ranked_requirement_ids),
+        reverse=True,
     )
     return ScorecardReport(
         threat_model=THREAT_MODEL,
@@ -247,6 +272,10 @@ def build_scorecard(mechanisms: Sequence[Mechanism], *, shortlist: int = 10) -> 
         deployable_count=sum(1 for c in cards if c.deployable),
         hard_pass_counts=hard_pass_counts,
         status_counts=status_counts,
+        ranked_requirement_ids=ranked_requirement_ids,
+        evidence_source=(
+            CLAIM_LEDGER_SCHEMA_VERSION if claim_ledger is not None else "no_claim_ledger"
+        ),
         closest=tuple(ranked[:shortlist]),
         cards=tuple(cards),
     )
@@ -293,7 +322,9 @@ def scorecard_markdown(report: ScorecardReport) -> str:
         "",
         "## Closest to deployable",
         "",
-        "Ranked by hard requirements passed, then partial. Every one still has blocking gates.",
+        "Ranking uses only hard requirements with differing execution-evidence status: "
+        + (", ".join(report.ranked_requirement_ids) or "none")
+        + ". Universal posture and applicability fields do not influence ordering.",
         "",
         "| Mechanism | Class | hard passed | hard partial | blocking hard requirements |",
         "| --- | --- | ---: | ---: | --- |",
@@ -314,6 +345,58 @@ def scorecard_markdown(report: ScorecardReport) -> str:
         lines.append(f"| {req.id} | {req.kind.value} | {req.summary} |")
     lines.append("")
     return "\n".join(lines)
+
+
+def _validate_claim_ledger(claim_ledger: Mapping[str, Any] | None) -> None:
+    if (
+        claim_ledger is not None
+        and claim_ledger.get("schema_version") != CLAIM_LEDGER_SCHEMA_VERSION
+    ):
+        raise ValueError("scorecard requires a celatim.claim_ledger.v2 document")
+
+
+def _claim_mechanism_ids(
+    claim_ledger: Mapping[str, Any] | None,
+    claim_id: str,
+) -> frozenset[str]:
+    if claim_ledger is None:
+        return frozenset()
+    claims = claim_ledger.get("claims")
+    if not isinstance(claims, Sequence) or isinstance(claims, str | bytes):
+        return frozenset()
+    for claim in claims:
+        if isinstance(claim, Mapping) and claim.get("id") == claim_id:
+            values = claim.get("mechanism_ids")
+            if isinstance(values, Sequence) and not isinstance(values, str | bytes):
+                return frozenset(value for value in values if isinstance(value, str))
+    return frozenset()
+
+
+def _ranking_key(
+    card: MechanismScorecard,
+    requirement_ids: Sequence[str],
+) -> tuple[int, int, int]:
+    statuses = {assessment.requirement_id: assessment.status for assessment in card.assessments}
+    passed = sum(statuses[requirement_id] is _S.PASSED for requirement_id in requirement_ids)
+    partial = sum(statuses[requirement_id] is _S.PARTIAL for requirement_id in requirement_ids)
+    failed = sum(statuses[requirement_id] is _S.FAILED for requirement_id in requirement_ids)
+    return passed, partial, -failed
+
+
+def _is_discriminating_requirement(
+    cards: Sequence[MechanismScorecard],
+    requirement_id: str,
+) -> bool:
+    statuses = {
+        next(
+            assessment.status
+            for assessment in card.assessments
+            if assessment.requirement_id == requirement_id
+        )
+        for card in cards
+    }
+    evidence_statuses = {_S.PASSED, _S.PARTIAL, _S.FAILED}
+    return len(statuses) > 1 and bool(statuses & evidence_statuses)
 
 
 def scorecard_matrix_markdown(report: ScorecardReport) -> str:

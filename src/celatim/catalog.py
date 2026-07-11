@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from .model import (
+    AnalysisPopulation,
     CarrierClass,
     DetectPredicate,
     FalsePositive,
@@ -81,6 +82,7 @@ def _from_dict(d: dict) -> Mechanism:
         ),
         false_positive=(FalsePositive(d["false_positive"]) if d.get("false_positive") else None),
         on_path_visibility=OnPathVisibility(d.get("on_path_visibility", "cleartext")),
+        analysis_population=AnalysisPopulation(d.get("analysis_population", "primary_rfc_carrier")),
         reserved_value_matches=tuple(
             _value_match_from_dict(item) for item in d.get("reserved_value_matches", ())
         ),

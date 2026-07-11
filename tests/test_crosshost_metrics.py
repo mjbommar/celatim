@@ -47,11 +47,13 @@ def test_metric_record_computes_efficiency_and_timing_ratios():
         )
     )
 
-    assert record["carrier_bit_efficiency"] == pytest.approx(800 / 1280)
-    assert record["payload_to_method_wire_ratio"] == pytest.approx(0.25)
-    assert record["method_wire_overhead"] == pytest.approx(4.0)
+    assert record["packing_efficiency_diagnostic"] == pytest.approx(800 / 1280)
+    assert record["useful_payload_ratio"] == pytest.approx(0.25)
+    assert record["wire_expansion"] == pytest.approx(4.0)
+    assert record["carrier_units_per_payload_byte"] == pytest.approx(0.2)
     assert record["timing"]["observed_unit_rate_hz"] == pytest.approx(10.0)
-    assert record["timing"]["payload_bits_per_s"] == pytest.approx(400.0)
+    assert record["timing"]["observed_recovery_rate_bps"] == pytest.approx(400.0)
+    assert record["timing"]["native_goodput_bps"] is None
 
 
 def test_metrics_summary_counts_suites_and_timing_claims():
@@ -90,4 +92,12 @@ def test_metrics_summary_counts_suites_and_timing_claims():
     assert summary["record_count"] == 2
     assert summary["suite_counts"] == {"envelope": 1, "packet": 1}
     assert summary["timing_claim_status_counts"] == {"measured": 1, "not_measured": 1}
-    assert summary["fastest_payload_bits_per_s"]["mechanism"] == "fast"
+    assert summary["fastest_observed_recovery_rate_bps"]["mechanism"] == "fast"
+    assert summary["wire_expansion"] == {
+        "n": 2,
+        "min": 2.0,
+        "q1": 2.75,
+        "median": 3.5,
+        "q3": 4.25,
+        "max": 5.0,
+    }

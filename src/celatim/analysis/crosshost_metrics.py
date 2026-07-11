@@ -7,7 +7,8 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-METRICS_SCHEMA_VERSION = "celatim.alice_bob_metrics.v1"
+METRICS_SCHEMA_VERSION = "celatim.alice_bob_metrics.v2"
+NATIVE_GOODPUT_CLAIM_STATUS = "native_protocol_goodput_measured"
 
 ETHERNET_HEADER_BYTES = 14
 IPV4_HEADER_BYTES = 20
@@ -74,6 +75,11 @@ def metric_record(input: MechanismMetricInput) -> dict[str, Any]:
         if input.carrier_units is not None and input.raw_capacity_bits is not None
         else None
     )
+    observed_recovery_rate_bps = (
+        _ratio(input.recovered_bytes * 8, input.measured_window_s)
+        if input.recovered_bytes is not None
+        else None
+    )
     return {
         "mechanism": input.mechanism_id,
         "suite": input.suite,
@@ -84,13 +90,15 @@ def metric_record(input: MechanismMetricInput) -> dict[str, Any]:
         "carrier_units": input.carrier_units,
         "raw_capacity_bits_per_unit": input.raw_capacity_bits,
         "carrier_capacity_bits": carrier_capacity_bits,
-        "carrier_bit_efficiency": _ratio(payload_bits, carrier_capacity_bits),
+        "packing_efficiency_diagnostic": _ratio(payload_bits, carrier_capacity_bits),
         "carrier_wire_bytes": input.carrier_wire_bytes,
         "method_wire_bytes": input.method_wire_bytes,
         "method_wire_basis": input.method_wire_basis,
         "vxlan_underlay_bytes_no_fcs": input.vxlan_underlay_bytes_no_fcs,
-        "payload_to_method_wire_ratio": _ratio(input.payload_bytes, input.method_wire_bytes),
-        "method_wire_overhead": _ratio(input.method_wire_bytes, input.payload_bytes),
+        "useful_payload_ratio": _ratio(input.payload_bytes, input.method_wire_bytes),
+        "wire_expansion": _ratio(input.method_wire_bytes, input.payload_bytes),
+        "carrier_units_per_payload_byte": _ratio(input.carrier_units, input.payload_bytes),
+        "method_wire_bytes_per_carrier_unit": _ratio(input.method_wire_bytes, input.carrier_units),
         "payload_to_vxlan_underlay_ratio": _ratio(
             input.payload_bytes, input.vxlan_underlay_bytes_no_fcs
         ),
@@ -102,9 +110,10 @@ def metric_record(input: MechanismMetricInput) -> dict[str, Any]:
             "scheduled_duration_s": input.scheduled_duration_s,
             "observed_unit_rate_hz": _ratio(input.carrier_units, input.measured_window_s),
             "payload_bytes_per_s": _ratio(input.recovered_bytes, input.measured_window_s),
-            "payload_bits_per_s": (
-                _ratio(input.recovered_bytes * 8, input.measured_window_s)
-                if input.recovered_bytes is not None
+            "observed_recovery_rate_bps": observed_recovery_rate_bps,
+            "native_goodput_bps": (
+                observed_recovery_rate_bps
+                if input.timing_claim_status == NATIVE_GOODPUT_CLAIM_STATUS
                 else None
             ),
             "claim_status": input.timing_claim_status,
@@ -123,7 +132,7 @@ def metrics_summary(
     measured = [
         record
         for record in pass_records
-        if _nested_number(record, ("timing", "payload_bits_per_s")) is not None
+        if _nested_number(record, ("timing", "observed_recovery_rate_bps")) is not None
     ]
     return {
         "schema_version": METRICS_SCHEMA_VERSION,
@@ -134,23 +143,27 @@ def metrics_summary(
         "timing_claim_status_counts": _counts(
             _nested_value(record, ("timing", "claim_status")) for record in records
         ),
-        "method_wire_overhead": _stats(
-            _number(record.get("method_wire_overhead")) for record in pass_records
+        "wire_expansion": _stats(_number(record.get("wire_expansion")) for record in pass_records),
+        "useful_payload_ratio": _stats(
+            _number(record.get("useful_payload_ratio")) for record in pass_records
         ),
-        "payload_to_method_wire_ratio": _stats(
-            _number(record.get("payload_to_method_wire_ratio")) for record in pass_records
+        "carrier_units_per_payload_byte": _stats(
+            _number(record.get("carrier_units_per_payload_byte")) for record in pass_records
         ),
-        "payload_bits_per_s": _stats(
-            _nested_number(record, ("timing", "payload_bits_per_s")) for record in measured
+        "observed_recovery_rate_bps": _stats(
+            _nested_number(record, ("timing", "observed_recovery_rate_bps")) for record in measured
+        ),
+        "native_goodput_bps": _stats(
+            _nested_number(record, ("timing", "native_goodput_bps")) for record in measured
         ),
         "observed_unit_rate_hz": _stats(
             _nested_number(record, ("timing", "observed_unit_rate_hz")) for record in measured
         ),
-        "fastest_payload_bits_per_s": _extreme(
-            measured, ("timing", "payload_bits_per_s"), reverse=True
+        "fastest_observed_recovery_rate_bps": _extreme(
+            measured, ("timing", "observed_recovery_rate_bps"), reverse=True
         ),
-        "slowest_payload_bits_per_s": _extreme(
-            measured, ("timing", "payload_bits_per_s"), reverse=False
+        "slowest_observed_recovery_rate_bps": _extreme(
+            measured, ("timing", "observed_recovery_rate_bps"), reverse=False
         ),
     }
 
@@ -191,10 +204,13 @@ def _counts(values: Iterable[Any]) -> dict[str, int]:
 def _stats(values: Iterable[float | None]) -> dict[str, float | None]:
     series = sorted(value for value in values if value is not None)
     if not series:
-        return {"min": None, "median": None, "max": None}
+        return {"n": 0, "min": None, "q1": None, "median": None, "q3": None, "max": None}
     return {
+        "n": len(series),
         "min": series[0],
+        "q1": _quantile(series, 0.25),
         "median": _median(series),
+        "q3": _quantile(series, 0.75),
         "max": series[-1],
     }
 
@@ -204,6 +220,16 @@ def _median(series: Sequence[float]) -> float:
     if len(series) % 2:
         return series[midpoint]
     return (series[midpoint - 1] + series[midpoint]) / 2.0
+
+
+def _quantile(series: Sequence[float], probability: float) -> float:
+    position = (len(series) - 1) * probability
+    lower = math.floor(position)
+    upper = math.ceil(position)
+    if lower == upper:
+        return series[lower]
+    fraction = position - lower
+    return series[lower] + fraction * (series[upper] - series[lower])
 
 
 def _extreme(
@@ -227,6 +253,7 @@ def _extreme(
 
 __all__ = [
     "METRICS_SCHEMA_VERSION",
+    "NATIVE_GOODPUT_CLAIM_STATUS",
     "MechanismMetricInput",
     "carrier_lengths_from_envelope",
     "metric_record",

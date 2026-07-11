@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from ..metrics import density_header, density_wire, raw_bits
-from ..model import CapacityModel, Mechanism
+from ..model import AnalysisPopulation, CapacityModel, Mechanism
 
 # Short, table-friendly survivability labels (the catalog enum values are verbose).
 _SURV_LABEL = {
@@ -75,7 +75,7 @@ def _survivability_cell(m: Mechanism) -> str:
     return _SURV_LABEL[m.survivability.value]
 
 
-def mechanisms_to_longtable(mechs: Iterable[Mechanism]) -> str:
+def _population_longtable(mechs: Iterable[Mechanism]) -> str:
     rows = [
         f"{_escape(m.name)} & {_escape(', '.join(m.rfcs))} & {m.carrier_class.value} & "
         f"{m.status.value} & {_survivability_cell(m)} & {_bits_cell(m)} & "
@@ -83,3 +83,23 @@ def mechanisms_to_longtable(mechs: Iterable[Mechanism]) -> str:
         for m in mechs
     ]
     return _HEADER + "\n".join(rows) + "\n\\midrule\n" + _NOTE + _FOOTER
+
+
+def mechanisms_to_longtable(mechs: Iterable[Mechanism]) -> str:
+    """Render separate primary, ordinary-payload, and non-IETF tables."""
+    catalog = tuple(mechs)
+    populations = (
+        (AnalysisPopulation.PRIMARY_RFC_CARRIER, "Primary RFC carrier population"),
+        (
+            AnalysisPopulation.COMPARISON_ORDINARY_PAYLOAD,
+            "Ordinary application-payload comparisons",
+        ),
+        (AnalysisPopulation.COMPARISON_NON_IETF, "Non-IETF comparisons"),
+    )
+    sections = []
+    for population, title in populations:
+        rows = tuple(
+            mechanism for mechanism in catalog if mechanism.analysis_population is population
+        )
+        sections.append(f"\\subsubsection*{{{title}}}\n" + _population_longtable(rows))
+    return "\n".join(sections)

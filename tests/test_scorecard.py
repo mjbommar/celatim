@@ -49,7 +49,7 @@ def test_every_usable_mechanism_scored_against_all_requirements():
 
 def test_nothing_is_deployable_today_and_the_gap_is_explicit():
     report = build_scorecard(_usable())
-    assert report.mechanism_count == len(_usable())
+    assert report.mechanism_count == 133
     # The honest floor: against the surveilled-user bar, no technique clears every hard gate.
     assert report.deployable_count == 0
     # The cells with no artifacts yet are unmet for *every* mechanism.
@@ -57,10 +57,40 @@ def test_nothing_is_deployable_today_and_the_gap_is_explicit():
         assert report.hard_pass_counts[rid] == 0
 
 
-def test_payload_security_is_failed_not_silently_passed():
+def test_authenticated_transfer_layer_replaces_obsolete_hash_only_failure():
     card = score_mechanism(_usable()[0])
     h7 = next(a for a in card.assessments if a.requirement_id == "H7")
-    assert h7.status is RequirementStatus.FAILED
+    assert h7.status is RequirementStatus.PARTIAL
+    assert "TLS 1.3" in h7.rationale
+
+
+def test_claim_ledger_v2_drives_execution_credit_and_ranking():
+    mechanism = _usable()[0]
+    ledger = {
+        "schema_version": "celatim.claim_ledger.v2",
+        "claims": [
+            {
+                "id": "all_usable_binary_exact_recovery",
+                "mechanism_ids": [mechanism.id],
+            },
+            {
+                "id": "crosshost_afpacket_exact_recovery",
+                "mechanism_ids": [mechanism.id],
+            },
+        ],
+    }
+
+    card = score_mechanism(mechanism, claim_ledger=ledger)
+    statuses = {assessment.requirement_id: assessment.status for assessment in card.assessments}
+    assert statuses["H2"] is RequirementStatus.PASSED
+    assert statuses["H5"] is RequirementStatus.PARTIAL
+    assert statuses["H6"] is RequirementStatus.PARTIAL
+    assert statuses["H10"] is RequirementStatus.PARTIAL
+
+    report = build_scorecard(_usable(), claim_ledger=ledger)
+    assert report.evidence_source == "celatim.claim_ledger.v2"
+    assert set(report.ranked_requirement_ids) == {"H2", "H5", "H6", "H10"}
+    assert report.closest[0].mechanism_id == mechanism.id
 
 
 def test_closest_to_deployable_shortlist_is_ranked_and_nonempty():

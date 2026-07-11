@@ -77,9 +77,12 @@ def test_survey_scale_macros_are_derived_from_self_contained_sources():
     )
     tex = survey_scale_macros_tex(macros)
 
-    assert macros.mechanism_count == 146
-    assert macros.usable_mechanism_count == 142
+    assert macros.catalog_total_count == 146
+    assert macros.mechanism_count == 137
+    assert macros.usable_mechanism_count == 133
     assert macros.negative_result_count == 4
+    assert macros.ordinary_payload_comparison_count == 7
+    assert macros.non_ietf_comparison_count == 2
     assert macros.spec_acknowledged_rfc_count == 5
     assert macros.spec_acknowledged_rfcs == (
         "RFC 6437",
@@ -88,7 +91,8 @@ def test_survey_scale_macros_are_derived_from_self_contained_sources():
         "RFC 7837",
         "RFC 8017",
     )
-    assert "\\newcommand{\\nmech}{146\\xspace}" in tex
+    assert "\\newcommand{\\ncatalogtotal}{146\\xspace}" in tex
+    assert "\\newcommand{\\nmech}{137\\xspace}" in tex
     assert "\\newcommand{\\nspecack}{five\\xspace}" in tex
 
     # Evidence-tier macros are generated from the catalog classification (never hand-edited).
@@ -99,13 +103,13 @@ def test_survey_scale_macros_are_derived_from_self_contained_sources():
         + macros.timing_scheme_count
         + macros.codec_roundtrip_count
     )
-    assert macros.substantiated_count + macros.structural_residual_count == 142
+    assert macros.substantiated_count + macros.structural_residual_count == 133
     assert macros.structural_residual_count == 1
     assert macros.exact_recovery_executed_count == 142
     assert macros.packet_path_executed_count == 56
     assert macros.envelope_executed_count == 86
     assert macros.message_carrier_executed_count == 6
-    assert "\\newcommand{\\nrealpducapable}{129\\xspace}" in tex
+    assert "\\newcommand{\\nrealpducapable}{123\\xspace}" in tex
     assert "\\newcommand{\\ncodeconlycapable}{1\\xspace}" in tex
     assert "\\newcommand{\\nexactrecoveryexecuted}{142\\xspace}" in tex
     assert "\\newcommand{\\npacketpathexecuted}{56\\xspace}" in tex

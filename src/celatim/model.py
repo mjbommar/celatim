@@ -40,6 +40,14 @@ class Status(str, Enum):
     NEW = "NEW"  # new to this survey
 
 
+class AnalysisPopulation(str, Enum):
+    """Population used for paper statistics and comparison tables."""
+
+    PRIMARY_RFC_CARRIER = "primary_rfc_carrier"
+    COMPARISON_ORDINARY_PAYLOAD = "comparison_ordinary_payload"
+    COMPARISON_NON_IETF = "comparison_non_ietf"
+
+
 class Provenance(str, Enum):
     C_FIELD = "c_field"  # capacity width measured directly from a C struct field
     C_HEADER = "c_header"  # header-size denominator from C; capacity is spec-sourced
@@ -261,6 +269,7 @@ class Mechanism:
     )
     false_positive: FalsePositive | None = None  # benign base rate: alert-vs-log dial
     on_path_visibility: OnPathVisibility = OnPathVisibility.CLEARTEXT
+    analysis_population: AnalysisPopulation = AnalysisPopulation.PRIMARY_RFC_CARRIER
     reserved_value_matches: tuple[FieldValueMatch, ...] = ()
     negative_result: bool = False  # §7 contrast case: field exists but is NOT a usable
     #                                channel (validated / signed / header-protected against

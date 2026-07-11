@@ -33,6 +33,7 @@ class MechanismSummary:
     layer: str
     carrier_class: str
     capacity_model: str
+    analysis_population: str
     raw_capacity_bits: int
     usable: bool
     adapter_status: str
@@ -50,6 +51,7 @@ class MechanismSummary:
             "layer": self.layer,
             "carrier_class": self.carrier_class,
             "capacity_model": self.capacity_model,
+            "analysis_population": self.analysis_population,
             "raw_capacity_bits": self.raw_capacity_bits,
             "usable": self.usable,
             "adapter_status": self.adapter_status,
@@ -171,6 +173,7 @@ def _mechanism_summary(mechanism: Mechanism) -> MechanismSummary:
         layer=mechanism.layer,
         carrier_class=mechanism.carrier_class.value,
         capacity_model=mechanism.capacity_model.value,
+        analysis_population=mechanism.analysis_population.value,
         raw_capacity_bits=mechanism.raw_capacity_bits,
         usable=mechanism.is_usable_channel,
         adapter_status=adapter.status.value,
@@ -198,6 +201,7 @@ def _mechanism_detail(mechanism: Mechanism) -> MechanismDetail:
             "status": mechanism.status.value,
             "carrier_unit": mechanism.carrier_unit,
             "capacity_model": mechanism.capacity_model.value,
+            "analysis_population": mechanism.analysis_population.value,
             "raw_capacity_bits": mechanism.raw_capacity_bits,
             "bits_min": mechanism.bits_min,
             "bits_max": mechanism.bits_max,

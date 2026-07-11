@@ -760,11 +760,16 @@ def capture(
     with open(out_file, "wb") as fh:
         fh.write(payload)
     if status_file is not None:
+        nonzero_units = sum(
+            (int.from_bytes(symbol, "big") if isinstance(symbol, bytes) else int(symbol)) != 0
+            for symbol in symbols
+        )
         Path(status_file).write_text(
             json.dumps(
                 {
                     "captured_units": len(symbols),
                     "expected_units": n,
+                    "nonzero_units": nonzero_units,
                     "recovered_bytes": len(payload),
                     "decode_error": decode_error,
                 },

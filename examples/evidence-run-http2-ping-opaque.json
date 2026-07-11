@@ -400,7 +400,7 @@
   "ok": true,
   "reproducibility": {
     "catalog_path": "data/mechanisms.jsonl",
-    "catalog_sha256": "199ae9da8ffcdcb830850e58c60bfdf8bb18a3ff7b731b2ac3c971ded8da2221",
+    "catalog_sha256": "41126735c15a1303f1dbc824e6ac5c4417bc0c4922ec4a1d88e4018b1b134ce2",
     "command": [
       "celatim",
       "--catalog",

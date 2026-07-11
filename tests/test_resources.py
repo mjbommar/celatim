@@ -417,6 +417,30 @@ def test_lab_packet_constructors_resolve_concrete_scapy_modules(monkeypatch):
         assert bytes(lab._base_packet(mechanism, lab.SND_IP, lab.RCV_IP, 1))
 
 
+def test_lab_scrubber_uses_ip_header_length_in_bits(monkeypatch):
+    monkeypatch.syspath_prepend(str(PROJECT))
+    from scapy.layers.inet import IP, TCP
+
+    from celatim.catalog import load_mechanisms
+    from experiments import lab
+
+    mechanism = next(
+        item
+        for item in load_mechanisms(PROJECT / "data" / "mechanisms.jsonl")
+        if item.id == "tcp-reserved-bits"
+    )
+    packet = IP(src=lab.SND_IP, dst=lab.RCV_IP) / TCP(reserved=7)
+    raw = bytearray(bytes(packet))
+    destination_before = bytes(raw[16:20])
+    offset = lab._abs_bit_offset(mechanism.locator, lab._ip_hdr_bits(raw))
+    assert lab._read_bits(raw, offset, mechanism.locator.bit_width) != 0
+
+    lab._scrub_field(raw, mechanism.locator)
+
+    assert bytes(raw[16:20]) == destination_before
+    assert lab._read_bits(raw, offset, mechanism.locator.bit_width) == 0
+
+
 def test_crosshost_runner_resolves_standalone_and_paper_snapshot_layouts(tmp_path, monkeypatch):
     monkeypatch.syspath_prepend(str(PROJECT))
     from experiments.crosshost.alice_bob_runner import Controller, RemoteConfig

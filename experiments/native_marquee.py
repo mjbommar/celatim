@@ -262,7 +262,6 @@ def _send_h2(host: str, port: int, symbols: Sequence[bytes]) -> ProtocolResult:
                     stream.sendall(pending)
                     carrier_bytes += len(pending)
             acked += 1
-        stream.shutdown(socket.SHUT_WR)
     return ProtocolResult((), carrier_bytes, response_bytes, acked, host)
 
 

@@ -1,14 +1,17 @@
-"""NAT run (E7): send an IP-ID covert channel THROUGH a real Linux MASQUERADE router
-and see whether the IP ID survives. Validates the `survivability=nat_rewritten` label.
+"""NAT run (E7): send an IP-ID channel through a Linux MASQUERADE router.
+
+No rewrite conclusion is emitted unless packets reach the receiver observation point.
 
 Usage: python run_nat.py <payload>
 """
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 import lab
 
@@ -17,6 +20,7 @@ from celatim.channel.framer import Framer
 from celatim.channel.registry import codec_for
 
 OUT = "/tmp/recovered_nat"
+STATUS = "/tmp/recovered_nat_status.json"
 MECH = "ipv4-id-atomic"
 
 
@@ -29,11 +33,26 @@ def main() -> None:
     payload = sys.argv[1].encode()
     m = next(x for x in load_mechanisms(lab.CATALOG) if x.id == MECH)
     n = len(Framer(codec_for(m)).encode(payload))
+    for path in (OUT, STATUS):
+        Path(path).unlink(missing_ok=True)
 
     lab.topo_nat_up()
     try:
         cap = subprocess.Popen(
-            ["ip", "netns", "exec", "rcv", "python3", "lab.py", "capture", MECH, "vr", str(n), OUT]
+            [
+                "ip",
+                "netns",
+                "exec",
+                "rcv",
+                "python3",
+                "lab.py",
+                "capture",
+                MECH,
+                "vr",
+                str(n),
+                OUT,
+                STATUS,
+            ]
         )
         time.sleep(2.5)
         # snd -> router's snd-side MAC; IP src 192.168.9.2, dst 10.10.0.2 (routed + NAT'd)
@@ -57,10 +76,17 @@ def main() -> None:
         )
         cap.wait(timeout=15)
         recovered = open(OUT, "rb").read()  # noqa: SIM115
+        status = json.loads(open(STATUS).read())  # noqa: SIM115
     finally:
         lab.topo_down()
         subprocess.run(["ip", "netns", "del", "rtr"], stderr=subprocess.DEVNULL)
 
+    if status["captured_units"] == 0:
+        print(
+            f"RESULT nat=MASQUERADE mechanism={MECH} sent={payload!r} recovered={recovered!r} "
+            "INCONCLUSIVE NO PACKETS AT RECEIVER"
+        )
+        raise SystemExit(2)
     survived = recovered == payload
     print(
         f"RESULT nat=MASQUERADE mechanism={MECH} sent={payload!r} recovered={recovered!r} "

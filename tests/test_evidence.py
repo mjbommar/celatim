@@ -100,7 +100,7 @@ def test_negative_results_and_summary_counts_are_explicit():
     assert counts[EvidenceBucket.OFFSET_REPRESENTED_ZERO_BLOB] > 0
     assert counts[EvidenceBucket.REAL_DAEMON_OR_CRYPTO_PATH] >= 3
     assert counts[EvidenceBucket.TIMING_SCHEME] >= 3
-    assert counts[EvidenceBucket.NEGATIVE_RESULT] == 4
+    assert counts[EvidenceBucket.NEGATIVE_RESULT] == 5
 
 
 def test_support_matrix_markdown_contains_marquee_and_full_tables():

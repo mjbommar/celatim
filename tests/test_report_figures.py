@@ -31,7 +31,7 @@ def test_capacity_by_class_data_separates_capacity_models_without_throughput_cla
     rows = {row.carrier_class: row for row in capacity_by_class_data(load_mechanisms(DATA))}
 
     assert rows[CarrierClass.A].mechanism_count == 74
-    assert rows[CarrierClass.F].mechanism_count == 3
+    assert rows[CarrierClass.F].mechanism_count == 12
     assert rows[CarrierClass.G].mechanism_count == 2
     assert rows[CarrierClass.D].unbounded_count >= 1
     assert rows[CarrierClass.G].median_bits == 256.0

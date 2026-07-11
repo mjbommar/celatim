@@ -20,13 +20,16 @@ _SURV_LABEL = {
 _HEADER = (
     "\\begingroup\n"
     "\\footnotesize\n"
+    "\\renewcommand{\\arraystretch}{1.28}\n"
     "\\setlength{\\LTleft}{0pt}\n"
     "\\setlength{\\LTright}{0pt}\n"
+    "\\rowcolors{2}{catalogrow}{white}\n"
     "\\begin{longtable}{@{}>{\\raggedright\\arraybackslash}p{0.40\\textwidth}"
     ">{\\raggedright\\arraybackslash}p{0.15\\textwidth}cclrrr@{}}\n"
     "\\toprule\n"
-    "Mechanism & RFC(s) & Class & St. & Surv. & Bits & "
-    "Hdr.\\ den. & Wire den. \\\\\n"
+    "\\rowcolor{cataloghead}\n"
+    "\\textbf{Mechanism} & \\textbf{RFC(s)} & \\textbf{Class} & \\textbf{St.} & "
+    "\\textbf{Surv.} & \\textbf{Bits} & \\textbf{Hdr.\\ den.} & \\textbf{Wire den.} \\\\\n"
     "\\midrule\n"
     "\\endhead\n"
 )
@@ -35,6 +38,7 @@ _HEADER = (
 # header they are measured against); on-wire density divides by a full PDU and
 # stays bounded.
 _NOTE = (
+    "\\rowcolor{white}\n"
     "\\multicolumn{8}{@{}p{\\textwidth}@{}}{\\footnotesize\\textit{Hdr.\\ den.} is "
     "covert bits per header bit and can exceed~1 because capacity accumulates across "
     "repeated carrier units; \\textit{Wire den.}\\ divides by a full on-wire PDU. "

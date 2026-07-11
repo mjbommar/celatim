@@ -152,7 +152,7 @@ class RecordingRunner:
 
 def test_package_exposes_versioned_facade_metadata():
     assert version("celatim") == celatim.__version__
-    assert celatim.__version__ == "0.2.9"
+    assert celatim.__version__ == "0.2.10"
     assert any(
         entry_point.value == "celatim.cli:main"
         for entry_point in entry_points(group="console_scripts")

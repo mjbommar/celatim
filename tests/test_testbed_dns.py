@@ -27,6 +27,7 @@ class FakeProcess:
     returncode: int | None = None
     terminated: bool = False
     killed: bool = False
+    waits: int = 0
 
     def poll(self) -> int | None:
         return self.returncode
@@ -35,6 +36,7 @@ class FakeProcess:
         self.terminated = True
 
     def wait(self, timeout: float | None = None) -> int:
+        self.waits += 1
         self.returncode = 0
         return 0
 
@@ -67,7 +69,9 @@ class FakeCommandRunner:
 def test_dns_edns_padding_roundtrip_uses_real_tool_commands_with_injected_runners(tmp_path):
     profile = MechanismProfile.from_catalog("edns0-padding", DATA)
     command_runner = FakeCommandRunner()
-    process_runner = QueueProcessRunner([FakeProcess(), FakeProcess()])
+    daemon_process = FakeProcess()
+    capture_process = FakeProcess()
+    process_runner = QueueProcessRunner([daemon_process, capture_process])
     capture_pcap = tmp_path / "dns.pcap"
 
     def decoder(path: Path, optcode: int) -> tuple[bytes, ...]:
@@ -109,14 +113,30 @@ def test_dns_edns_padding_roundtrip_uses_real_tool_commands_with_injected_runner
         "vr",
         "-U",
     )
-    assert process_runner.started[1][-7:] == (
-        "udp",
-        "port",
-        "53",
-        "and",
+    assert process_runner.started[1][-23:] == (
         "src",
         "host",
         "10.10.0.1",
+        "and",
+        "(",
+        "udp",
+        "dst",
+        "port",
+        "53",
+        "or",
+        "(",
+        "tcp",
+        "dst",
+        "port",
+        "53",
+        "and",
+        "tcp[tcpflags]",
+        "&",
+        "tcp-push",
+        "!=",
+        "0",
+        ")",
+        ")",
     )
     assert command_runner.argv[0] == ("dnsmasq", "--version")
     assert command_runner.argv[1] == ("dig", "-v")
@@ -132,12 +152,16 @@ def test_dns_edns_padding_roundtrip_uses_real_tool_commands_with_injected_runner
     assert result.result.evidence.endpoint_os.sender.namespace == "snd"
     assert result.result.evidence.endpoint_os.receiver.namespace == "rcv"
     assert result.result.evidence.endpoint_os.independent_receiver_os is False
+    assert capture_process.waits == 1
+    assert capture_process.terminated is False
 
 
 def test_dns_edns_padding_empty_payload_emits_no_padding_control_query(tmp_path):
     profile = MechanismProfile.from_catalog("edns0-padding", DATA)
     command_runner = FakeCommandRunner()
-    process_runner = QueueProcessRunner([FakeProcess(), FakeProcess()])
+    daemon_process = FakeProcess()
+    capture_process = FakeProcess()
+    process_runner = QueueProcessRunner([daemon_process, capture_process])
 
     result = run_dns_edns0_padding_roundtrip(
         profile,
@@ -191,6 +215,8 @@ def test_dns_edns_padding_empty_payload_emits_no_padding_control_query(tmp_path)
             "+edns=0",
         ),
     ]
+    assert capture_process.waits == 1
+    assert capture_process.terminated is False
 
 
 def test_dns_edns_padding_split_send_emits_dig_queries_without_daemon(tmp_path):
@@ -264,14 +290,30 @@ def test_dns_edns_padding_split_receive_waits_for_capture_and_decodes(tmp_path):
         "vr",
         "-U",
     )
-    assert process_runner.started[1][-7:] == (
-        "udp",
-        "port",
-        "53",
-        "and",
+    assert process_runner.started[1][-23:] == (
         "src",
         "host",
         "10.10.0.1",
+        "and",
+        "(",
+        "udp",
+        "dst",
+        "port",
+        "53",
+        "or",
+        "(",
+        "tcp",
+        "dst",
+        "port",
+        "53",
+        "and",
+        "tcp[tcpflags]",
+        "&",
+        "tcp-push",
+        "!=",
+        "0",
+        ")",
+        ")",
     )
     assert command_runner.argv[0] == ("dnsmasq", "--version")
     assert command_runner.argv[1] == ("dig", "-v")
@@ -302,3 +344,30 @@ def test_edns_padding_pcap_decoder_reports_missing_packet_extra(monkeypatch, tmp
 
     with pytest.raises(TransportError, match="packet extra"):
         edns_padding_options_from_pcap(tmp_path / "missing.pcap")
+
+
+def test_edns_padding_pcap_decoder_accepts_tcp_dns_additional_record_list(tmp_path):
+    from scapy.layers.dns import DNS, DNSQR, DNSRROPT, EDNS0TLV
+    from scapy.layers.inet import IP, TCP
+    from scapy.layers.l2 import Ether
+    from scapy.utils import wrpcap
+
+    pcap = tmp_path / "dns-tcp.pcap"
+    packet = (
+        Ether()
+        / IP(src="10.10.0.1", dst="10.10.0.2")
+        / TCP(sport=53000, dport=53, flags="PA")
+        / DNS(
+            length=None,
+            id=1,
+            qd=DNSQR(qname="covert.test"),
+            ar=DNSRROPT(
+                rclass=1232,
+                rdata=[EDNS0TLV(optcode=12, optdata=b"daemon-path")],
+            ),
+            arcount=1,
+        )
+    )
+    wrpcap(str(pcap), [packet])
+
+    assert edns_padding_options_from_pcap(pcap) == (b"daemon-path",)

@@ -152,7 +152,7 @@ class RecordingRunner:
 
 def test_package_exposes_versioned_facade_metadata():
     assert version("celatim") == celatim.__version__
-    assert celatim.__version__ == "0.2.6"
+    assert celatim.__version__ == "0.2.7"
     assert any(
         entry_point.value == "celatim.cli:main"
         for entry_point in entry_points(group="console_scripts")
@@ -1634,7 +1634,32 @@ def test_package_endpoint_cli_dns_daemon_scenario_roundtrip_uses_live_runner(
         assert config.padding_optcode == 12
         assert config.port == 53
         assert config.capture_interface == "vr"
-        assert config.capture_filter == ("udp", "port", "53", "and", "src", "host", "10.10.0.1")
+        assert config.capture_filter == ()
+        assert config.default_capture_filter == (
+            "src",
+            "host",
+            "10.10.0.1",
+            "and",
+            "(",
+            "udp",
+            "dst",
+            "port",
+            "53",
+            "or",
+            "(",
+            "tcp",
+            "dst",
+            "port",
+            "53",
+            "and",
+            "tcp[tcpflags]",
+            "&",
+            "tcp-push",
+            "!=",
+            "0",
+            ")",
+            ")",
+        )
         config.capture_pcap.parent.mkdir(parents=True, exist_ok=True)
         config.capture_pcap.write_bytes(b"dns-daemon-endpoint")
         seen.append(

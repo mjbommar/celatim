@@ -147,6 +147,7 @@ def test_native_marquee_split_process_roundtrip(mechanism_id: str, tmp_path: Pat
     assert sender_doc["carrier_units"] == expected_symbols
     assert sender_doc["responses_validated"] == expected_symbols
     assert sender_doc["response_validation_complete"] is True
+    assert sender_doc["process_cpu_s"] > 0
     assert sender_doc["payload_sha256"] == payload_hash
     assert receiver_doc["ok"] is True
     assert receiver_doc["topology_kind"] == "loopback_split_process"
@@ -157,5 +158,6 @@ def test_native_marquee_split_process_roundtrip(mechanism_id: str, tmp_path: Pat
     assert receiver_doc["observed_symbols"] == expected_symbols
     assert receiver_doc["recovered_payload_sha256"] == payload_hash
     assert receiver_doc["exact_recovery"] is True
+    assert receiver_doc["process_cpu_s"] > 0
     assert PAYLOAD.hex() not in sender_path.read_text()
     assert PAYLOAD.hex() not in receiver_path.read_text()

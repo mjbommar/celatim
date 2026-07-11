@@ -12,7 +12,6 @@ from ..analysis.crosshost_evidence import (
     ENVELOPE_EXECUTED_CLAIM,
     MESSAGE_CARRIER_EXECUTED_CLAIM,
     PACKET_PATH_EXECUTED_CLAIM,
-    claim_count,
     load_claim_ledger,
 )
 from ..evidence import classify_evidence
@@ -90,6 +89,7 @@ def survey_scale_macros(
         if mechanism.analysis_population is AnalysisPopulation.PRIMARY_RFC_CARRIER
     )
     usable = tuple(mechanism for mechanism in mechs if mechanism.is_usable_channel)
+    usable_ids = frozenset(mechanism.id for mechanism in usable)
     ordinary_payload = tuple(
         mechanism
         for mechanism in catalog
@@ -132,10 +132,18 @@ def survey_scale_macros(
         timing_scheme_count=buckets.count("timing_scheme"),
         codec_roundtrip_count=buckets.count("codec_roundtrip"),
         structural_residual_count=buckets.count("offset_represented_zero_blob"),
-        exact_recovery_executed_count=claim_count(ledger, ALL_USABLE_EXACT_RECOVERY_CLAIM),
-        packet_path_executed_count=claim_count(ledger, PACKET_PATH_EXECUTED_CLAIM),
-        envelope_executed_count=claim_count(ledger, ENVELOPE_EXECUTED_CLAIM),
-        message_carrier_executed_count=claim_count(ledger, MESSAGE_CARRIER_EXECUTED_CLAIM),
+        exact_recovery_executed_count=_population_claim_count(
+            ledger, ALL_USABLE_EXACT_RECOVERY_CLAIM, usable_ids
+        ),
+        packet_path_executed_count=_population_claim_count(
+            ledger, PACKET_PATH_EXECUTED_CLAIM, usable_ids
+        ),
+        envelope_executed_count=_population_claim_count(
+            ledger, ENVELOPE_EXECUTED_CLAIM, usable_ids
+        ),
+        message_carrier_executed_count=_population_claim_count(
+            ledger, MESSAGE_CARRIER_EXECUTED_CLAIM, usable_ids
+        ),
     )
 
 
@@ -236,6 +244,26 @@ def _rfc_sort_key(value: str) -> int:
     if match is None:
         return 0
     return int(match.group(1))
+
+
+def _population_claim_count(
+    ledger: dict[str, object] | None,
+    claim_id: str,
+    population_ids: frozenset[str],
+) -> int:
+    if ledger is None:
+        return 0
+    claims = ledger.get("claims")
+    if not isinstance(claims, list):
+        return 0
+    for claim in claims:
+        if not isinstance(claim, dict) or claim.get("id") != claim_id:
+            continue
+        mechanism_ids = claim.get("mechanism_ids")
+        if not isinstance(mechanism_ids, list):
+            return 0
+        return len(population_ids & {value for value in mechanism_ids if isinstance(value, str)})
+    return 0
 
 
 __all__ = [

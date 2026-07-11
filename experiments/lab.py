@@ -150,6 +150,11 @@ def _write_bits(buf: bytearray, off: int, width: int, value: int) -> None:
         buf[byte_i] = (buf[byte_i] | mask) if bit else (buf[byte_i] & ~mask)
 
 
+def _scrub_field(ipb: bytearray, loc) -> None:
+    """Zero one located field using the packet's actual IP-header length."""
+    _write_bits(ipb, _abs_bit_offset(loc, _ip_hdr_bits(ipb)), loc.bit_width, 0)
+
+
 def _read_bits(buf: bytes, off: int, width: int) -> int:
     value = 0
     for i in range(width):
@@ -798,8 +803,7 @@ def forward(in_if: str, out_if: str, scrub_mech: str) -> None:
         if bytes(ipb[12:16]) != bytes(int(p) for p in SND_IP.split(".")):
             continue  # only forward snd's IPv4 frames
         if loc is not None:
-            ihl = ipb[0] & 0x0F
-            _write_bits(ipb, _abs_bit_offset(loc, ihl), loc.bit_width, 0)  # scrub to zero
+            _scrub_field(ipb, loc)
             ip = IP(bytes(ipb))
             del ip.chksum
             if TCP in ip:

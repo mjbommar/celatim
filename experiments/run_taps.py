@@ -10,9 +10,11 @@ Usage: python run_taps.py <mechanism> <payload> <pass|scrub-mech-id>
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 import lab
 
@@ -42,6 +44,9 @@ def main() -> None:
     lab.topo3_up()
     procs = {}
     out = {tap: f"/tmp/tap_{tap}" for tap in TAPS}
+    status_paths = {tap: f"/tmp/tap_{tap}_status.json" for tap in TAPS}
+    for path in (*out.values(), *status_paths.values()):
+        Path(path).unlink(missing_ok=True)
     try:
         for tap, (ns, dev) in TAPS.items():
             procs[tap] = subprocess.Popen(
@@ -57,6 +62,7 @@ def main() -> None:
                     dev,
                     str(n),
                     out[tap],
+                    status_paths[tap],
                 ]
             )
         fwd = subprocess.Popen(
@@ -84,6 +90,7 @@ def main() -> None:
         fwd.terminate()
         fwd.wait(timeout=5)
         recovered = {tap: open(out[tap], "rb").read() for tap in TAPS}  # noqa: SIM115
+        status = {tap: json.loads(Path(status_paths[tap]).read_text()) for tap in TAPS}
     finally:
         lab.topo_down()
 
@@ -93,7 +100,12 @@ def main() -> None:
         intact = recovered[tap] == payload
         died = (not intact) and (prev == payload)  # first tap where it breaks
         marker = "  <-- field dies here" if died else ""
-        print(f"  {tap:18} {'INTACT' if intact else 'BROKEN'} recovered={recovered[tap]!r}{marker}")
+        captured = status[tap]["captured_units"]
+        expected = status[tap]["expected_units"]
+        print(
+            f"  {tap:18} {'INTACT' if intact else 'BROKEN'} "
+            f"captured={captured}/{expected} recovered={recovered[tap]!r}{marker}"
+        )
         prev = recovered[tap]
 
 

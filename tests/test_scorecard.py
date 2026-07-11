@@ -49,7 +49,7 @@ def test_every_usable_mechanism_scored_against_all_requirements():
 
 def test_nothing_is_deployable_today_and_the_gap_is_explicit():
     report = build_scorecard(_usable())
-    assert report.mechanism_count == 133
+    assert report.mechanism_count == 176
     # The honest floor: against the surveilled-user bar, no technique clears every hard gate.
     assert report.deployable_count == 0
     # The cells with no artifacts yet are unmet for *every* mechanism.

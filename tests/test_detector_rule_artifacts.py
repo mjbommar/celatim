@@ -59,7 +59,7 @@ def test_detector_rule_manifest_records_claim_boundary_and_hashes():
     assert manifest["schema_version"] == DETECTOR_RULES_SCHEMA_VERSION
     assert manifest["claim_status"] == "generated_not_executed_no_false_positive_estimate"
     assert manifest["rule_mechanism_count"] == 68
-    assert manifest["stateful_plan_mechanism_count"] == 52
+    assert manifest["stateful_plan_mechanism_count"] == 93
     assert manifest["stateful_claim_status"] == "generated_not_executed_requires_trace_baseline"
     assert manifest["coverage"]["stateless_filter"] == 70
     assert manifest["output_dir"] == "rules"

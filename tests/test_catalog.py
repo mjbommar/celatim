@@ -63,6 +63,7 @@ def test_negative_results_loaded_and_flagged():
         "bgpsec-signed-neg",
         "quic-hdr-protected-neg",
         "ah-reserved-external-neg",
+        "ntp-digest",
     }
     assert negatives <= set(mechs)
     assert all(not mechs[i].is_usable_channel for i in negatives)
@@ -98,7 +99,7 @@ def test_analysis_populations_separate_primary_and_comparison_rows():
     counts = Counter(mechanism.analysis_population for mechanism in usable)
 
     assert counts == {
-        AnalysisPopulation.PRIMARY_RFC_CARRIER: 133,
+        AnalysisPopulation.PRIMARY_RFC_CARRIER: 176,
         AnalysisPopulation.COMPARISON_ORDINARY_PAYLOAD: 7,
         AnalysisPopulation.COMPARISON_NON_IETF: 2,
     }
@@ -145,7 +146,7 @@ def test_catalog_detection_annotation_migration_coverage_is_explicit():
         if mechanism.detection_annotation_source is DetectionAnnotationSource.EXPLICIT_CATALOG
     ]
 
-    assert len(explicit) == len(mechs) == 146
+    assert len(explicit) == len(mechs) == 190
 
 
 def test_scrub_strategy_derived_for_catalog_rows():

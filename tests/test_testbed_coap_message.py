@@ -1,8 +1,7 @@
-"""Paired aiocoap client/server CoAP payload carrier.
+"""Paired aiocoap client/server CoAP elective-option carrier.
 
-A CoAP message payload is arbitrary application data, so carrying covert bytes is
-conforming. A client builds a real CoAP message with aiocoap's wire codec; a server
-re-parses it with aiocoap as the independent validator.
+A client builds a real CoAP message with aiocoap's wire codec; a server re-parses the
+unknown elective option with aiocoap as the independent validator.
 """
 
 from __future__ import annotations
@@ -18,10 +17,14 @@ from celatim.testbed.coap_message import (
 )
 
 
-def test_coap_payload_roundtrips_arbitrary_bytes():
+def test_coap_elective_option_roundtrips_arbitrary_bytes():
     covert = bytes(range(32))
     wire = build_coap_message(covert)
-    assert len(wire) > len(covert)  # a real CoAP header precedes the payload
+    assert len(wire) > len(covert)
+    message = pytest.importorskip("aiocoap").Message.decode(wire)
+    assert message.payload == b""
+    assert message.code == pytest.importorskip("aiocoap").Code.POST
+    assert bytes(message.opt.get_option(65000)[0].value) == covert
     assert parse_coap_message(wire) == covert
 
 

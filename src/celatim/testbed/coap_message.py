@@ -1,9 +1,8 @@
-"""Paired aiocoap client/server CoAP payload carrier.
+"""Paired aiocoap client/server CoAP elective-option carrier.
 
-A client builds a real CoAP message with aiocoap's wire codec (the covert bytes ride in
-the conforming payload); a server re-parses the wire with aiocoap as the independent
-validator. aiocoap is the optional ``iot`` extra, imported lazily in the carrier
-primitives.
+A client builds a real CoAP message with aiocoap's wire codec, placing covert bytes in an
+unknown elective option; a server re-parses the wire with aiocoap as the independent
+validator. aiocoap is imported lazily in the carrier primitives.
 """
 
 from __future__ import annotations

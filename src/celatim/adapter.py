@@ -549,12 +549,12 @@ def _paths_for(
                 kind=AdapterPathKind.COAP_AIOCOAP,
                 transport_kind="coap_aiocoap",
                 evidence_tier="real_daemon_path",
-                claim_status="local_aiocoap_client_server_payload_message_path",
+                claim_status="local_aiocoap_client_server_elective_option_path",
                 required_extras=("iot",),
                 records_artifact=True,
                 notes=(
                     "paired aiocoap client/server CoAP message exchange; covert bytes in "
-                    "the conforming payload, aiocoap Message codec validates"
+                    "an unknown elective option, aiocoap Message codec validates"
                 ),
             )
         )

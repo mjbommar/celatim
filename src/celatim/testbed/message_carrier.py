@@ -92,7 +92,7 @@ MESSAGE_CARRIER_KINDS: dict[str, MessageCarrierSpec] = {
     "coap_aiocoap": MessageCarrierSpec(
         build=_ignore_qname(build_coap_message),
         parse=parse_coap_message,
-        claim_status="local_aiocoap_client_server_payload_message_path",
+        claim_status="local_aiocoap_client_server_elective_option_path",
         client_role="aiocoap.Message.encode",
         server_role="aiocoap.Message.decode",
         independent_validator="aiocoap_message_codec",

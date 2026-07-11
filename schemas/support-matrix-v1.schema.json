@@ -188,6 +188,7 @@
             "dns_txt_dnspython",
             "dns_null_dnspython",
             "ssh_kexinit_paramiko",
+            "ssh_kexinit_openssh",
             "coap_aiocoap",
             "websocket_websockets",
             "dns_edns0_padding_daemon",

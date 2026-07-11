@@ -1,8 +1,8 @@
 schema_version = "celatim.scenario.v1"
 scenario_id = "ssh-kexinit-paramiko"
 mechanism_id = "ssh-kexinit-cookie"
-description = "Non-privileged paired real-codec client/server scenario for ssh-kexinit-cookie."
-evidence_tier = "real_daemon_path"
+description = "Non-privileged in-process Paramiko KEXINIT build/parse scenario."
+evidence_tier = "real_pdu_packet_path"
 privilege = "none"
 expected_runtime_s = 5.0
 requires_tools = []

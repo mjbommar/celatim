@@ -1220,6 +1220,7 @@ def test_discover_scenarios_lists_checked_in_specs():
         "dns-txt-dnspython",
         "ssh-kexinit-paramiko",
         "websocket-websockets",
+        "ssh-kexinit-openssh-real-daemon",
     ]
     assert all(info.path.suffix == ".toml" for info in infos)
     assert all(info.evidence_tier == "real_pdu_packet_path" for info in infos[:4])
@@ -1252,7 +1253,7 @@ def test_discover_scenarios_lists_checked_in_specs():
     assert all(info.requires_tools == () for info in infos[9:11])
     assert all(info.requires_extras == ("crypto",) for info in infos[9:11])
     # paired real-codec message-carrier scenarios (positions 11..16)
-    message_carriers = infos[11:]
+    message_carriers = infos[11:17]
     assert [info.scenario_id for info in message_carriers] == [
         "bgp-optional-transitive-scapy",
         "coap-tunnel-aiocoap",
@@ -1272,7 +1273,12 @@ def test_discover_scenarios_lists_checked_in_specs():
         ("realtime",),
     ]
     assert infos[11].evidence_tier == "real_pdu_packet_path"
-    assert all(info.evidence_tier == "real_daemon_path" for info in infos[12:])
+    assert infos[15].evidence_tier == "real_pdu_packet_path"
+    assert all(info.evidence_tier == "real_daemon_path" for info in infos[12:15])
+    assert infos[16].evidence_tier == "real_daemon_path"
+    assert infos[17].evidence_tier == "real_daemon_path"
+    assert infos[17].requires_tools == ("sshd",)
+    assert infos[17].requires_extras == ("ssh",)
 
 
 def test_build_scenario_execution_plan_summarizes_reviewer_run_shape():
@@ -1280,7 +1286,7 @@ def test_build_scenario_execution_plan_summarizes_reviewer_run_shape():
     doc = plan.to_json()
 
     assert doc["schema_version"] == SCENARIO_EXECUTION_PLAN_SCHEMA_VERSION
-    assert doc["scenario_count"] == 17
+    assert doc["scenario_count"] == 18
     assert doc["scenario_ids"] == [
         "http2-ping-opaque-real-pdu-smoke",
         "quic-connection-id-real-pdu-smoke",
@@ -1299,18 +1305,19 @@ def test_build_scenario_execution_plan_summarizes_reviewer_run_shape():
         "dns-txt-dnspython",
         "ssh-kexinit-paramiko",
         "websocket-websockets",
+        "ssh-kexinit-openssh-real-daemon",
     ]
     assert doc["default_included_count"] == 4
-    assert doc["manual_review_count"] == 13
-    assert doc["privilege_counts"] == {"cap_net_admin": 1, "none": 15, "root": 1}
+    assert doc["manual_review_count"] == 14
+    assert doc["privilege_counts"] == {"cap_net_admin": 1, "none": 16, "root": 1}
     assert doc["execution_mode_counts"] == {
         "default_non_privileged": 4,
-        "non_privileged_with_dependencies": 11,
+        "non_privileged_with_dependencies": 12,
         "requires_linux_capability": 1,
         "requires_root": 1,
     }
-    assert doc["expected_runtime_s_total"] == 115.0
-    assert doc["required_tools"] == ["dig", "dnsmasq", "ip", "tcpdump"]
+    assert doc["expected_runtime_s_total"] == 130.0
+    assert doc["required_tools"] == ["dig", "dnsmasq", "ip", "sshd", "tcpdump"]
     assert doc["required_extras"] == [
         "crypto",
         "daemon",

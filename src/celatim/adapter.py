@@ -84,6 +84,7 @@ class AdapterPathKind(str, Enum):
     DNS_TXT_DNSPYTHON = "dns_txt_dnspython"
     DNS_NULL_DNSPYTHON = "dns_null_dnspython"
     SSH_KEXINIT_PARAMIKO = "ssh_kexinit_paramiko"
+    SSH_KEXINIT_OPENSSH = "ssh_kexinit_openssh"
     COAP_AIOCOAP = "coap_aiocoap"
     WEBSOCKET_WEBSOCKETS = "websocket_websockets"
     BGP_SCAPY = "bgp_scapy"
@@ -532,14 +533,30 @@ def _paths_for(
             AdapterPath(
                 kind=AdapterPathKind.SSH_KEXINIT_PARAMIKO,
                 transport_kind="ssh_kexinit_paramiko",
-                evidence_tier="real_daemon_path",
+                evidence_tier="real_pdu_packet_path",
                 claim_status="local_paramiko_client_server_kexinit_message_path",
                 required_extras=("ssh",),
                 records_artifact=True,
                 notes=(
-                    "paired paramiko client/server SSH_MSG_KEXINIT exchange; covert bytes "
-                    "across the receiver-ignored cookie and reserved uint32, paramiko "
-                    "Message codec validates"
+                    "in-process paramiko SSH_MSG_KEXINIT build/parse; bytes occupy only "
+                    "the 16-byte random cookie and the reserved uint32 remains zero"
+                ),
+            )
+        )
+        paths.append(
+            AdapterPath(
+                kind=AdapterPathKind.SSH_KEXINIT_OPENSSH,
+                transport_kind="ssh_kexinit_openssh",
+                evidence_tier="real_daemon_path",
+                claim_status="paramiko_client_openssh_daemon_completed_key_exchange",
+                required_binaries=("sshd",),
+                required_extras=("ssh",),
+                scenario_id="ssh-kexinit-openssh-real-daemon",
+                records_artifact=True,
+                notes=(
+                    "Paramiko client substitutes the 16-byte KEXINIT cookie, preserves "
+                    "the reserved uint32 as zero, and completes key exchange with a "
+                    "production OpenSSH daemon"
                 ),
             )
         )

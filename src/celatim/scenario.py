@@ -62,12 +62,14 @@ from .testbed import (
     HTTP3_AIOQUIC_SETTINGS_TRANSPORT_KIND,
     MESSAGE_CARRIER_KINDS,
     QUIC_AIOQUIC_TRANSPORT_KIND,
+    SSH_KEXINIT_OPENSSH_TRANSPORT_KIND,
     AioquicConnectionIdPathConfig,
     AioquicH3SettingsPathConfig,
     DnsEdnsPaddingPathConfig,
     HyperH2PingPathConfig,
     Ipv4PacketPathConfig,
     MessageCarrierTransport,
+    OpenSshKexinitPathConfig,
     PacketProtocol,
     TcpdumpCapture,
     TcpdumpCaptureConfig,
@@ -76,6 +78,7 @@ from .testbed import (
     run_aioquic_h3_settings_roundtrip,
     run_dns_edns0_padding_roundtrip,
     run_hyper_h2_ping_roundtrip,
+    run_openssh_kexinit_roundtrip,
 )
 from .transports import FileTransport, PcapTransport, TimedMemoryTransport
 
@@ -164,6 +167,7 @@ class TransportConfig:
     http3_validate_receiver_settings: bool = True
     quic_transcript_json: str | None = None
     quic_validate_server_response: bool = True
+    ssh_transcript_json: str | None = None
 
 
 @dataclass(frozen=True)
@@ -851,6 +855,24 @@ def _run_case(
             result = session.run_roundtrip(payload, session_id=session_id, pacing=pacing)
             symbols = message_transport.receive_symbols(session_id)
             transport_metadata = message_transport.metadata_for(session_id)
+        elif transport.kind == SSH_KEXINIT_OPENSSH_TRANSPORT_KIND:
+            transcript_path = _ssh_transcript_path_for_case(transport, scenario_id, case)
+            live = run_openssh_kexinit_roundtrip(
+                profile,
+                payload,
+                session_id=session_id,
+                config=_ssh_openssh_config_from_transport(transport, transcript_path),
+                pacing=pacing,
+                reliability=reliability,
+            )
+            result = live.result
+            symbols = list(live.symbols)
+            transport_record = None if live.transcript_json is None else str(live.transcript_json)
+            transport_artifact = _existing_file_artifact_record(
+                transport_record,
+                kind="ssh_kexinit_openssh_transcript",
+            )
+            transport_metadata = live.transport_metadata
         elif transport.kind == HTTP2_HYPER_H2_TRANSPORT_KIND:
             transcript_path = _http2_transcript_path_for_case(transport, scenario_id, case)
             live = run_hyper_h2_ping_roundtrip(
@@ -1074,6 +1096,14 @@ def _endpoint_os_for_transport(transport: TransportConfig) -> EndpointOsMetadata
             "same_process",
             notes=(MESSAGE_CARRIER_KINDS[transport.kind].endpoint_note,),
         )
+    if transport.kind == SSH_KEXINIT_OPENSSH_TRANSPORT_KIND:
+        return local_endpoint_os(
+            "unknown",
+            notes=(
+                f"Paramiko client completed key exchange with an OpenSSH daemon at "
+                f"{transport.dst_ip}:{transport.dst_port}",
+            ),
+        )
     if transport.kind == HTTP2_HYPER_H2_TRANSPORT_KIND:
         return local_endpoint_os(
             "same_process",
@@ -1243,6 +1273,7 @@ def _transport_from_mapping(data: dict[str, Any], path: Path) -> TransportConfig
         "afpacket_ipv4",
         "dns_edns0_padding",
         *MESSAGE_CARRIER_KINDS,
+        SSH_KEXINIT_OPENSSH_TRANSPORT_KIND,
         HTTP2_HYPER_H2_TRANSPORT_KIND,
         HTTP3_AIOQUIC_SETTINGS_TRANSPORT_KIND,
         QUIC_AIOQUIC_TRANSPORT_KIND,
@@ -1370,6 +1401,25 @@ def _transport_from_mapping(data: dict[str, Any], path: Path) -> TransportConfig
         return TransportConfig(
             kind,
             dns_query_name=_transport_str(raw, "dns_query_name", "covert.example.", path),
+        )
+    if kind == SSH_KEXINIT_OPENSSH_TRANSPORT_KIND:
+        if root is not None:
+            raise ValueError(
+                f"{path}: {SSH_KEXINIT_OPENSSH_TRANSPORT_KIND} transport must not set root"
+            )
+        allowed_keys = {"kind", "dst_ip", "dst_port", "timeout_s", "transcript_json"}
+        unknown = sorted(set(raw) - allowed_keys)
+        if unknown:
+            raise ValueError(
+                f"{path}: unknown {SSH_KEXINIT_OPENSSH_TRANSPORT_KIND} transport keys: "
+                f"{', '.join(unknown)}"
+            )
+        return TransportConfig(
+            kind,
+            dst_ip=_transport_str(raw, "dst_ip", "127.0.0.1", path),
+            dst_port=_transport_int(raw, "dst_port", 22, path),
+            timeout_s=_transport_optional_float(raw, "timeout_s", 10.0, path),
+            ssh_transcript_json=_transport_optional_path(raw, "transcript_json", path),
         )
     if kind == HTTP2_HYPER_H2_TRANSPORT_KIND:
         if root is not None:
@@ -1663,6 +1713,27 @@ def _quic_transcript_path_for_case(
     return str(path / f"{safe_scenario}-{safe_case}.json")
 
 
+def _ssh_transcript_path_for_case(
+    transport: TransportConfig,
+    scenario_id: str,
+    case: str,
+) -> str | None:
+    raw = transport.ssh_transcript_json
+    if raw is None:
+        return None
+    safe_scenario = _safe_artifact_name(scenario_id)
+    safe_case = _safe_artifact_name(case)
+    if "{" in raw or "}" in raw:
+        try:
+            return raw.format(scenario_id=safe_scenario, case=safe_case)
+        except (KeyError, ValueError) as exc:
+            raise ValueError(f"invalid transcript_json template: {raw}") from exc
+    path = Path(raw)
+    if path.suffix:
+        return str(path.with_name(f"{path.stem}-{safe_case}{path.suffix}"))
+    return str(path / f"{safe_scenario}-{safe_case}.json")
+
+
 def _http2_hyper_h2_config_from_transport(
     transport: TransportConfig,
     transcript_path: str | None,
@@ -1690,6 +1761,18 @@ def _quic_aioquic_config_from_transport(
     return AioquicConnectionIdPathConfig(
         transcript_json=None if transcript_path is None else Path(transcript_path),
         validate_server_response=transport.quic_validate_server_response,
+    )
+
+
+def _ssh_openssh_config_from_transport(
+    transport: TransportConfig,
+    transcript_path: str | None,
+) -> OpenSshKexinitPathConfig:
+    return OpenSshKexinitPathConfig(
+        host=transport.dst_ip,
+        port=transport.dst_port,
+        timeout_s=transport.timeout_s or 10.0,
+        transcript_json=None if transcript_path is None else Path(transcript_path),
     )
 
 

@@ -85,7 +85,7 @@ MESSAGE_CARRIER_KINDS: dict[str, MessageCarrierSpec] = {
         independent_validator="paramiko_message_codec",
         endpoint_note=(
             "client builds a real SSH_MSG_KEXINIT and the server re-parses it with the "
-            "paramiko Message codec in one Python process"
+            "paramiko Message codec in one Python process; the reserved uint32 remains zero"
         ),
         required_extra="ssh",
     ),

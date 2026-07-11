@@ -1852,7 +1852,7 @@ def test_session_cli_scenario_list_and_run(tmp_path):
     listed_doc = json.loads(listed.read_text())
     assert listed_doc["schema_version"] == "celatim.scenario_inventory.v1"
     assert listed_doc["path"] == str(SCENARIOS)
-    assert listed_doc["scenario_count"] == 17
+    assert listed_doc["scenario_count"] == 18
     assert listed_doc["scenario_ids"] == [
         "http2-ping-opaque-real-pdu-smoke",
         "quic-connection-id-real-pdu-smoke",
@@ -1871,15 +1871,16 @@ def test_session_cli_scenario_list_and_run(tmp_path):
         "dns-txt-dnspython",
         "ssh-kexinit-paramiko",
         "websocket-websockets",
+        "ssh-kexinit-openssh-real-daemon",
     ]
     assert listed_doc["evidence_tier_counts"] == {
         "real_daemon_path": 9,
         "real_crypto_path": 2,
-        "real_pdu_packet_path": 6,
+        "real_pdu_packet_path": 7,
     }
-    assert listed_doc["privilege_counts"] == {"cap_net_admin": 1, "none": 15, "root": 1}
-    assert listed_doc["expected_runtime_s_total"] == 115.0
-    assert listed_doc["required_tools"] == ["dig", "dnsmasq", "ip", "tcpdump"]
+    assert listed_doc["privilege_counts"] == {"cap_net_admin": 1, "none": 16, "root": 1}
+    assert listed_doc["expected_runtime_s_total"] == 130.0
+    assert listed_doc["required_tools"] == ["dig", "dnsmasq", "ip", "sshd", "tcpdump"]
     assert listed_doc["required_extras"] == [
         "crypto",
         "daemon",
@@ -1907,6 +1908,7 @@ def test_session_cli_scenario_list_and_run(tmp_path):
         "dns-txt-dnspython",
         "ssh-kexinit-paramiko",
         "websocket-websockets",
+        "ssh-kexinit-openssh-real-daemon",
     ]
     default_scenarios = listed_doc["scenarios"][:4]
     dns_scenario = listed_doc["scenarios"][4]
@@ -1972,12 +1974,12 @@ def test_session_cli_scenario_list_and_run(tmp_path):
     )
     planned_doc = json.loads(planned.read_text())
     assert planned_doc["schema_version"] == "celatim.scenario_execution_plan.v1"
-    assert planned_doc["scenario_count"] == 17
+    assert planned_doc["scenario_count"] == 18
     assert planned_doc["default_included_count"] == 4
-    assert planned_doc["manual_review_count"] == 13
+    assert planned_doc["manual_review_count"] == 14
     assert planned_doc["execution_mode_counts"] == {
         "default_non_privileged": 4,
-        "non_privileged_with_dependencies": 11,
+        "non_privileged_with_dependencies": 12,
         "requires_linux_capability": 1,
         "requires_root": 1,
     }
@@ -2331,8 +2333,8 @@ def test_session_cli_uses_packaged_scenario_default_outside_measurement_tree(
 
     listed_doc = json.loads(listed.read_text())
     assert listed_doc["schema_version"] == "celatim.scenario_inventory.v1"
-    assert listed_doc["scenario_count"] == 17
-    assert listed_doc["privilege_counts"] == {"cap_net_admin": 1, "none": 15, "root": 1}
+    assert listed_doc["scenario_count"] == 18
+    assert listed_doc["privilege_counts"] == {"cap_net_admin": 1, "none": 16, "root": 1}
     assert [item["scenario_id"] for item in listed_doc["scenarios"]] == [
         "http2-ping-opaque-real-pdu-smoke",
         "quic-connection-id-real-pdu-smoke",
@@ -2351,6 +2353,7 @@ def test_session_cli_uses_packaged_scenario_default_outside_measurement_tree(
         "dns-txt-dnspython",
         "ssh-kexinit-paramiko",
         "websocket-websockets",
+        "ssh-kexinit-openssh-real-daemon",
     ]
     assert all(item["privilege"] == "none" for item in listed_doc["scenarios"][:4])
     assert listed_doc["scenarios"][4]["privilege"] == "cap_net_admin"

@@ -162,6 +162,20 @@ uv run --group daemon celatim scenario run \
   --output out/quic-aioquic-evidence.json
 ```
 
+The OpenSSH scenario requires a reachable production `sshd` on the host and port in
+the scenario specification (localhost port 22 by default):
+
+```bash
+uv run --group ssh celatim scenario run \
+  --scenario-id ssh-kexinit-openssh-real-daemon \
+  --transport-transcript-json out/transcripts/{scenario_id}-{case}.json \
+  --output out/ssh-openssh-evidence.json
+```
+
+Its transcript records the OpenSSH version and host-key hash but does not authenticate
+the host key; run it only against a controlled server whose address is independently
+known.
+
 Inspect `out/evidence.json` for payload hashes, recovered bytes, parser validation,
 parser provenance, detector provenance, observer validation, mutation controls,
 transport metadata, transport artifact hashes, structured run-log artifact hashes,

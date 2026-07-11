@@ -41,7 +41,7 @@ def test_survivability_loaded_from_catalog():
     mechs = {m.id: m for m in load_mechanisms(DATA)}
     # The canonical "easy" header channels are exactly the ones the path mangles:
     # IP ID is NAT-rewritten, TCP reserved bits are normalizer-scrubbed.
-    assert mechs["ipv4-id-atomic"].survivability is Survivability.NAT_REWRITTEN
+    assert mechs["ipv4-id-atomic"].survivability is Survivability.PATH_DEPENDENT
     assert mechs["tcp-reserved-bits"].survivability is Survivability.NORMALIZED
     # QUIC frames ride inside AEAD -> intact but endpoint-only.
     assert mechs["http3-reserved-frame-types"].survivability is Survivability.INTEGRITY_BOUND
@@ -153,7 +153,7 @@ def test_scrub_strategy_derived_for_catalog_rows():
 
     mechs = {m.id: m for m in load_mechanisms(DATA)}
     # The scrub follows the structure and stays consistent with survivability:
-    # normalizers zero TCP reserved bits; NATs rewrite the IP ID.
+    # Normalizers zero TCP reserved bits; IPv4-ID treatment varies by path.
     assert mechs["tcp-reserved-bits"].scrub_strategy is ScrubStrategy.CANONICALIZE_ZERO
     assert mechs["ipv4-id-atomic"].scrub_strategy is ScrubStrategy.REWRITE_FIELD
     # AEAD-protected frames can only be refused at the endpoint.

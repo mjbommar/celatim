@@ -194,6 +194,13 @@ def test_robust_unwitting_predicate():
         make(reach=Reach.UNWITTING, survivability=Survivability.NORMALIZED).robust_unwitting
         is False
     )
+    assert (
+        make(
+            reach=Reach.UNWITTING,
+            survivability=Survivability.PATH_DEPENDENT,
+        ).robust_unwitting
+        is False
+    )
     # endpoint-only -> not an unwitting threat
     assert (
         make(reach=Reach.COOPERATING, survivability=Survivability.END_TO_END).robust_unwitting

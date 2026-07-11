@@ -24,8 +24,8 @@ _HEADER = (
     "\\setlength{\\LTleft}{0pt}\n"
     "\\setlength{\\LTright}{0pt}\n"
     "\\rowcolors{2}{catalogrow}{white}\n"
-    "\\begin{longtable}{@{}>{\\raggedright\\arraybackslash}p{0.40\\textwidth}"
-    ">{\\raggedright\\arraybackslash}p{0.15\\textwidth}cclrrr@{}}\n"
+    "\\begin{longtable}{@{}>{\\raggedright\\arraybackslash}p{0.46\\textwidth}"
+    ">{\\raggedright\\arraybackslash}p{0.10\\textwidth}cclrrr@{}}\n"
     "\\toprule\n"
     "\\rowcolor{cataloghead}\n"
     "\\textbf{Mechanism} & \\textbf{RFC(s)} & \\textbf{Class} & \\textbf{St.} & "
@@ -82,7 +82,7 @@ def _survivability_cell(m: Mechanism) -> str:
 
 def _population_longtable(mechs: Iterable[Mechanism]) -> str:
     rows = [
-        f"{_escape(m.name)} & {_escape(', '.join(m.rfcs))} & {m.carrier_class.value} & "
+        f"{_escape(m.name)} & {_escape(', '.join(r.removeprefix('RFC ') for r in m.rfcs))} & {m.carrier_class.value} & "
         f"{m.status.value} & {_survivability_cell(m)} & {_bits_cell(m)} & "
         f"{_density_header_cell(m)} & {_density_wire_cell(m)} \\\\"
         for m in mechs

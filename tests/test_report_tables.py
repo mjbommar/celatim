@@ -48,9 +48,11 @@ def test_longtable_env_and_rows():
     tex = mechanisms_to_longtable(load_mechanisms(DATA))
     assert "\\begin{longtable}" in tex
     assert "\\end{longtable}" in tex
-    # a cited RFC and a class tag survive into the rendered table
-    assert "RFC 9293" in tex
-    assert "RFC" in tex and tex.count("RFC") >= 3
+    # RFC numbers render bare (the "RFC " prefix is stripped; the column header keeps it);
+    # a cited RFC survives into the rendered table.
+    assert "9293" in tex
+    assert "RFC 9293" not in tex
+    assert "\\textbf{RFC(s)}" in tex
 
 
 def test_longtable_handles_nonstorage_and_unbounded_rows():

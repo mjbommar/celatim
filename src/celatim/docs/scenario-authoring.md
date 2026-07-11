@@ -111,9 +111,15 @@ celatim doctor --scenario-dir scenarios --artifact-dir artifacts/reviewer/doctor
 celatim scenario list --scenario-dir scenarios
 celatim scenario plan --scenario-dir scenarios
 celatim scenario run --scenario scenarios/http2-ping-opaque.toml --output out/evidence.json
+celatim scenario run --scenario scenarios/http2-ping-opaque.toml --file payload.bin --output out/evidence.json
 celatim scenario run --scenario-id ecdsa-nonce-local-crypto-transcript --transport-transcript-json out/transcripts/{scenario_id}-{case}.json --output out/ecdsa-evidence.json
 celatim scenario run --scenario-id rsa-pss-salt-local-crypto-transcript --transport-transcript-json out/transcripts/{scenario_id}-{case}.json --output out/rsa-pss-evidence.json
 ```
+
+`scenario run` accepts `--message`, `--hex`, or `--file` to replace the scenario's
+covert payload without changing its benign control or checked-in specification. Use an
+explicit override for payload-size sweeps and retain the invocation recorded in the
+evidence document.
 
 Unknown top-level keys or malformed transport knobs fail schema validation in
 `doctor`, before a reviewer run starts.

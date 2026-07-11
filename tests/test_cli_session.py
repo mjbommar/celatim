@@ -2260,6 +2260,66 @@ def test_session_cli_scenario_run_overrides_transport_capture_pcap(tmp_path, mon
     assert json.loads(out.read_text()) == {"ok": True}
 
 
+def test_evidence_commands_return_nonzero_and_preserve_failed_result(tmp_path, monkeypatch):
+    class FakeEvidenceResult:
+        def to_json(self) -> dict[str, Any]:
+            return {"ok": False, "error": "controlled failure"}
+
+    monkeypatch.setattr(
+        cli_module,
+        "run_evidence",
+        lambda config, catalog, command=(): FakeEvidenceResult(),
+    )
+
+    evidence_output = tmp_path / "evidence-failure.json"
+    assert (
+        session_main(
+            [
+                "--catalog",
+                str(DATA),
+                "evidence",
+                "run",
+                "--scenario-id",
+                "failure-smoke",
+                "--mechanism",
+                "http2-ping-opaque",
+                "--hex",
+                "00",
+                "--output",
+                str(evidence_output),
+            ]
+        )
+        == 1
+    )
+    assert json.loads(evidence_output.read_text()) == {
+        "error": "controlled failure",
+        "ok": False,
+    }
+
+    scenario_output = tmp_path / "scenario-failure.json"
+    assert (
+        session_main(
+            [
+                "--catalog",
+                str(DATA),
+                "scenario",
+                "run",
+                "--scenario-id",
+                "http2-ping-opaque-real-pdu-smoke",
+                "--scenario-dir",
+                str(SCENARIOS),
+                "--output",
+                str(scenario_output),
+            ]
+        )
+        == 1
+    )
+    assert json.loads(scenario_output.read_text()) == {
+        "error": "controlled failure",
+        "ok": False,
+    }
+
+
 def test_session_cli_uses_packaged_scenario_default_outside_measurement_tree(
     tmp_path,
     monkeypatch,

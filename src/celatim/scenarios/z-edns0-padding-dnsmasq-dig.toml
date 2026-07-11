@@ -20,7 +20,6 @@ dst_port = 53
 timeout_s = 2.0
 capture_pcap = "../out/pcaps/{scenario_id}-{case}.pcap"
 capture_interface = "vr"
-capture_filter = ["udp", "port", "53", "and", "src", "host", "10.10.0.1"]
 dns_sender_namespace = "snd"
 dns_resolver_namespace = "rcv"
 dns_query_name = "covert.test"

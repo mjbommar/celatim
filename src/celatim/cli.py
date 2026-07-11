@@ -76,6 +76,7 @@ from .reviewer_bundle import (
     verify_reviewer_bundle_manifest,
 )
 from .scenario import (
+    EvidenceRunResult,
     TransportConfig,
     build_scenario_execution_plan,
     build_scenario_inventory,
@@ -1430,7 +1431,7 @@ def _evidence_run_main(args: argparse.Namespace) -> int:
         args.catalog,
         command=args._invocation,
     )
-    return _write_json(result.to_json(), args.output)
+    return _write_evidence_result(result, args.output)
 
 
 def _evidence_index_main(args: argparse.Namespace) -> int:
@@ -1564,7 +1565,7 @@ def _scenario_run_main(args: argparse.Namespace) -> int:
                 ),
             )
             result = run_evidence(config, args.catalog, command=args._invocation)
-            return _write_json(result.to_json(), args.output)
+            return _write_evidence_result(result, args.output)
         if config.transport.kind == "http3_aioquic_reserved_settings":
             config = replace(
                 config,
@@ -1574,7 +1575,7 @@ def _scenario_run_main(args: argparse.Namespace) -> int:
                 ),
             )
             result = run_evidence(config, args.catalog, command=args._invocation)
-            return _write_json(result.to_json(), args.output)
+            return _write_evidence_result(result, args.output)
         if config.transport.kind == "quic_aioquic_connection_id":
             config = replace(
                 config,
@@ -1584,7 +1585,7 @@ def _scenario_run_main(args: argparse.Namespace) -> int:
                 ),
             )
             result = run_evidence(config, args.catalog, command=args._invocation)
-            return _write_json(result.to_json(), args.output)
+            return _write_evidence_result(result, args.output)
         config = replace(
             config,
             transport=replace(
@@ -1593,7 +1594,7 @@ def _scenario_run_main(args: argparse.Namespace) -> int:
             ),
         )
     result = run_evidence(config, args.catalog, command=args._invocation)
-    return _write_json(result.to_json(), args.output)
+    return _write_evidence_result(result, args.output)
 
 
 def _mechanism_list_main(args: argparse.Namespace) -> int:
@@ -2262,6 +2263,14 @@ def _timing_sweep_pacing_from_args(args: argparse.Namespace) -> PacingConfig:
 def _write_json(document: dict[str, Any], output: Path | None) -> int:
     text = json.dumps(document, sort_keys=True) + "\n"
     return _write_text(text, output)
+
+
+def _write_evidence_result(result: EvidenceRunResult, output: Path | None) -> int:
+    document = result.to_json()
+    write_status = _write_json(document, output)
+    if write_status != 0:
+        return write_status
+    return 0 if document["ok"] else 1
 
 
 def _write_text(text: str, output: Path | None) -> int:

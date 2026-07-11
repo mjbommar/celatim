@@ -132,13 +132,29 @@ class DnsEdnsPaddingPathConfig:
     @property
     def default_capture_filter(self) -> tuple[str, ...]:
         return (
-            "udp",
-            "port",
-            str(self.port),
-            "and",
             "src",
             "host",
             self.sender_address,
+            "and",
+            "(",
+            "udp",
+            "dst",
+            "port",
+            str(self.port),
+            "or",
+            "(",
+            "tcp",
+            "dst",
+            "port",
+            str(self.port),
+            "and",
+            "tcp[tcpflags]",
+            "&",
+            "tcp-push",
+            "!=",
+            "0",
+            ")",
+            ")",
         )
 
 
@@ -248,6 +264,7 @@ def run_dns_edns0_padding_roundtrip(
             name="dig",
         ),
     )
+    capture_timeout = _capture_wait_timeout(active_config, pacing, packet_count)
     start = monotonic()
     with daemon:
         capture = TcpdumpCapture(
@@ -264,6 +281,7 @@ def run_dns_edns0_padding_roundtrip(
                 pacing=pacing,
                 sleeper=sleeper,
             )
+            capture.wait(timeout=capture_timeout)
 
     captured_symbols = decoder(capture_pcap, active_config.padding_optcode)
     if len(captured_symbols) != len(query_symbols):
@@ -449,12 +467,18 @@ def edns_padding_options_from_pcap(
         if dns_cls not in packet or packet[dns_cls].qr != 0:
             continue
         additional = packet[dns_cls].ar
-        while additional is not None and additional != b"" and not isinstance(additional, int):
+        records: list[Any] = []
+        if isinstance(additional, list):
+            records.extend(additional)
+        else:
+            while additional is not None and additional != b"" and not isinstance(additional, int):
+                records.append(additional)
+                additional = additional.payload if getattr(additional, "payload", None) else None
+        for additional in records:
             if isinstance(additional, opt_cls):
                 for tlv in additional.rdata or []:
                     if getattr(tlv, "optcode", None) == padding_optcode:
                         options.append(bytes(tlv.optdata))
-            additional = additional.payload if getattr(additional, "payload", None) else None
     return tuple(options)
 
 

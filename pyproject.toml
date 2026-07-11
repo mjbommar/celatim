@@ -1,6 +1,6 @@
 [project]
 name = "celatim"
-version = "0.2.6"
+version = "0.2.7"
 description = "Typed secure file transfer and reproducible covert-channel measurement for IETF protocol fields."
 readme = "README.md"
 license = "Apache-2.0"

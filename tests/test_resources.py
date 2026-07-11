@@ -429,16 +429,18 @@ def test_lab_scrubber_uses_ip_header_length_in_bits(monkeypatch):
         for item in load_mechanisms(PROJECT / "data" / "mechanisms.jsonl")
         if item.id == "tcp-reserved-bits"
     )
+    locator = mechanism.locator
+    assert locator is not None
     packet = IP(src=lab.SND_IP, dst=lab.RCV_IP) / TCP(reserved=7)
     raw = bytearray(bytes(packet))
     destination_before = bytes(raw[16:20])
-    offset = lab._abs_bit_offset(mechanism.locator, lab._ip_hdr_bits(raw))
-    assert lab._read_bits(raw, offset, mechanism.locator.bit_width) != 0
+    offset = lab._abs_bit_offset(locator, lab._ip_hdr_bits(raw))
+    assert lab._read_bits(bytes(raw), offset, locator.bit_width) != 0
 
-    lab._scrub_field(raw, mechanism.locator)
+    lab._scrub_field(raw, locator)
 
     assert bytes(raw[16:20]) == destination_before
-    assert lab._read_bits(raw, offset, mechanism.locator.bit_width) == 0
+    assert lab._read_bits(bytes(raw), offset, locator.bit_width) == 0
 
 
 def test_crosshost_runner_resolves_standalone_and_paper_snapshot_layouts(tmp_path, monkeypatch):

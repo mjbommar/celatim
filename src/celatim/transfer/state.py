@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import tempfile
 from collections.abc import Iterator
@@ -14,6 +15,8 @@ from typing import Any
 
 from .errors import TransferErrorCode, transfer_failure
 from .models import TransferStateRecord, TransferStatus
+
+_LOGGER = logging.getLogger(__name__)
 
 _ALLOWED_TRANSITIONS: dict[TransferStatus, frozenset[TransferStatus]] = {
     TransferStatus.CREATED: frozenset(
@@ -165,7 +168,8 @@ class TransferStateStore:
                 raw = json.loads(path.read_text())
                 if isinstance(raw, dict):
                     states.append(TransferStateRecord.from_json(raw))
-            except OSError, ValueError, TypeError, json.JSONDecodeError:
+            except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+                _LOGGER.warning("skipping unreadable transfer state file %s: %s", path, exc)
                 continue
         return tuple(states)
 

@@ -502,7 +502,7 @@ def _matching_l4_segment(config: Ipv4PacketPathConfig, frame: bytes) -> bytes | 
         if ip_packet[16:20] != ipaddress.IPv4Address(config.dst_ip).packed:
             return None
         return ip_packet[ihl:total_len]
-    except ipaddress.AddressValueError, ValueError, IndexError:
+    except (ipaddress.AddressValueError, ValueError, IndexError):
         return None
 
 

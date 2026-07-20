@@ -202,3 +202,29 @@ def test_rsa_pss_salt_transcript_rejects_non_rsa_pss_mechanism():
 
     with pytest.raises(TransportError, match="only supports rsa-pss-salt"):
         RsaPssSaltTranscriptTransport(profile)
+
+
+class _EcdsaConfigWithSuppliedKey(EcdsaNonceTranscriptConfig):
+    """Subclass that smuggles a caller-supplied private key past the base config."""
+
+    private_key: object = "smuggled-signing-key"
+
+
+class _RsaConfigWithSuppliedKey(RsaPssSaltTranscriptConfig):
+    """Subclass that smuggles a caller-supplied private key past the base config."""
+
+    signing_key: object = "smuggled-signing-key"
+
+
+def test_ecdsa_nonce_transport_refuses_caller_supplied_private_key():
+    profile = MechanismProfile.from_catalog("ecdsa-nonce", DATA)
+
+    with pytest.raises(TransportError, match="refuse caller-supplied or persisted private keys"):
+        EcdsaNonceTranscriptTransport(profile, _EcdsaConfigWithSuppliedKey())
+
+
+def test_rsa_pss_salt_transport_refuses_caller_supplied_private_key():
+    profile = MechanismProfile.from_catalog("rsa-pss-salt", DATA)
+
+    with pytest.raises(TransportError, match="refuse caller-supplied or persisted private keys"):
+        RsaPssSaltTranscriptTransport(profile, _RsaConfigWithSuppliedKey())

@@ -165,7 +165,7 @@ def test_package_docs_lock_install_profiles_and_release_workflow():
     readme = (PACKAGE_ROOT / "README.md").read_text()
 
     assert pyproject["project"]["name"] == "celatim"
-    assert pyproject["project"]["requires-python"] == ">=3.14"
+    assert pyproject["project"]["requires-python"] == ">=3.12"
     assert pyproject["project"]["dependencies"] == []
     assert pyproject["project"]["optional-dependencies"] == {
         "transfer": ["cryptography>=46.0.3"],

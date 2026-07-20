@@ -1,4 +1,14 @@
-"""Local cryptographic transcript transports for Class G channels."""
+"""Local cryptographic transcript transports for Class G channels.
+
+Research-only, by construction. The signing paths in this module perform raw
+private-key operations with a caller-controlled ECDSA nonce and a caller-controlled
+RSA-PSS salt. They deliberately omit blinding and constant-time protection because the
+subliminal-channel measurement needs known nonce/salt bytes. As a consequence they
+mint a fresh ephemeral key per transcript (via ``_mint_ephemeral_ec_key`` /
+``_mint_ephemeral_rsa_key``) and structurally refuse any caller-supplied or persisted
+private key (see ``_reject_supplied_private_key``). Pointing these paths at a real,
+reused, or long-lived signing key would leak the key and is not supported.
+"""
 
 from __future__ import annotations
 
@@ -22,6 +32,64 @@ RSA_PSS_SALT_TRANSPORT_METADATA_SCHEMA_VERSION = "celatim.transport_metadata.cry
 RSA_PSS_SALT_CLAIM_STATUS = "real_rsa_pss_sign_verify_local_transcript_salt_recovery"
 RSA_PSS_SALT_SIGNING_BACKEND = "cryptography_openssl_with_explicit_rfc8017_pss_salt"
 CRYPTO_TRANSCRIPT_KEY_SCOPE = "ephemeral_per_transcript"
+
+# Attribute names that would indicate a caller-supplied or persisted private key.
+# These transports mint a fresh ephemeral key per transcript by construction (see the
+# module docstring); if a config object ever exposes one of these with a non-None value
+# we fail closed rather than sign with external, reusable key material.
+_FORBIDDEN_PRIVATE_KEY_ATTRS: tuple[str, ...] = (
+    "private_key",
+    "private_key_path",
+    "private_key_pem",
+    "private_key_der",
+    "signing_key",
+    "signing_key_path",
+    "key_material",
+    "key_path",
+    "key_pem",
+    "private_scalar",
+    "private_numbers",
+    "seed",
+)
+
+
+def _reject_supplied_private_key(config: Any) -> None:
+    """Fail closed if a config ever carries caller-supplied private-key material.
+
+    This is a hard, structural fence: the crypto transcript transports only ever sign
+    with a fresh ephemeral key minted per transcript, so any attempt to inject or load
+    a private key must raise instead of silently signing with it.
+    """
+    for name in _FORBIDDEN_PRIVATE_KEY_ATTRS:
+        if getattr(config, name, None) is not None:
+            raise TransportError(
+                "crypto transcript transports mint fresh ephemeral research-only keys "
+                "by construction and refuse caller-supplied or persisted private keys "
+                f"(config attribute {name!r} is set)"
+            )
+
+
+def _mint_ephemeral_ec_key(crypto: dict[str, Any], curve: _EcdsaCurveSpec) -> Any:
+    """Mint a fresh, ephemeral EC signing key for a single research transcript.
+
+    Research-only: the explicit-nonce signing path has no blinding or constant-time
+    protection, so it must never touch a persisted or reused key. Key material is
+    generated here and discarded when the transcript completes.
+    """
+    return crypto["ec"].generate_private_key(curve.curve)
+
+
+def _mint_ephemeral_rsa_key(crypto: dict[str, Any], *, public_exponent: int, key_bits: int) -> Any:
+    """Mint a fresh, ephemeral RSA signing key for a single research transcript.
+
+    Research-only: the explicit-salt signing path performs the raw RSA private
+    operation with no blinding, so it must never touch a persisted or reused key. Key
+    material is generated here and discarded when the transcript completes.
+    """
+    return crypto["rsa"].generate_private_key(
+        public_exponent=public_exponent,
+        key_size=key_bits,
+    )
 
 
 @dataclass(frozen=True)
@@ -102,6 +170,7 @@ class EcdsaNonceTranscriptTransport:
             raise TransportError("crypto_ecdsa_nonce transport only supports ecdsa-nonce")
         self.profile = profile
         self.config = config or EcdsaNonceTranscriptConfig()
+        _reject_supplied_private_key(self.config)
         self._sessions: dict[str, list[Symbol]] = {}
         self._pacing: dict[str, PacingConfig | None] = {}
         self._metadata: dict[str, dict[str, Any]] = {}
@@ -123,7 +192,7 @@ class EcdsaNonceTranscriptTransport:
                 f"{self.config.nonce_payload_bits}-bit embedded nonce payloads"
             )
 
-        signing_key = crypto["ec"].generate_private_key(curve.curve)
+        signing_key = _mint_ephemeral_ec_key(crypto, curve)
         verifying_key = signing_key.public_key()
         private_scalar = int(signing_key.private_numbers().private_value)
         symbol_bytes = self.config.nonce_payload_bits // 8
@@ -340,6 +409,7 @@ class RsaPssSaltTranscriptTransport:
             raise TransportError("crypto_rsa_pss_salt transport only supports rsa-pss-salt")
         self.profile = profile
         self.config = config or RsaPssSaltTranscriptConfig()
+        _reject_supplied_private_key(self.config)
         self._sessions: dict[str, list[Symbol]] = {}
         self._pacing: dict[str, PacingConfig | None] = {}
         self._metadata: dict[str, dict[str, Any]] = {}
@@ -359,9 +429,10 @@ class RsaPssSaltTranscriptTransport:
             self.config.mgf_hash_name,
         )
         salt_bytes = self.config.salt_payload_bits // 8
-        private_key = crypto["rsa"].generate_private_key(
+        private_key = _mint_ephemeral_rsa_key(
+            crypto,
             public_exponent=self.config.public_exponent,
-            key_size=self.config.key_bits,
+            key_bits=self.config.key_bits,
         )
         public_key = private_key.public_key()
         private_numbers = private_key.private_numbers()

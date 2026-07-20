@@ -220,7 +220,7 @@ def test_unified_celatim_project_owns_the_only_distribution_and_namespace():
 
     assert project["name"] == "celatim"
     assert project["version"] == "0.2.11"
-    assert project["requires-python"] == ">=3.14"
+    assert project["requires-python"] == ">=3.12"
     assert project["license"] == "Apache-2.0"
     assert project["license-files"] == ["LICENSE"]
     assert project["dependencies"] == []

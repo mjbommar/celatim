@@ -152,7 +152,7 @@ def _process_start(pid: int) -> str | None:
     try:
         fields = (Path("/proc") / str(pid) / "stat").read_text().split()
         return fields[21]
-    except OSError, IndexError:
+    except (OSError, IndexError):
         return None
 
 

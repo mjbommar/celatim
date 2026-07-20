@@ -20,7 +20,7 @@ see [the compatibility policy](docs/transfer-compatibility-policy.md) and the
 
 ## Requirements
 
-- CPython 3.14 or newer.
+- CPython 3.12 or newer.
 - Linux for AF_PACKET, network-namespace, tcpdump, and QEMU/TAP workflows.
 - No optional protocol stack is imported by the base package.
 

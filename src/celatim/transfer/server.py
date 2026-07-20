@@ -163,7 +163,7 @@ class TransferServer:
                 if isinstance(raw, dict):
                     offer = TransferOffer.parse(raw)
                     self._offers[offer.offer_id] = offer
-            except OSError, ValueError, TransferFailure, json.JSONDecodeError:
+            except (OSError, ValueError, TransferFailure, json.JSONDecodeError):
                 continue
 
     async def _handle_connection(
@@ -629,7 +629,7 @@ def _mark_receiver_interrupted(
             )
         receiver_file.store.write_state(current)
         receiver_file.record = current
-    except TransferFailure, ValueError:
+    except (TransferFailure, ValueError):
         return
 
 
@@ -648,7 +648,7 @@ async def _send_error(writer: asyncio.StreamWriter, failure: TransferFailure) ->
                 "resumable": failure.resumable,
             },
         )
-    except ConnectionError, OSError, TransferFailure:
+    except (ConnectionError, OSError, TransferFailure):
         return
 
 

@@ -450,7 +450,7 @@ async def _mark_sender_interrupted(
         else:
             return
         await asyncio.to_thread(store.write_state, current)
-    except TransferFailure, ValueError:
+    except (TransferFailure, ValueError):
         return
 
 

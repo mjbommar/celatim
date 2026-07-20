@@ -21,8 +21,9 @@ requires updating the publisher configuration on PyPI.
 1. Register the pending publisher above while signed in to PyPI.
 2. Keep the GitHub `pypi` environment enabled. Add deployment protection rules when
    the repository plan supports them.
-3. Require the `CI / Python 3.14 quality and installed-package gate` check on `main`
-   before making the repository public.
+3. Require the `CI / Python 3.12 quality and installed-package gate` check (the
+   supported floor; the CI matrix also runs 3.13 and 3.14) on `main` before making
+   the repository public.
 
 Celatim is licensed under Apache-2.0. The release workflow rejects distributions that
 do not contain both the exact PEP 639 `License-Expression` and the packaged `LICENSE`

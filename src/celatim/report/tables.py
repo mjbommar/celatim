@@ -24,7 +24,7 @@ _HEADER = (
     "\\setlength{\\LTleft}{0pt}\n"
     "\\setlength{\\LTright}{0pt}\n"
     "\\rowcolors{2}{catalogrow}{white}\n"
-    "\\begin{longtable}{@{}>{\\raggedright\\arraybackslash}p{0.46\\textwidth}"
+    "\\begin{longtable}{@{}>{\\raggedright\\arraybackslash}p{0.435\\textwidth}"
     ">{\\raggedright\\arraybackslash}p{0.10\\textwidth}cclrrr@{}}\n"
     "\\toprule\n"
     "\\rowcolor{cataloghead}\n"

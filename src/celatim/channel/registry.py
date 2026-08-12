@@ -1,8 +1,8 @@
 """Map each catalog mechanism to the codec that carries its bits.
 
-Working backwards from the ~90 mechanisms, the seven carrier classes collapse onto
-three codec shapes, so this is a small deterministic dispatch keyed to the catalog
-(the single source of truth), not ninety bespoke implementations:
+Working backwards from the 176 usable mechanisms, the seven carrier classes collapse
+onto three codec shapes, so this is a small deterministic dispatch keyed to the catalog
+(the single source of truth), not 176 bespoke implementations:
 
 * fixed-width value  — Class A reserved/MBZ bits, small Class C opaque fields;
 * variable-length bytes — Class B padding, Class E blobs, Class G salt/nonce, large

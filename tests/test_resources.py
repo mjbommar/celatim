@@ -224,7 +224,7 @@ def test_unified_celatim_project_owns_the_only_distribution_and_namespace():
     assert project["license"] == "Apache-2.0"
     assert project["license-files"] == ["LICENSE"]
     assert project["dependencies"] == []
-    assert project["optional-dependencies"]["crypto"] == ["cryptography>=46.0.3"]
+    assert project["optional-dependencies"]["crypto"] == ["cryptography>=50.0.0"]
     assert project["scripts"]["celatim"] == "celatim.cli:main"
     assert pyproject["tool"]["uv"]["build-backend"]["module-name"] == ["celatim"]
     assert "src" not in pyproject["tool"]["ty"]

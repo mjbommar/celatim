@@ -168,10 +168,10 @@ def test_package_docs_lock_install_profiles_and_release_workflow():
     assert pyproject["project"]["requires-python"] == ">=3.14"
     assert pyproject["project"]["dependencies"] == []
     assert pyproject["project"]["optional-dependencies"] == {
-        "transfer": ["cryptography>=46.0.3"],
+        "transfer": ["cryptography>=50.0.0"],
         "packet": ["scapy>=2.6.1"],
-        "crypto": ["cryptography>=46.0.3"],
-        "daemon": ["aioquic>=1.3.0", "h2>=4.3.0"],
+        "crypto": ["cryptography>=50.0.0"],
+        "daemon": ["aioquic>=1.3.0", "h2>=4.4.1"],
         "dns": ["dnspython>=2.8.0"],
         "ssh": ["paramiko>=3.5.0"],
         "iot": ["aiocoap>=0.4.12", "paho-mqtt>=2.1.0"],

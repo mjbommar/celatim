@@ -381,9 +381,9 @@ def test_pyproject_optional_extras_match_doctor_registry():
 
     assert set(extras) == set(PACKAGE_EXTRA_MODULES)
     assert extras["packet"] == ["scapy>=2.6.1"]
-    assert extras["transfer"] == ["cryptography>=46.0.3"]
-    assert extras["crypto"] == ["cryptography>=46.0.3"]
-    assert extras["daemon"] == ["aioquic>=1.3.0", "h2>=4.3.0"]
+    assert extras["transfer"] == ["cryptography>=50.0.0"]
+    assert extras["crypto"] == ["cryptography>=50.0.0"]
+    assert extras["daemon"] == ["aioquic>=1.3.0", "h2>=4.4.1"]
     assert extras["dns"] == ["dnspython>=2.8.0"]
     assert extras["ssh"] == ["paramiko>=3.5.0"]
     assert extras["iot"] == ["aiocoap>=0.4.12", "paho-mqtt>=2.1.0"]

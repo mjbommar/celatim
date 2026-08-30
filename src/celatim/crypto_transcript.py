@@ -619,7 +619,7 @@ def _cryptography_modules() -> dict[str, Any]:
         from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa, utils
     except ImportError as exc:  # pragma: no cover - depends on optional extra installation
         raise TransportError(
-            "crypto transcript transports require optional extra 'crypto' (cryptography>=46.0.3)"
+            "crypto transcript transports require optional extra 'crypto' (cryptography>=50.0.0)"
         ) from exc
     return {
         "InvalidSignature": InvalidSignature,

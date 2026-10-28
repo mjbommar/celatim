@@ -152,7 +152,7 @@ class RecordingRunner:
 
 def test_package_exposes_versioned_facade_metadata():
     assert version("celatim") == celatim.__version__
-    assert celatim.__version__ == "0.2.11"
+    assert celatim.__version__ == "0.2.12"
     assert any(
         entry_point.value == "celatim.cli:main"
         for entry_point in entry_points(group="console_scripts")
@@ -172,7 +172,7 @@ def test_package_docs_lock_install_profiles_and_release_workflow():
         "packet": ["scapy>=2.6.1"],
         "crypto": ["cryptography>=50.0.0"],
         "daemon": ["aioquic>=1.3.0", "h2>=4.4.1"],
-        "dns": ["dnspython>=2.8.0"],
+        "dns": ["dnspython>=2.9.0"],
         "ssh": ["paramiko>=3.5.0"],
         "iot": ["aiocoap>=0.4.12", "paho-mqtt>=2.1.0"],
         "realtime": ["websockets>=13.0"],
